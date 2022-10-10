@@ -42,3 +42,20 @@ pub struct WorldConfiguration {
     /// implemented
     pub threading_model: ThreadingModel,
 }
+
+impl Default for WorldConfiguration {
+    fn default() -> Self {
+        WorldConfiguration {
+            individuals_per_island: 100,
+            elite_individuals_per_generation: 2,
+            generations_between_migrations: 10,
+            number_of_individuals_migrating: 10,
+            migration_algorithm: MigrationAlgorithm::Circular,
+            clone_migrated_individuals: true,
+            select_for_migration: SelectionCurve::PreferenceForFit,
+            select_as_parent: SelectionCurve::PreferenceForFit,
+            select_as_elite: SelectionCurve::StrongPreferenceForFit,
+            threading_model: ThreadingModel::None,
+        }
+    }
+}
