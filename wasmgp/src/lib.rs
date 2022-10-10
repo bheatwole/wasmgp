@@ -1,5 +1,7 @@
+mod migration_algorithm;
 mod selection_curve;
 
+pub use migration_algorithm::MigrationAlgorithm;
 pub use selection_curve::SelectionCurve;
 
 #[cfg(test)]
