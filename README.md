@@ -31,4 +31,11 @@ character, or a list of circuit board parts that need to be laid out, etc.
 ## Pre-defined Functions
 If you know your program will need to perform specific actions with it's memory (say your memory is a long linear array
 of Open-High-Low-Close-Volume value), you may want to provide accessor functions to the programs that can be selected
-during genetic programming along with other instructions. 
+during genetic programming along with other instructions.
+
+## Fitness
+Fitness has three components in wasmgp:
+- Sorted Order: you will need to provide a function that is able to order two individuals according to their relative
+fitness.
+- Score (optional): if fitness can be reduced to a single numerical value, it can be useful to some algorithms.
+- Zero Fitness (optional): if a program didn't even try to solve a particular problem, it can be useful to notate that.
