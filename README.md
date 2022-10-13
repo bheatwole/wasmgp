@@ -6,7 +6,7 @@ You will need to define the structure of what you want the output code to be abl
 to define the signature of the main entry point to the program.
 
 ## Main Entry Point
-- Writing a program for evaluating stocks? Mabye that's a `func(i32) -> f64` that takes a symbol as a number and returns
+- Writing a program for evaluating stocks? Maybe that's a `func(i32) -> f64` that takes a symbol as a number and returns
 a relative value for how the stock is likely to perform tomorrow.
 - Writing a game AI? Maybe that's a `func()` that using imported functions to detect the current state of the world and
 other functions to act upon it.
