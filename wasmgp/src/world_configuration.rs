@@ -1,7 +1,15 @@
-use crate::{MigrationAlgorithm, SelectionCurve, ThreadingModel};
+use crate::{MigrationAlgorithm, SelectionCurve, ThreadingModel, MainEntryPoint};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct WorldConfiguration {
+    /// The signature of the main entry point for the individuals in the world
+    pub main_entry_point: MainEntryPoint,
+
+    /// The amount of Wasm memory that individuals may access. May be zero. Must be set to at least the size of any
+    /// default data you will provide to the individual at runtime if you choose to pre-load a block of data. This will
+    /// be rounded up to the nearest multiple of Wasm page size (usually 64K)
+    pub memory_size: usize,
+
     /// The number of individuals on each island. Before running a generation, the island will be filled with the
     /// children of genetic selection if there was a previous generation, or new random individuals if there was no
     /// previous generation.
@@ -46,6 +54,8 @@ pub struct WorldConfiguration {
 impl Default for WorldConfiguration {
     fn default() -> Self {
         WorldConfiguration {
+            main_entry_point: MainEntryPoint::empty(),
+            memory_size: 0,
             individuals_per_island: 100,
             elite_individuals_per_generation: 2,
             generations_between_migrations: 10,
