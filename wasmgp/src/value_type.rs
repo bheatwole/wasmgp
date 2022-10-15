@@ -19,3 +19,9 @@ impl Into<wasm_ast::ValueType> for ValueType {
         }
     }
 }
+
+impl From<wasmtime::ValType> for ValueType {
+    fn from(_: wasmtime::ValType) -> Self {
+        todo!()
+    }
+}
