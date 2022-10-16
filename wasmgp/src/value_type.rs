@@ -21,7 +21,13 @@ impl Into<wasm_ast::ValueType> for ValueType {
 }
 
 impl From<wasmtime::ValType> for ValueType {
-    fn from(_: wasmtime::ValType) -> Self {
-        todo!()
+    fn from(value: wasmtime::ValType) -> Self {
+        match value {
+            wasmtime::ValType::I32 => ValueType::I32,
+            wasmtime::ValType::I64 => ValueType::I64,
+            wasmtime::ValType::F32 => ValueType::F32,
+            wasmtime::ValType::F64 => ValueType::F64,
+            _ => panic!("unsupported wasmtime::ValType {:?}", value),
+        }
     }
 }
