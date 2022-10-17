@@ -4,6 +4,7 @@ mod migration_algorithm;
 mod selection_curve;
 mod threading_model;
 mod value_type;
+mod wasm_ast_assumptions;
 mod world;
 mod world_configuration;
 

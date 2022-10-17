@@ -7,9 +7,12 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
-wasm-ast = "0.1"
 wasmtime = "1.0"
 
 [dependencies.rand]
 version = "0.8"
 features = ["small_rng"]
+
+[dependencies.wasm-ast]
+git = "https://github.com/misalcedo/wasm-ast" 
+features = [ "emitter" ]
