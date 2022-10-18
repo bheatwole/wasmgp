@@ -41,11 +41,16 @@ mod tests {
         let mut buffer = Vec::new();
         emit_binary(&module, &mut buffer).unwrap();
 
+        // Create an instance of the module and get a pointer to the exported function by its name
         let (mut store, instance) = instanciate_binary(&buffer[..]);
         let typed_func = instance
             .get_typed_func::<i32, i32, _>(&mut store, &name)
             .unwrap();
+        
+        // Call the function and confirm we get the same value as what we passed in
         let result = typed_func.call(&mut store, 1).unwrap();
         assert_eq!(1, result);
+        let result = typed_func.call(&mut store, 42).unwrap();
+        assert_eq!(42, result);
     }
 }
