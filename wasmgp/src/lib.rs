@@ -1,3 +1,4 @@
+mod code;
 mod function_signature;
 mod main_entry_point;
 mod migration_algorithm;
@@ -8,6 +9,7 @@ mod wasm_ast_assumptions;
 mod world;
 mod world_configuration;
 
+pub use code::Code;
 pub use function_signature::FunctionSignature;
 pub use main_entry_point::MainEntryPoint;
 pub use migration_algorithm::MigrationAlgorithm;
