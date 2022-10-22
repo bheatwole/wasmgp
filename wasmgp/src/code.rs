@@ -122,11 +122,12 @@ pub enum Code {
     /// use locals 0..x until all return values are satisfied.
     Return(Vec<u8>),
 
-    /// Call(function_index, parameters): Calls the host or code function with the specified index (remainder the number
-    /// of functions) and uses the specified list of local variables as parameters. If more local variables are 
-    /// specified than are needed, they will be ignored. If more local variables are needed than are supplied, the 
-    /// locals 0..x will be used until all parameters are satisfied.
-    Call(u32, Vec<u8>),
+    /// Call(function_index, parameter_slots, return_slots): Calls the host or code function with the specified index
+    /// (remainder the number of functions) and uses the specified list of local variables as parameters. If more local 
+    /// variables are specified than are needed, they will be ignored. If more local variables are needed than are 
+    /// supplied, the locals 0..x will be used until all parameters are satisfied. The returns values from the function
+    /// will be placed into the local variables specified by 'return_slots'.
+    Call(u32, Vec<u8>, Vec<u8>),
 
     /// If(compare_slot, do): If the value in the compare_slot is not zero, than the code listed in 'do' will execute.
     If(u8, Vec<Code>),
