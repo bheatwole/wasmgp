@@ -156,3 +156,11 @@ pub enum Code {
     /// compare_slot is not zero. If the code is not in a loop, this is a null-op.
     BreakIf(u8),
 }
+
+impl Code {
+
+    /// Returns the number of places where this code item could be mutated.
+    pub fn mutation_points(&self) -> u32 {
+        todo!()
+    }
+}
