@@ -4,7 +4,7 @@ mod tests {
 
     use wasm_ast::{
         emit_binary, Export, Expression, Function, FunctionType, ModuleBuilder, NumberType,
-        NumericInstruction, ResultType, ValueType, VariableInstruction,
+        NumericInstruction, ResultType, ValueType, VariableInstruction, IntegerType, FloatType,
     };
     use wasmtime::{Engine, Instance, Store};
 
@@ -90,5 +90,57 @@ mod tests {
         assert!(module_err.is_err());
 
         // This test shows that Wasm expects very well-mannered and well-formed code from our genetic algorithm.
+    }
+
+    #[test]
+    fn what_happens_to_extra_local_values() {
+        // This test determines if a program compiles that has local values that aren't used
+        let mut builder = ModuleBuilder::new();
+
+        // Create a main function that takes one int and returns the double of it. However it loads the parameter to the
+        // stack three times instead of the two that are necessary.
+        let one_i32 = ResultType::from(vec![ValueType::I32]);
+        let func_type_index = builder
+            .add_function_type(FunctionType::new(one_i32.clone(), one_i32))
+            .unwrap();
+        let body: Expression = vec![
+            VariableInstruction::LocalGet(0).into(), // load param once
+            VariableInstruction::LocalGet(0).into(), // load param twice
+            VariableInstruction::LocalGet(0).into(), // load param thrice
+            VariableInstruction::LocalSet(1).into(), // put the param we just loaded into in local
+            NumericInstruction::Add(NumberType::I32).into(), // double (pops twice and pushes back one answer)
+        ]
+        .into();
+        // Define three local values in the main function. We will only use one
+        let main_func = Function::new(func_type_index, ResultType::new(vec![
+            IntegerType::I32.into(),
+            IntegerType::I32.into(),
+            FloatType::F64.into(),
+        ]), body);
+        let main_func_index = builder.add_function(main_func).unwrap();
+
+        // Export the function so that we can call it
+        let name = "double";
+        let export = Export::function(name.into(), main_func_index);
+        builder.add_export(export);
+        let module = builder.build();
+
+        let mut buffer = Vec::new();
+        emit_binary(&module, &mut buffer).unwrap();
+
+        // Attempt to create an instance of the module.
+        let (mut store, instance) = instanciate_binary(&buffer[..]);
+        let typed_func = instance
+            .get_typed_func::<i32, i32, _>(&mut store, &name)
+            .unwrap();
+
+        // Call the function and confirm we get the same value as what we passed in
+        let result = typed_func.call(&mut store, 1).unwrap();
+        assert_eq!(2, result);
+        let result = typed_func.call(&mut store, 42).unwrap();
+        assert_eq!(84, result);
+
+        // This test confirms that we can use local variables as a way to write generic code and have it work even after
+        // a crossover operation.
     }
 }
