@@ -171,13 +171,13 @@ impl Code {
 }
 
 impl CodeBuilder for Code {
-    fn append_code(&self, context: &mut CodeContext, instruction_list: &mut Vec<Instruction>) {
+    fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) {
         match self {
             Code::DoFor(times, do_block) => {
                 // Set a new local with the number of loops remaining (might be zero already)
                 let local_index = context.get_unused_local(ValueType::I32);
                 instruction_list.push(NumericInstruction::I32Constant(*times as i32).into());
-                instruction_list.push(VariableInstruction::LocalSet(local_index).into());
+                instruction_list.push(VariableInstruction::LocalSet(*local_index).into());
 
                 // Create the code for the innermost loop. A branch of '0' will bring us to the top of this loop and a
                 // branch of '1' will bring us to the end of the block surrounding the loop
@@ -185,7 +185,7 @@ impl CodeBuilder for Code {
 
                 // Branch to the end of the outer block if the remaining loop count is zero
                 // br_if 1 (i32.eqz (get_local $x) )
-                inner_instructions.push(VariableInstruction::LocalGet(local_index).into());
+                inner_instructions.push(VariableInstruction::LocalGet(*local_index).into());
                 inner_instructions.push(NumericInstruction::EqualToZero(IntegerType::I32).into());
                 inner_instructions.push(ControlInstruction::BranchIf(1).into());
 
@@ -194,16 +194,13 @@ impl CodeBuilder for Code {
 
                 // Subtract one from the remaining loop count
                 // (set_local $x (sub (get_local $x) (i32.const 1) ) )
-                inner_instructions.push(VariableInstruction::LocalGet(local_index).into());
+                inner_instructions.push(VariableInstruction::LocalGet(*local_index).into());
                 inner_instructions.push(NumericInstruction::I32Constant(1).into());
                 inner_instructions.push(NumericInstruction::Subtract(NumberType::I32).into());
-                inner_instructions.push(VariableInstruction::LocalSet(local_index).into());
+                inner_instructions.push(VariableInstruction::LocalSet(*local_index).into());
 
                 // Branch to the loop top (which will immediately check for zero loops remaining)
                 inner_instructions.push(ControlInstruction::Branch(0).into());
-
-                // We won't use this local variable anymore
-                context.mark_unused(local_index);
 
                 // Create a `loop` as the target or our 'keep going' jump. The loop does not enter or exit with any new
                 // stack values
