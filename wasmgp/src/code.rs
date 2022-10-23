@@ -189,8 +189,12 @@ impl CodeBuilder for Code {
                 inner_instructions.push(NumericInstruction::EqualToZero(IntegerType::I32).into());
                 inner_instructions.push(ControlInstruction::BranchIf(1).into());
 
-                // 'Do' the code
-                do_block.append_code(context, &mut inner_instructions);
+                // 'Do' the code. When the `loop_label` is dropped, it indicates we can't break from that loop anymore
+                {
+                    let loop_label = context.entering_loop(1);
+                    do_block.append_code(context, &mut inner_instructions);
+                    drop(loop_label);
+                }
 
                 // Subtract one from the remaining loop count
                 // (set_local $x (sub (get_local $x) (i32.const 1) ) )
