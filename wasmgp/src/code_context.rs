@@ -51,6 +51,13 @@ impl CodeContext {
         }
     }
 
+    /// Returns a list of all the local variable types suitable for passing to wasm_ast::Function::new. Specifically,
+    /// this list does NOT include the parameters as part of the list
+    pub fn local_types(&self) -> Vec<ValueType> {
+        let locals = self.locals.borrow();
+        locals.iter().filter(|i| i.purpose != SlotPurpose::Parameter).map(|i| i.value_type).collect()
+    }
+
     /// Gets the next local variable index of the specified type that isn't already in use. If there is not currently
     /// a local of that type, a new one will be added. When the return value is dropped, that index is marked as unused
     /// and could be re-used by other code.
