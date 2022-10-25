@@ -31,4 +31,12 @@ impl FunctionSignature {
             results,
         }
     }
+
+    pub fn params(&self) -> &[ValueType] {
+        &self.params
+    }
+
+    pub fn results(&self) -> &[ValueType] {
+        &self.results
+    }
 }
