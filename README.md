@@ -39,3 +39,18 @@ Fitness has three components in wasmgp:
 fitness.
 - Score (optional): if fitness can be reduced to a single numerical value, it can be useful to some algorithms.
 - Zero Fitness (optional): if a program didn't even try to solve a particular problem, it can be useful to notate that.
+
+
+# Logic Engine
+While we do need to solve problems involving very specific arthimatic sequences, often what we actually want is a
+engine that can give us a set of rules, or logical steps to follow, to achieve an outcome in the most efficient manner.
+
+Therefore our genetic algorithm should not be so concerned with figuring out how to use addition to loop through records
+and evaluate position 3 on each, but should rather focus on the logic (filter list of stocks for those that are trending
+up in the long term, but trending down in the short term, or filter list of possible play locations for those where a
+three of spades can go).
+
+The logical constructs would be things like 'sets' (lists of similar things), 'set operations' (what can I do to sets),
+'properties' (what are the numerical attributes of a thing), 'comparisons' (how do I compare two things, how do I
+compare two discrete properties), 'decisions' (how do I make a choice), 'ordering' (given a set, what is best or worst)
+'actions' (how can I affect the world)
