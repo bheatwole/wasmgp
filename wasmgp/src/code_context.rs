@@ -1,4 +1,4 @@
-use crate::{FunctionSignature, SlotCount, ValueType, Slot, SlotBytes, SlotType};
+use crate::{FunctionSignature, Slot, SlotBytes, SlotCount, SlotType, ValueType};
 use std::{cell::RefCell, ops::Deref};
 use wasm_ast::{LabelIndex, LocalIndex};
 
@@ -55,13 +55,17 @@ impl CodeContext {
     /// this list does NOT include the parameters as part of the list
     pub fn local_types(&self) -> Vec<ValueType> {
         let locals = self.locals.borrow();
-        locals.iter().filter(|i| i.purpose != SlotPurpose::Parameter).map(|i| i.value_type).collect()
+        locals
+            .iter()
+            .filter(|i| i.purpose != SlotPurpose::Parameter)
+            .map(|i| i.value_type)
+            .collect()
     }
 
     /// Returns a tuple of (SlotType, SlotBytes, is_initialized) for a slot that the code generator would like to use.
     /// If the slot was not initialized, false will be returned, but the slot will be marked as initialized for future
     /// calls to `get_slot_for_use`.
-    /// 
+    ///
     /// Returns `None` if the slot is out of range of all slots, or has `SlotPurpose::Instruction`
     pub fn get_slot_for_use(&self, slot: Slot) -> Option<(SlotType, SlotBytes, bool)> {
         let mut locals = self.locals.borrow_mut();
@@ -71,7 +75,7 @@ impl CodeContext {
             } else {
                 let init = slot_info.is_initialized;
                 slot_info.is_initialized = true;
-                
+
                 match slot_info.value_type {
                     ValueType::I32 => Some((SlotType::Integer, SlotBytes::Four, init)),
                     ValueType::I64 => Some((SlotType::Integer, SlotBytes::Eight, init)),
@@ -94,6 +98,7 @@ impl CodeContext {
                 && !slot.is_in_use
                 && slot.value_type == value_type
         }) {
+            locals[position].is_in_use = true;
             position
         } else {
             let position = locals.len();
@@ -208,15 +213,23 @@ struct SlotInfo {
 
 #[cfg(test)]
 mod tests {
-    use crate::{FunctionSignature, ValueType, SlotType, SlotBytes};
+    use crate::{FunctionSignature, SlotBytes, SlotType, ValueType};
 
     use super::CodeContext;
 
-
     #[test]
     fn get_local_types() {
-        let fs = FunctionSignature::new("test", vec![ValueType::I32, ValueType::F64], vec![ValueType::F32]);
-        let slots = crate::SlotCount { i32: 0, i64: 3, f32: 0, f64: 0 };
+        let fs = FunctionSignature::new(
+            "test",
+            vec![ValueType::I32, ValueType::F64],
+            vec![ValueType::F32],
+        );
+        let slots = crate::SlotCount {
+            i32: 0,
+            i64: 3,
+            f32: 0,
+            f64: 0,
+        };
         let context = CodeContext::new(&fs, slots);
 
         // The local types should NOT include parameters (these locals are created by the definition for the function),
@@ -231,21 +244,48 @@ mod tests {
 
     #[test]
     fn get_slot_for_use() {
-        let fs = FunctionSignature::new("test", vec![ValueType::I32, ValueType::F64], vec![ValueType::F32]);
-        let slots = crate::SlotCount { i32: 0, i64: 3, f32: 0, f64: 0 };
+        let fs = FunctionSignature::new(
+            "test",
+            vec![ValueType::I32, ValueType::F64],
+            vec![ValueType::F32],
+        );
+        let slots = crate::SlotCount {
+            i32: 0,
+            i64: 3,
+            f32: 0,
+            f64: 0,
+        };
         let context = CodeContext::new(&fs, slots);
 
         // Getting a parameter slot returns an initialized type
-        assert_eq!(Some((SlotType::Integer, SlotBytes::Four, true)), context.get_slot_for_use(0));
-        assert_eq!(Some((SlotType::Float, SlotBytes::Eight, true)), context.get_slot_for_use(1));
+        assert_eq!(
+            Some((SlotType::Integer, SlotBytes::Four, true)),
+            context.get_slot_for_use(0)
+        );
+        assert_eq!(
+            Some((SlotType::Float, SlotBytes::Eight, true)),
+            context.get_slot_for_use(1)
+        );
 
         // Getting a return slot once, returns an un-initialized type. Getting it again says its initialized
-        assert_eq!(Some((SlotType::Float, SlotBytes::Four, false)), context.get_slot_for_use(2));
-        assert_eq!(Some((SlotType::Float, SlotBytes::Four, true)), context.get_slot_for_use(2));
+        assert_eq!(
+            Some((SlotType::Float, SlotBytes::Four, false)),
+            context.get_slot_for_use(2)
+        );
+        assert_eq!(
+            Some((SlotType::Float, SlotBytes::Four, true)),
+            context.get_slot_for_use(2)
+        );
 
         // Getting a local slot once, returns an un-initialized type. Getting it again says its initialized
-        assert_eq!(Some((SlotType::Integer, SlotBytes::Eight, false)), context.get_slot_for_use(5));
-        assert_eq!(Some((SlotType::Integer, SlotBytes::Eight, true)), context.get_slot_for_use(5));
+        assert_eq!(
+            Some((SlotType::Integer, SlotBytes::Eight, false)),
+            context.get_slot_for_use(5)
+        );
+        assert_eq!(
+            Some((SlotType::Integer, SlotBytes::Eight, true)),
+            context.get_slot_for_use(5)
+        );
 
         // If you make an Instruction slot and try to get it, it returns None
         assert_eq!(6, *(context.get_unused_local(ValueType::I32)));
@@ -253,5 +293,44 @@ mod tests {
 
         // Getting a slot that doesn't exist also returns None
         assert_eq!(None, context.get_slot_for_use(200));
+    }
+
+    #[test]
+    fn get_unused_local() {
+        let fs = FunctionSignature::new("test", vec![], vec![]);
+        let slots = crate::SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots);
+
+        // Getting an unused local slot from an empty context returns the first slot
+        let slot_zero = context.get_unused_local(ValueType::I32);
+        assert_eq!(0, *slot_zero);
+
+        // If we drop the slot, we can get it again
+        drop(slot_zero);
+        let slot_zero = context.get_unused_local(ValueType::I32);
+        assert_eq!(0, *slot_zero);
+
+        // If we don't drop the slot, we get the next slot when we ask for the same type
+        let slot_one = context.get_unused_local(ValueType::I32);
+        assert_eq!(0, *slot_zero);
+        assert_eq!(1, *slot_one);
+
+        // Even when we drop both, we'll get the next slot (2) when we ask for a different type
+        drop(slot_zero);
+        drop(slot_one);
+        let slot_two = context.get_unused_local(ValueType::I64);
+        assert_eq!(2, *slot_two);
+
+        // All three of the locals we created should show up when we ask for the locals that the function needs to have
+        let locals = context.local_types();
+        assert_eq!(3, locals.len());
+        assert_eq!(ValueType::I32, locals[0]);
+        assert_eq!(ValueType::I32, locals[1]);
+        assert_eq!(ValueType::I64, locals[2]);
     }
 }
