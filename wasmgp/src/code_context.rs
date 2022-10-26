@@ -1,4 +1,4 @@
-use crate::{FunctionSignature, SlotCount, ValueType};
+use crate::{FunctionSignature, SlotCount, ValueType, Slot, SlotBytes, SlotType};
 use std::{cell::RefCell, ops::Deref};
 use wasm_ast::{LabelIndex, LocalIndex};
 
@@ -56,6 +56,15 @@ impl CodeContext {
     pub fn local_types(&self) -> Vec<ValueType> {
         let locals = self.locals.borrow();
         locals.iter().filter(|i| i.purpose != SlotPurpose::Parameter).map(|i| i.value_type).collect()
+    }
+
+    /// Returns a tuple of (SlotType, SlotBytes, is_initialized) for a slot that the code generator would like to use.
+    /// If the slot was not initialized, false will be returned, but the slot will be marked as initialized for future
+    /// calls to `get_slot_for_use`.
+    /// 
+    /// Returns `None` if the slot is out of range of all slots, or has `SlotPurpose::Instruction`
+    pub fn get_slot_for_use(&self, slot: Slot) -> Option<(SlotType, SlotBytes, bool)> {
+        todo!()
     }
 
     /// Gets the next local variable index of the specified type that isn't already in use. If there is not currently
@@ -178,4 +187,54 @@ struct SlotInfo {
     // If the `purpose` is `Instruction`, the slot is used for a while and then is available for another instruction to
     // use it. Always `true` for all other purpose types.
     is_in_use: bool,
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{FunctionSignature, ValueType, SlotType, SlotBytes};
+
+    use super::CodeContext;
+
+
+    #[test]
+    fn get_local_types() {
+        let fs = FunctionSignature::new("test", vec![ValueType::I32, ValueType::F64], vec![ValueType::F32]);
+        let slots = crate::SlotCount { i32: 0, i64: 3, f32: 0, f64: 0 };
+        let context = CodeContext::new(&fs, slots);
+
+        // The local types should NOT include parameters (these locals are created by the definition for the function),
+        // but start with the return types, and then include each of the slots
+        let locals = context.local_types();
+        assert_eq!(4, locals.len());
+        assert_eq!(ValueType::F32, locals[0]);
+        assert_eq!(ValueType::I64, locals[1]);
+        assert_eq!(ValueType::I64, locals[2]);
+        assert_eq!(ValueType::I64, locals[3]);
+    }
+
+    #[test]
+    fn get_slot_for_use() {
+        let fs = FunctionSignature::new("test", vec![ValueType::I32, ValueType::F64], vec![ValueType::F32]);
+        let slots = crate::SlotCount { i32: 0, i64: 3, f32: 0, f64: 0 };
+        let context = CodeContext::new(&fs, slots);
+
+        // Getting a parameter slot returns an initialized type
+        assert_eq!(Some((SlotType::Integer, SlotBytes::Four, true)), context.get_slot_for_use(0));
+        assert_eq!(Some((SlotType::Float, SlotBytes::Eight, true)), context.get_slot_for_use(1));
+
+        // Getting a return slot once, returns an un-initialized type. Getting it again says its initialized
+        assert_eq!(Some((SlotType::Float, SlotBytes::Four, false)), context.get_slot_for_use(2));
+        assert_eq!(Some((SlotType::Float, SlotBytes::Four, true)), context.get_slot_for_use(2));
+
+        // Getting a local slot once, returns an un-initialized type. Getting it again says its initialized
+        assert_eq!(Some((SlotType::Integer, SlotBytes::Eight, false)), context.get_slot_for_use(5));
+        assert_eq!(Some((SlotType::Integer, SlotBytes::Eight, true)), context.get_slot_for_use(5));
+
+        // If you make an Instruction slot and try to get it, it returns None
+        assert_eq!(6, *(context.get_unused_local(ValueType::I32)));
+        assert_eq!(None, context.get_slot_for_use(6));
+
+        // Getting a slot that doesn't exist also returns None
+        assert_eq!(None, context.get_slot_for_use(200));
+    }
 }
