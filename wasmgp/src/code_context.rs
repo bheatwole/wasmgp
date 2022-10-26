@@ -64,7 +64,24 @@ impl CodeContext {
     /// 
     /// Returns `None` if the slot is out of range of all slots, or has `SlotPurpose::Instruction`
     pub fn get_slot_for_use(&self, slot: Slot) -> Option<(SlotType, SlotBytes, bool)> {
-        todo!()
+        let mut locals = self.locals.borrow_mut();
+        if let Some(slot_info) = locals.get_mut(slot as usize) {
+            if SlotPurpose::Instruction == slot_info.purpose {
+                None
+            } else {
+                let init = slot_info.is_initialized;
+                slot_info.is_initialized = true;
+                
+                match slot_info.value_type {
+                    ValueType::I32 => Some((SlotType::Integer, SlotBytes::Four, init)),
+                    ValueType::I64 => Some((SlotType::Integer, SlotBytes::Eight, init)),
+                    ValueType::F32 => Some((SlotType::Float, SlotBytes::Four, init)),
+                    ValueType::F64 => Some((SlotType::Float, SlotBytes::Eight, init)),
+                }
+            }
+        } else {
+            None
+        }
     }
 
     /// Gets the next local variable index of the specified type that isn't already in use. If there is not currently
