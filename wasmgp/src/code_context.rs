@@ -333,4 +333,38 @@ mod tests {
         assert_eq!(ValueType::I32, locals[1]);
         assert_eq!(ValueType::I64, locals[2]);
     }
+
+    #[test]
+    fn break_stack() {
+        let fs = FunctionSignature::new("test", vec![], vec![]);
+        let slots = crate::SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots);
+
+        // Calling 'can_break' with no loop returns None
+        assert_eq!(None, context.can_break());
+
+        // Entering a loop with a distance of 2, returns that distance from 'can_break'
+        let outer = context.entering_loop(2);
+        assert_eq!(Some(2), context.can_break());
+
+        // 'can_break' may be called again
+        assert_eq!(Some(2), context.can_break());
+
+        // Entering a second loop with a distance of 1, returns that distance from 'can_break'
+        let inner = context.entering_loop(1);
+        assert_eq!(Some(1), context.can_break());
+
+        // After the inner loop is dropped, the answer is '2' again
+        drop(inner);
+        assert_eq!(Some(2), context.can_break());
+
+        // After the outer loop is dropped, the answer is None again
+        drop(outer);
+        assert_eq!(None, context.can_break());
+    }
 }
