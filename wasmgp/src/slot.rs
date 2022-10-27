@@ -10,12 +10,14 @@ pub type IntegerSlot = u8;
 pub type FloatSlot = u8;
 
 /// When dealing with generic slots, we need to know whether it holds an integer or float
+#[derive(Debug, Eq, PartialEq)]
 pub enum SlotType {
     Integer,
     Float,
 }
 
 /// When dealing with slots, we need to know its size
+#[derive(Debug, Eq, PartialEq)]
 pub enum SlotBytes {
     /// I32 or F32
     Four,
