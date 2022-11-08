@@ -1,9 +1,7 @@
-use crate::{
-    code_builder::CodeBuilder, code_context::CodeContext, FloatSlot, IntegerSlot, Slot, ValueType,
-};
+use crate::{code_builder::CodeBuilder, code_context::CodeContext, FloatSlot, IntegerSlot, Slot, ValueType};
 use wasm_ast::{
-    BlockType, ControlInstruction, Expression, Instruction, IntegerType, NumberType,
-    NumericInstruction, VariableInstruction,
+    BlockType, ControlInstruction, Expression, Instruction, IntegerType, NumberType, NumericInstruction,
+    VariableInstruction,
 };
 
 pub enum Code {
@@ -236,8 +234,7 @@ impl CodeBuilder for Code {
 
                 // Create a `block` as the target of our 'exit' jump. The block does not enter or exit with any new
                 // stack values
-                instruction_list
-                    .push(ControlInstruction::Block(BlockType::None, loop_expression).into());
+                instruction_list.push(ControlInstruction::Block(BlockType::None, loop_expression).into());
             }
 
             _ => unimplemented!(),
@@ -253,9 +250,17 @@ mod tests {
 
     use crate::{Code, CodeContext, FunctionSignature, SlotCount, ValueType};
 
-    fn instanciate_binary(bytes: impl AsRef<[u8]>) -> (Store<()>, Instance) {
+    fn build_code(context: CodeContext, code: Vec<Code>) -> (Store<()>, Instance) {
+        let mut builder = ModuleBuilder::new();
+        context.build(&mut builder, &code[..]);
+        let module = builder.build();
+
+        let mut buffer = Vec::new();
+        emit_binary(&module, &mut buffer).unwrap();
+
+        // Create an instance of the module
         let engine = Engine::default();
-        let module = wasmtime::Module::new(&engine, bytes).unwrap();
+        let module = wasmtime::Module::new(&engine, &buffer[..]).unwrap();
         let mut store = Store::new(&engine, ());
         let instance = Instance::new(&mut store, &module, &vec![]).unwrap();
         (store, instance)
@@ -263,7 +268,9 @@ mod tests {
 
     #[test]
     fn const_i32_and_return() {
-        let fs = FunctionSignature::new("const_i32_and_return", vec![], vec![ValueType::I32]);
+        // Context
+        let name = "const_i32_and_return";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
         let slots = SlotCount {
             i32: 1,
             i64: 0,
@@ -272,20 +279,12 @@ mod tests {
         };
         let context = CodeContext::new(&fs, slots);
 
+        // Code
         let code = vec![Code::ConstI32(0, 42), Code::Return(vec![0])];
 
-        let mut builder = ModuleBuilder::new();
-        context.build(&mut builder, &code[..]);
-        let module = builder.build();
-
-        let mut buffer = Vec::new();
-        emit_binary(&module, &mut buffer).unwrap();
-
-        // Create an instance of the module and get a pointer to the exported function by its name
-        let (mut store, instance) = instanciate_binary(&buffer[..]);
-        let typed_func = instance
-            .get_typed_func::<(), i32, _>(&mut store, "const_i32_and_return")
-            .unwrap();
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), i32, _>(&mut store, name).unwrap();
 
         // Call the function and confirm we get the constant
         let result = typed_func.call(&mut store, ()).unwrap();
