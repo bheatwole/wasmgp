@@ -3,8 +3,8 @@ mod tests {
     use std::vec;
 
     use wasm_ast::{
-        emit_binary, Export, Expression, Function, FunctionType, ModuleBuilder, NumberType,
-        NumericInstruction, ResultType, ValueType, VariableInstruction, IntegerType, FloatType,
+        emit_binary, Export, Expression, FloatType, Function, FunctionType, IntegerType, ModuleBuilder, NumberType,
+        NumericInstruction, ResultType, ValueType, VariableInstruction,
     };
     use wasmtime::{Engine, Instance, Store};
 
@@ -43,9 +43,7 @@ mod tests {
 
         // Create an instance of the module and get a pointer to the exported function by its name
         let (mut store, instance) = instanciate_binary(&buffer[..]);
-        let typed_func = instance
-            .get_typed_func::<i32, i32, _>(&mut store, &name)
-            .unwrap();
+        let typed_func = instance.get_typed_func::<i32, i32, _>(&mut store, &name).unwrap();
 
         // Call the function and confirm we get the same value as what we passed in
         let result = typed_func.call(&mut store, 1).unwrap();
@@ -66,9 +64,9 @@ mod tests {
             .add_function_type(FunctionType::new(one_i32.clone(), one_i32))
             .unwrap();
         let body: Expression = vec![
-            VariableInstruction::LocalGet(0).into(), // load param once
-            VariableInstruction::LocalGet(0).into(), // load param twice
-            VariableInstruction::LocalGet(0).into(), // load param thrice (not necessary)
+            VariableInstruction::LocalGet(0).into(),         // load param once
+            VariableInstruction::LocalGet(0).into(),         // load param twice
+            VariableInstruction::LocalGet(0).into(),         // load param thrice (not necessary)
             NumericInstruction::Add(NumberType::I32).into(), // double (pops twice and pushes back one answer)
         ]
         .into();
@@ -104,19 +102,23 @@ mod tests {
             .add_function_type(FunctionType::new(one_i32.clone(), one_i32))
             .unwrap();
         let body: Expression = vec![
-            VariableInstruction::LocalGet(0).into(), // load param once
-            VariableInstruction::LocalGet(0).into(), // load param twice
-            VariableInstruction::LocalGet(0).into(), // load param thrice
-            VariableInstruction::LocalSet(1).into(), // put the param we just loaded into in local
+            VariableInstruction::LocalGet(0).into(),         // load param once
+            VariableInstruction::LocalGet(0).into(),         // load param twice
+            VariableInstruction::LocalGet(0).into(),         // load param thrice
+            VariableInstruction::LocalSet(1).into(),         // put the param we just loaded into in local
             NumericInstruction::Add(NumberType::I32).into(), // double (pops twice and pushes back one answer)
         ]
         .into();
         // Define three local values in the main function. We will only use one
-        let main_func = Function::new(func_type_index, ResultType::new(vec![
-            IntegerType::I32.into(),
-            IntegerType::I32.into(),
-            FloatType::F64.into(),
-        ]), body);
+        let main_func = Function::new(
+            func_type_index,
+            ResultType::new(vec![
+                IntegerType::I32.into(),
+                IntegerType::I32.into(),
+                FloatType::F64.into(),
+            ]),
+            body,
+        );
         let main_func_index = builder.add_function(main_func).unwrap();
 
         // Export the function so that we can call it
@@ -130,9 +132,7 @@ mod tests {
 
         // Attempt to create an instance of the module.
         let (mut store, instance) = instanciate_binary(&buffer[..]);
-        let typed_func = instance
-            .get_typed_func::<i32, i32, _>(&mut store, &name)
-            .unwrap();
+        let typed_func = instance.get_typed_func::<i32, i32, _>(&mut store, &name).unwrap();
 
         // Call the function and confirm we get the same value as what we passed in
         let result = typed_func.call(&mut store, 1).unwrap();

@@ -1,7 +1,4 @@
-use crate::{
-    code_builder::CodeBuilder, Code, FunctionSignature, Slot, SlotBytes, SlotCount, SlotType,
-    ValueType,
-};
+use crate::{code_builder::CodeBuilder, Code, FunctionSignature, Slot, SlotBytes, SlotCount, SlotType, ValueType};
 use std::{cell::RefCell, ops::Deref};
 use wasm_ast::{Export, Function, FunctionType, LabelIndex, LocalIndex, ModuleBuilder, ResultType};
 
@@ -127,9 +124,7 @@ impl CodeContext {
     pub fn get_unused_local(&self, value_type: ValueType) -> DroppableLocalIndex {
         let mut locals = self.locals.borrow_mut();
         let position = if let Some(position) = locals.iter().position(|slot| {
-            slot.purpose == SlotPurpose::Instruction
-                && !slot.is_in_use
-                && slot.value_type == value_type
+            slot.purpose == SlotPurpose::Instruction && !slot.is_in_use && slot.value_type == value_type
         }) {
             locals[position].is_in_use = true;
             position
@@ -252,11 +247,7 @@ mod tests {
 
     #[test]
     fn get_local_types() {
-        let fs = FunctionSignature::new(
-            "test",
-            vec![ValueType::I32, ValueType::F64],
-            vec![ValueType::F32],
-        );
+        let fs = FunctionSignature::new("test", vec![ValueType::I32, ValueType::F64], vec![ValueType::F32]);
         let slots = crate::SlotCount {
             i32: 0,
             i64: 3,
@@ -277,11 +268,7 @@ mod tests {
 
     #[test]
     fn get_slot_for_use() {
-        let fs = FunctionSignature::new(
-            "test",
-            vec![ValueType::I32, ValueType::F64],
-            vec![ValueType::F32],
-        );
+        let fs = FunctionSignature::new("test", vec![ValueType::I32, ValueType::F64], vec![ValueType::F32]);
         let slots = crate::SlotCount {
             i32: 0,
             i64: 3,

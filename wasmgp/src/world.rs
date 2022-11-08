@@ -65,11 +65,7 @@ impl<T: Default> World<T> {
         Ok(())
     }
 
-    fn get_extern_func_from_linker(
-        &self,
-        store: impl AsContextMut<Data = T>,
-        name: &str,
-    ) -> Option<Func> {
+    fn get_extern_func_from_linker(&self, store: impl AsContextMut<Data = T>, name: &str) -> Option<Func> {
         if let Some(ext) = self.linker.get(store, MODULE_NAME, name) {
             match ext {
                 Extern::Func(f) => Some(f),

@@ -16,25 +16,15 @@ impl MainEntryPoint {
     }
 
     pub fn new(parameters: Vec<ValueType>, results: Vec<ValueType>) -> MainEntryPoint {
-        MainEntryPoint {
-            parameters,
-            results,
-        }
+        MainEntryPoint { parameters, results }
     }
 }
 
 impl Into<FunctionType> for MainEntryPoint {
     fn into(self) -> FunctionType {
-        let ast_parameters = self
-            .parameters
-            .iter()
-            .map(|t| ValueType::into(*t))
-            .collect();
+        let ast_parameters = self.parameters.iter().map(|t| ValueType::into(*t)).collect();
         let ast_results = self.results.iter().map(|t| ValueType::into(*t)).collect();
 
-        FunctionType::new(
-            ResultType::new(ast_parameters),
-            ResultType::new(ast_results),
-        )
+        FunctionType::new(ResultType::new(ast_parameters), ResultType::new(ast_results))
     }
 }

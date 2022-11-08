@@ -1,4 +1,4 @@
-use crate::{MigrationAlgorithm, SelectionCurve, ThreadingModel, MainEntryPoint};
+use crate::{MainEntryPoint, MigrationAlgorithm, SelectionCurve, ThreadingModel};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct WorldConfiguration {

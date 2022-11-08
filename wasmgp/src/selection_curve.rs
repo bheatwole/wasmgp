@@ -105,7 +105,12 @@ mod tests {
                 last_bucket_count
             );
             if i < 20 {
-                assert!(bucket <= 600, "bucket[{}] had {} but should have had less than 600", i, bucket);
+                assert!(
+                    bucket <= 600,
+                    "bucket[{}] had {} but should have had less than 600",
+                    i,
+                    bucket
+                );
             }
 
             last_bucket_count = bucket;
@@ -127,7 +132,12 @@ mod tests {
                 last_bucket_count
             );
             if i < 20 {
-                assert!(bucket <= 600, "bucket[{}] had {} but should have had less than 600", i, bucket);
+                assert!(
+                    bucket <= 600,
+                    "bucket[{}] had {} but should have had less than 600",
+                    i,
+                    bucket
+                );
             }
 
             last_bucket_count = bucket;
@@ -150,7 +160,12 @@ mod tests {
                 last_bucket_count
             );
             if i < 50 {
-                assert!(bucket <= 600, "bucket[{}] had {} but should have had less than 600", i, bucket);
+                assert!(
+                    bucket <= 600,
+                    "bucket[{}] had {} but should have had less than 600",
+                    i,
+                    bucket
+                );
             }
 
             last_bucket_count = bucket;
@@ -172,7 +187,12 @@ mod tests {
                 last_bucket_count
             );
             if i < 50 {
-                assert!(bucket <= 600, "bucket[{}] had {} but should have had less than 600", i, bucket);
+                assert!(
+                    bucket <= 600,
+                    "bucket[{}] had {} but should have had less than 600",
+                    i,
+                    bucket
+                );
             }
 
             last_bucket_count = bucket;
@@ -195,7 +215,12 @@ mod tests {
                 last_bucket_count
             );
             if i < 75 {
-                assert!(bucket <= 600, "bucket[{}] had {} but should have had less than 600", i, bucket);
+                assert!(
+                    bucket <= 600,
+                    "bucket[{}] had {} but should have had less than 600",
+                    i,
+                    bucket
+                );
             }
 
             last_bucket_count = bucket;
@@ -217,7 +242,12 @@ mod tests {
                 last_bucket_count
             );
             if i < 75 {
-                assert!(bucket <= 600, "bucket[{}] had {} but should have had less than 600", i, bucket);
+                assert!(
+                    bucket <= 600,
+                    "bucket[{}] had {} but should have had less than 600",
+                    i,
+                    bucket
+                );
             }
 
             last_bucket_count = bucket;
