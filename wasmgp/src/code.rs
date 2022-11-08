@@ -290,4 +290,29 @@ mod tests {
         let result = typed_func.call(&mut store, ()).unwrap();
         assert_eq!(42, result);
     }
+
+    #[test]
+    fn return_order() {
+        // Context
+        let name = "return_order";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32, ValueType::I32]);
+        let slots = SlotCount {
+            i32: 2,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots);
+
+        // Confirm that 'return' uses the correct order in the returned tuple
+        let code = vec![Code::ConstI32(0, 42), Code::ConstI32(1, 7), Code::Return(vec![1, 0])];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), (i32, i32), _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the values in the expected order
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!((7, 42), result);
+    }
 }
