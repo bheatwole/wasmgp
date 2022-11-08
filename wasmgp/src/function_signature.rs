@@ -2,6 +2,7 @@ use wasmtime::FuncType;
 
 use crate::ValueType;
 
+#[derive(Clone)]
 pub struct FunctionSignature {
     name: String,
     params: Vec<ValueType>,
@@ -32,11 +33,23 @@ impl FunctionSignature {
         }
     }
 
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+
     pub fn params(&self) -> &[ValueType] {
         &self.params
     }
 
+    pub fn params_ast(&self) -> Vec<wasm_ast::ValueType> {
+        self.params.iter().map(|f| (*f).into()).collect()
+    }
+
     pub fn results(&self) -> &[ValueType] {
         &self.results
+    }
+
+    pub fn results_ast(&self) -> Vec<wasm_ast::ValueType> {
+        self.results.iter().map(|f| (*f).into()).collect()
     }
 }

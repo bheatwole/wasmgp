@@ -1,4 +1,6 @@
-use crate::{code_builder::CodeBuilder, code_context::CodeContext, ValueType, IntegerSlot, FloatSlot, Slot};
+use crate::{
+    code_builder::CodeBuilder, code_context::CodeContext, FloatSlot, IntegerSlot, Slot, ValueType,
+};
 use wasm_ast::{
     BlockType, ControlInstruction, Expression, Instruction, IntegerType, NumberType,
     NumericInstruction, VariableInstruction,
@@ -31,7 +33,7 @@ pub enum Code {
     /// source slot and places it into the destination_slot.
     CountTrailingZeros(IntegerSlot, IntegerSlot),
 
-    /// PopulationCount(source_slot, destination_slot): Counts the number of one bits in the specified source slot and 
+    /// PopulationCount(source_slot, destination_slot): Counts the number of one bits in the specified source slot and
     /// places it into the destination_slot.
     PopulationCount(IntegerSlot, IntegerSlot),
 
@@ -182,6 +184,15 @@ impl Code {
 impl CodeBuilder for Code {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) {
         match self {
+            Code::ConstI32(slot, value) => {
+                instruction_list.push(NumericInstruction::I32Constant(*value as i32).into());
+                instruction_list.push(VariableInstruction::LocalSet(*slot as u32).into());
+            }
+            Code::Return(slots) => {
+                for slot in slots.iter() {
+                    instruction_list.push(VariableInstruction::LocalGet(*slot as u32).into());
+                }
+            }
             Code::DoFor(times, do_block) => {
                 // Set a new local with the number of loops remaining (might be zero already)
                 let local_index = context.get_unused_local(ValueType::I32);
@@ -228,7 +239,56 @@ impl CodeBuilder for Code {
                 instruction_list
                     .push(ControlInstruction::Block(BlockType::None, loop_expression).into());
             }
+
             _ => unimplemented!(),
         }
+    }
+}
+#[cfg(test)]
+mod tests {
+    use std::vec;
+
+    use wasm_ast::{emit_binary, ModuleBuilder};
+    use wasmtime::{Engine, Instance, Store};
+
+    use crate::{Code, CodeContext, FunctionSignature, SlotCount, ValueType};
+
+    fn instanciate_binary(bytes: impl AsRef<[u8]>) -> (Store<()>, Instance) {
+        let engine = Engine::default();
+        let module = wasmtime::Module::new(&engine, bytes).unwrap();
+        let mut store = Store::new(&engine, ());
+        let instance = Instance::new(&mut store, &module, &vec![]).unwrap();
+        (store, instance)
+    }
+
+    #[test]
+    fn const_i32_and_return() {
+        let fs = FunctionSignature::new("const_i32_and_return", vec![], vec![ValueType::I32]);
+        let slots = SlotCount {
+            i32: 1,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots);
+
+        let code = vec![Code::ConstI32(0, 42), Code::Return(vec![0])];
+
+        let mut builder = ModuleBuilder::new();
+        context.build(&mut builder, &code[..]);
+        let module = builder.build();
+
+        let mut buffer = Vec::new();
+        emit_binary(&module, &mut buffer).unwrap();
+
+        // Create an instance of the module and get a pointer to the exported function by its name
+        let (mut store, instance) = instanciate_binary(&buffer[..]);
+        let typed_func = instance
+            .get_typed_func::<(), i32, _>(&mut store, "const_i32_and_return")
+            .unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(42, result);
     }
 }

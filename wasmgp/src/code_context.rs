@@ -1,8 +1,12 @@
-use crate::{FunctionSignature, Slot, SlotBytes, SlotCount, SlotType, ValueType};
+use crate::{
+    code_builder::CodeBuilder, Code, FunctionSignature, Slot, SlotBytes, SlotCount, SlotType,
+    ValueType,
+};
 use std::{cell::RefCell, ops::Deref};
-use wasm_ast::{LabelIndex, LocalIndex};
+use wasm_ast::{Export, Function, FunctionType, LabelIndex, LocalIndex, ModuleBuilder, ResultType};
 
 pub struct CodeContext {
+    signature: FunctionSignature,
     locals: RefCell<Vec<SlotInfo>>,
 
     // A stack of the looping constructs that have been entered. If at least one loop is involved, then the 'Break'
@@ -46,19 +50,48 @@ impl CodeContext {
         }
 
         CodeContext {
+            signature: signature.clone(),
             locals: RefCell::new(locals),
             break_stack: RefCell::new(vec![]),
         }
     }
 
+    /// Adds a function to the specified builder. This adds three components to the WASM: a function type using the
+    /// signature held by the context, the function body using the specified Code, and a function export using the name
+    /// from the signature.
+    pub fn build(&self, builder: &mut ModuleBuilder, code: &[Code]) {
+        // Add the function type
+        let params = self.signature.params_ast();
+        let results = self.signature.results_ast();
+        let function_type = FunctionType::new(ResultType::from(params), ResultType::from(results));
+        let function_type_index = builder.add_function_type(function_type).unwrap();
+
+        // Create the list of local variables
+        let locals = ResultType::new(self.local_types());
+
+        // Build the code
+        let mut instruction_list = vec![];
+        for c in code.iter() {
+            c.append_code(&self, &mut instruction_list);
+        }
+
+        // Create the function
+        let function = Function::new(function_type_index, locals, instruction_list.into());
+        let function_index = builder.add_function(function).unwrap();
+
+        // Export it
+        let export = Export::function(self.signature.name().clone().into(), function_index);
+        builder.add_export(export);
+    }
+
     /// Returns a list of all the local variable types suitable for passing to wasm_ast::Function::new. Specifically,
     /// this list does NOT include the parameters as part of the list
-    pub fn local_types(&self) -> Vec<ValueType> {
+    pub fn local_types(&self) -> Vec<wasm_ast::ValueType> {
         let locals = self.locals.borrow();
         locals
             .iter()
             .filter(|i| i.purpose != SlotPurpose::Parameter)
-            .map(|i| i.value_type)
+            .map(|i| i.value_type.into())
             .collect()
     }
 
@@ -236,10 +269,10 @@ mod tests {
         // but start with the return types, and then include each of the slots
         let locals = context.local_types();
         assert_eq!(4, locals.len());
-        assert_eq!(ValueType::F32, locals[0]);
-        assert_eq!(ValueType::I64, locals[1]);
-        assert_eq!(ValueType::I64, locals[2]);
-        assert_eq!(ValueType::I64, locals[3]);
+        assert_eq!(wasm_ast::ValueType::F32, locals[0]);
+        assert_eq!(wasm_ast::ValueType::I64, locals[1]);
+        assert_eq!(wasm_ast::ValueType::I64, locals[2]);
+        assert_eq!(wasm_ast::ValueType::I64, locals[3]);
     }
 
     #[test]
@@ -329,9 +362,9 @@ mod tests {
         // All three of the locals we created should show up when we ask for the locals that the function needs to have
         let locals = context.local_types();
         assert_eq!(3, locals.len());
-        assert_eq!(ValueType::I32, locals[0]);
-        assert_eq!(ValueType::I32, locals[1]);
-        assert_eq!(ValueType::I64, locals[2]);
+        assert_eq!(wasm_ast::ValueType::I32, locals[0]);
+        assert_eq!(wasm_ast::ValueType::I32, locals[1]);
+        assert_eq!(wasm_ast::ValueType::I64, locals[2]);
     }
 
     #[test]

@@ -13,6 +13,7 @@ mod world;
 mod world_configuration;
 
 pub use code::Code;
+pub use code_context::CodeContext;
 pub use function_signature::FunctionSignature;
 pub use main_entry_point::MainEntryPoint;
 pub use migration_algorithm::MigrationAlgorithm;
