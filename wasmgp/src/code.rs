@@ -1,3 +1,4 @@
+use anyhow::Result;
 use crate::{code_builder::CodeBuilder, code_context::CodeContext, FloatSlot, IntegerSlot, Slot, ValueType};
 use wasm_ast::{
     BlockType, ControlInstruction, Expression, Instruction, IntegerType, NumberType, NumericInstruction,
@@ -180,7 +181,7 @@ impl Code {
 }
 
 impl CodeBuilder for Code {
-    fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) {
+    fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
         match self {
             Code::ConstI32(slot, value) => {
                 instruction_list.push(NumericInstruction::I32Constant(*value as i32).into());
@@ -210,7 +211,7 @@ impl CodeBuilder for Code {
                 // 'Do' the code. When the `loop_label` is dropped, it indicates we can't break from that loop anymore
                 {
                     let loop_label = context.entering_loop(1);
-                    do_block.append_code(context, &mut inner_instructions);
+                    do_block.append_code(context, &mut inner_instructions)?;
                     drop(loop_label);
                 }
 
@@ -239,6 +240,8 @@ impl CodeBuilder for Code {
 
             _ => unimplemented!(),
         }
+
+        Ok(())
     }
 }
 #[cfg(test)]
@@ -252,7 +255,7 @@ mod tests {
 
     fn build_code(context: CodeContext, code: Vec<Code>) -> (Store<()>, Instance) {
         let mut builder = ModuleBuilder::new();
-        context.build(&mut builder, &code[..]);
+        context.build(&mut builder, &code[..]).unwrap();
         let module = builder.build();
 
         let mut buffer = Vec::new();
@@ -277,7 +280,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots);
+        let context = CodeContext::new(&fs, slots).unwrap();
 
         // Code
         let code = vec![Code::ConstI32(0, 42), Code::Return(vec![0])];
@@ -302,7 +305,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots);
+        let context = CodeContext::new(&fs, slots).unwrap();
 
         // Confirm that 'return' uses the correct order in the returned tuple
         let code = vec![Code::ConstI32(0, 42), Code::ConstI32(1, 7), Code::Return(vec![1, 0])];

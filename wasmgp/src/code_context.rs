@@ -1,3 +1,4 @@
+use anyhow::{Result, bail};
 use crate::{code_builder::CodeBuilder, Code, FunctionSignature, Slot, SlotBytes, SlotCount, SlotType, ValueType};
 use std::{cell::RefCell, ops::Deref};
 use wasm_ast::{Export, Function, FunctionType, LabelIndex, LocalIndex, ModuleBuilder, ResultType};
@@ -13,9 +14,11 @@ pub struct CodeContext {
 }
 
 impl CodeContext {
-    pub fn new(signature: &FunctionSignature, slots: SlotCount) -> CodeContext {
+    pub fn new(signature: &FunctionSignature, slots: SlotCount) -> Result<CodeContext> {
         let slot_count = signature.params().len() + signature.results().len() + slots.len();
-        assert!(slot_count <= 256);
+        if slot_count > 256 {
+            bail!("The total number of slots used across all parameters, return and locals must be 256 or fewer, but got {}", slot_count);
+        }
 
         let mut locals = Vec::with_capacity(slot_count);
         for p in signature.params().iter() {
@@ -46,22 +49,22 @@ impl CodeContext {
             });
         }
 
-        CodeContext {
+        Ok(CodeContext {
             signature: signature.clone(),
             locals: RefCell::new(locals),
             break_stack: RefCell::new(vec![]),
-        }
+        })
     }
 
     /// Adds a function to the specified builder. This adds three components to the WASM: a function type using the
     /// signature held by the context, the function body using the specified Code, and a function export using the name
     /// from the signature.
-    pub fn build(&self, builder: &mut ModuleBuilder, code: &[Code]) {
+    pub fn build(&self, builder: &mut ModuleBuilder, code: &[Code]) -> Result<()> {
         // Add the function type
         let params = self.signature.params_ast();
         let results = self.signature.results_ast();
         let function_type = FunctionType::new(ResultType::from(params), ResultType::from(results));
-        let function_type_index = builder.add_function_type(function_type).unwrap();
+        let function_type_index = builder.add_function_type(function_type)?;
 
         // Create the list of local variables
         let locals = ResultType::new(self.local_types());
@@ -69,16 +72,18 @@ impl CodeContext {
         // Build the code
         let mut instruction_list = vec![];
         for c in code.iter() {
-            c.append_code(&self, &mut instruction_list);
+            c.append_code(&self, &mut instruction_list)?;
         }
 
         // Create the function
         let function = Function::new(function_type_index, locals, instruction_list.into());
-        let function_index = builder.add_function(function).unwrap();
+        let function_index = builder.add_function(function)?;
 
         // Export it
         let export = Export::function(self.signature.name().clone().into(), function_index);
         builder.add_export(export);
+
+        Ok(())
     }
 
     /// Returns a list of all the local variable types suitable for passing to wasm_ast::Function::new. Specifically,
@@ -254,7 +259,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots);
+        let context = CodeContext::new(&fs, slots).unwrap();
 
         // The local types should NOT include parameters (these locals are created by the definition for the function),
         // but start with the return types, and then include each of the slots
@@ -275,7 +280,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots);
+        let context = CodeContext::new(&fs, slots).unwrap();
 
         // Getting a parameter slot returns an initialized type
         assert_eq!(
@@ -324,7 +329,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots);
+        let context = CodeContext::new(&fs, slots).unwrap();
 
         // Getting an unused local slot from an empty context returns the first slot
         let slot_zero = context.get_unused_local(ValueType::I32);
@@ -363,7 +368,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots);
+        let context = CodeContext::new(&fs, slots).unwrap();
 
         // Calling 'can_break' with no loop returns None
         assert_eq!(None, context.can_break());
