@@ -1,5 +1,6 @@
-use anyhow::{Result, bail};
+use crate::slot;
 use crate::{code_builder::CodeBuilder, Code, FunctionSignature, Slot, SlotBytes, SlotCount, SlotType, ValueType};
+use anyhow::{bail, Result};
 use std::{cell::RefCell, ops::Deref};
 use wasm_ast::{Export, Function, FunctionType, LabelIndex, LocalIndex, ModuleBuilder, ResultType};
 
@@ -19,8 +20,8 @@ impl CodeContext {
     /// signature is the function that is called to run the code. The slots indicate the working variables used by the
     /// various instruction to simplify stack management. All integers will be intrepreted as signed or unsigned based
     /// on the value of `is_signed`. It is not current possible to mix signedness in an algorithm.
-    /// 
-    /// The total number of slots used across all parameters, return and locals must be 256 or fewer. 
+    ///
+    /// The total number of slots used across all parameters, return and locals must be 256 or fewer.
     pub fn new(signature: &FunctionSignature, slots: SlotCount, is_signed: bool) -> Result<CodeContext> {
         let slot_count = signature.params().len() + signature.results().len() + slots.len();
         if slot_count > 256 {
@@ -133,6 +134,21 @@ impl CodeContext {
         } else {
             None
         }
+    }
+
+    /// Returns a list of all the slot indices that are `SlotPurpose::Return`
+    pub fn return_slots(&self) -> Vec<Slot> {
+        let mut locals = self.locals.borrow_mut();
+        locals
+            .iter()
+            .filter_map(|slot_info| {
+                if SlotPurpose::Return == slot_info.purpose {
+                    Some(slot_info.index as Slot)
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 
     /// Gets the next local variable index of the specified type that isn't already in use. If there is not currently

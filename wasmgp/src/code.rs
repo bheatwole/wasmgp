@@ -118,10 +118,10 @@ pub enum Code {
     StoreF32(IntegerSlot, FloatSlot),
     StoreF64(IntegerSlot, FloatSlot),
 
-    /// Returns from a function, using the specified slots as return values. If more work variable are
-    /// specified than are needed, they will be ignored. If more work variable are needed than supplied, the code will
-    /// use works 0..x until all return values are satisfied.
-    Return(Vec<Slot>),
+    /// Returns from a function. There are work variables of the appropriate types set aside to hold the return values.
+    /// The function should set the values of those slots prior to calling Return, however they are always initialized
+    /// to zero at the top of the function.
+    Return,
 
     /// Call(function_index, parameter_slots, return_slots): Calls the host or code function with the specified index
     /// (remainder the number of functions) and uses the specified list of work variables as parameters. If more work
@@ -172,8 +172,8 @@ impl CodeBuilder for Code {
                 instruction_list.push(NumericInstruction::I32Constant(*value as i32).into());
                 instruction_list.push(VariableInstruction::LocalSet(*slot as u32).into());
             }
-            Code::Return(slots) => {
-                for slot in slots.iter() {
+            Code::Return => {
+                for slot in context.return_slots().iter() {
                     instruction_list.push(VariableInstruction::LocalGet(*slot as u32).into());
                 }
             }
@@ -260,7 +260,7 @@ mod tests {
         let name = "const_i32_and_return";
         let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
         let slots = SlotCount {
-            i32: 1,
+            i32: 0,
             i64: 0,
             f32: 0,
             f64: 0,
@@ -268,7 +268,7 @@ mod tests {
         let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Code
-        let code = vec![Code::ConstI32(0, 42), Code::Return(vec![0])];
+        let code = vec![Code::ConstI32(0, 42), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -280,27 +280,27 @@ mod tests {
     }
 
     #[test]
-    fn return_order() {
+    fn return_init_to_zero() {
         // Context
-        let name = "return_order";
-        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32, ValueType::I32]);
+        let name = "return_init_to_zero";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
         let slots = SlotCount {
-            i32: 2,
+            i32: 0,
             i64: 0,
             f32: 0,
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
 
-        // Confirm that 'return' uses the correct order in the returned tuple
-        let code = vec![Code::ConstI32(0, 42), Code::ConstI32(1, 7), Code::Return(vec![1, 0])];
+        // Code
+        let code = vec![Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
-        let typed_func = instance.get_typed_func::<(), (i32, i32), _>(&mut store, name).unwrap();
+        let typed_func = instance.get_typed_func::<(), i32, _>(&mut store, name).unwrap();
 
-        // Call the function and confirm we get the values in the expected order
+        // Call the function and confirm we get zero
         let result = typed_func.call(&mut store, ()).unwrap();
-        assert_eq!((7, 42), result);
+        assert_eq!(0, result);
     }
 }
