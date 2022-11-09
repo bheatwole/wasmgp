@@ -6,21 +6,19 @@ use wasm_ast::{
 };
 
 pub enum Code {
-    /// ConstI32(slot, value): Loads the specified value into a four-byte integer into the specified global variable
-    /// slot. It may be interpreted as signed or unsigned later. If the slot is for floating-point values, it will be
-    /// cast to a float.
+    /// ConstI32(slot, value): Loads the specified value into a four-byte integer into the specified work variable
+    /// slot. If the slot is for floating-point values, it will be cast to a float.
     ConstI32(IntegerSlot, i32),
 
-    /// ConstI64(slot, value): Loads the specified value into a eight-byte integer into the specified global variable
-    /// slot. It may be interpreted as signed or unsigned later. If the slot is for floating-point values, it will be
-    /// cast to a float.
+    /// ConstI64(slot, value): Loads the specified value into a eight-byte integer into the specified work variable
+    /// slot. If the slot is for floating-point values, it will be cast to a float.
     ConstI64(IntegerSlot, i64),
 
-    /// ConstF32(slot, value): Loads the specified value into a four-byte global variable slot. If the slot is for
+    /// ConstF32(slot, value): Loads the specified value into a four-byte work variable slot. If the slot is for
     /// integer values, it will be truncated.
     ConstF32(FloatSlot, f32),
 
-    /// ConstF64(slot, value): Loads the specified value into a eight-byte global variable slot. If the slot is for
+    /// ConstF64(slot, value): Loads the specified value into a eight-byte work variable slot. If the slot is for
     /// integer values, it will be truncated.
     ConstF64(FloatSlot, f64),
 
@@ -54,32 +52,23 @@ pub enum Code {
     /// MultiplyFloat(left_slot, right_slot, result_slot): Places the result of left * right in the result slot.
     MultiplyFloat(FloatSlot, FloatSlot, FloatSlot),
 
-    /// DivideSigned(dividend_slot, divisor_slot, result_slot): Places the result of dividend / divisor in the result
+    /// Divide(dividend_slot, divisor_slot, result_slot): Places the result of dividend / divisor in the result
     /// slot. The code will leave the result untouched if the divisor is zero.
-    DivideSigned(IntegerSlot, IntegerSlot, IntegerSlot),
-
-    /// DivideUnsigned(dividend_slot, divisor_slot, result_slot): Places the result of dividend / divisor in the result
-    /// slot. The code will leave the result untouched if the divisor is zero.
-    DivideUnsigned(IntegerSlot, IntegerSlot, IntegerSlot),
+    Divide(IntegerSlot, IntegerSlot, IntegerSlot),
 
     /// DivideFloat(dividend_slot, divisor_slot, result_slot): Places the result of dividend / divisor in the result
     /// slot. The code will leave the result untouched if the divisor is zero.
     DivideFloat(FloatSlot, FloatSlot, FloatSlot),
 
-    /// RemainderSigned(dividend_slot, divisor_slot, result_slot): Places the result of dividend % divisor in the result
+    /// Remainder(dividend_slot, divisor_slot, result_slot): Places the result of dividend % divisor in the result
     /// slot. The code will leave the result untouched if the divisor is zero.
-    RemainderSigned(IntegerSlot, IntegerSlot, IntegerSlot),
-
-    /// RemainderUnsigned(dividend_slot, divisor_slot, result_slot): Places the result of dividend % divisor in the
-    /// result slot. The code will leave the result untouched if the divisor is zero.
-    RemainderUnsigned(IntegerSlot, IntegerSlot, IntegerSlot),
+    Remainder(IntegerSlot, IntegerSlot, IntegerSlot),
 
     And(IntegerSlot, IntegerSlot, IntegerSlot),
     Or(IntegerSlot, IntegerSlot, IntegerSlot),
     Xor(IntegerSlot, IntegerSlot, IntegerSlot),
     ShiftLeft(IntegerSlot, IntegerSlot, IntegerSlot),
-    ShiftRightSigned(IntegerSlot, IntegerSlot, IntegerSlot),
-    ShiftRightUnsigned(IntegerSlot, IntegerSlot, IntegerSlot),
+    ShiftRight(IntegerSlot, IntegerSlot, IntegerSlot),
     RotateLeft(IntegerSlot, IntegerSlot, IntegerSlot),
     RotateRight(IntegerSlot, IntegerSlot, IntegerSlot),
     AbsoluteValue(FloatSlot, FloatSlot),
@@ -94,14 +83,10 @@ pub enum Code {
     IsEqualZero(IntegerSlot, IntegerSlot),
     AreEqualInteger(IntegerSlot, IntegerSlot, IntegerSlot),
     AreNotEqualInteger(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsLessThanSigned(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsLessThanUnsigned(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsGreaterThanSigned(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsGreaterThanUnsigned(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsLessThanOrEqualSigned(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsLessThanOrEqualUnsigned(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsGreaterThanOrEqualSigned(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsGreaterThanOrEqualUnsigned(IntegerSlot, IntegerSlot, IntegerSlot),
+    IsLessThan(IntegerSlot, IntegerSlot, IntegerSlot),
+    IsGreaterThan(IntegerSlot, IntegerSlot, IntegerSlot),
+    IsLessThanOrEqual(IntegerSlot, IntegerSlot, IntegerSlot),
+    IsGreaterThanOrEqual(IntegerSlot, IntegerSlot, IntegerSlot),
     AreEqualFloat(FloatSlot, FloatSlot, FloatSlot),
     AreNotEqualFloat(FloatSlot, FloatSlot, FloatSlot),
     IsLessThanFloat(FloatSlot, FloatSlot, FloatSlot),
@@ -133,16 +118,16 @@ pub enum Code {
     StoreF32(IntegerSlot, FloatSlot),
     StoreF64(IntegerSlot, FloatSlot),
 
-    /// Returns from a function, using the specified slots as return values. If more global variable are
-    /// specified than are needed, they will be ignored. If more global variable are needed than supplied, the code will
-    /// use globals 0..x until all return values are satisfied.
+    /// Returns from a function, using the specified slots as return values. If more work variable are
+    /// specified than are needed, they will be ignored. If more work variable are needed than supplied, the code will
+    /// use works 0..x until all return values are satisfied.
     Return(Vec<Slot>),
 
     /// Call(function_index, parameter_slots, return_slots): Calls the host or code function with the specified index
-    /// (remainder the number of functions) and uses the specified list of global variables as parameters. If more global
-    /// variables are specified than are needed, they will be ignored. If more global variables are needed than are
-    /// supplied, the globals 0..x will be used until all parameters are satisfied. The returns values from the function
-    /// will be placed into the global variables specified by 'return_slots'.
+    /// (remainder the number of functions) and uses the specified list of work variables as parameters. If more work
+    /// variables are specified than are needed, they will be ignored. If more work variables are needed than are
+    /// supplied, the works 0..x will be used until all parameters are satisfied. The returns values from the function
+    /// will be placed into the work variables specified by 'return_slots'.
     Call(u32, Vec<Slot>, Vec<Slot>),
 
     /// If(compare_slot, do): If the value in the compare_slot is not zero, than the code listed in 'do' will execute.
@@ -280,7 +265,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots).unwrap();
+        let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Code
         let code = vec![Code::ConstI32(0, 42), Code::Return(vec![0])];
@@ -305,7 +290,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots).unwrap();
+        let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Confirm that 'return' uses the correct order in the returned tuple
         let code = vec![Code::ConstI32(0, 42), Code::ConstI32(1, 7), Code::Return(vec![1, 0])];

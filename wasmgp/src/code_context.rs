@@ -5,6 +5,7 @@ use wasm_ast::{Export, Function, FunctionType, LabelIndex, LocalIndex, ModuleBui
 
 pub struct CodeContext {
     signature: FunctionSignature,
+    is_signed: bool,
     locals: RefCell<Vec<SlotInfo>>,
 
     // A stack of the looping constructs that have been entered. If at least one loop is involved, then the 'Break'
@@ -14,7 +15,13 @@ pub struct CodeContext {
 }
 
 impl CodeContext {
-    pub fn new(signature: &FunctionSignature, slots: SlotCount) -> Result<CodeContext> {
+    /// Creates the context that will be used to generate the specific Wasm instructions for some genetic Code. The
+    /// signature is the function that is called to run the code. The slots indicate the working variables used by the
+    /// various instruction to simplify stack management. All integers will be intrepreted as signed or unsigned based
+    /// on the value of `is_signed`. It is not current possible to mix signedness in an algorithm.
+    /// 
+    /// The total number of slots used across all parameters, return and locals must be 256 or fewer. 
+    pub fn new(signature: &FunctionSignature, slots: SlotCount, is_signed: bool) -> Result<CodeContext> {
         let slot_count = signature.params().len() + signature.results().len() + slots.len();
         if slot_count > 256 {
             bail!("The total number of slots used across all parameters, return and locals must be 256 or fewer, but got {}", slot_count);
@@ -51,6 +58,7 @@ impl CodeContext {
 
         Ok(CodeContext {
             signature: signature.clone(),
+            is_signed,
             locals: RefCell::new(locals),
             break_stack: RefCell::new(vec![]),
         })
@@ -84,6 +92,10 @@ impl CodeContext {
         builder.add_export(export);
 
         Ok(())
+    }
+
+    pub fn is_signed(&self) -> bool {
+        self.is_signed
     }
 
     /// Returns a list of all the local variable types suitable for passing to wasm_ast::Function::new. Specifically,
@@ -259,7 +271,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots).unwrap();
+        let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // The local types should NOT include parameters (these locals are created by the definition for the function),
         // but start with the return types, and then include each of the slots
@@ -280,7 +292,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots).unwrap();
+        let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Getting a parameter slot returns an initialized type
         assert_eq!(
@@ -329,7 +341,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots).unwrap();
+        let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Getting an unused local slot from an empty context returns the first slot
         let slot_zero = context.get_unused_local(ValueType::I32);
@@ -368,7 +380,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots).unwrap();
+        let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Calling 'can_break' with no loop returns None
         assert_eq!(None, context.can_break());
