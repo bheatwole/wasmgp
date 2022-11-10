@@ -1,4 +1,3 @@
-use crate::slot;
 use crate::{code_builder::CodeBuilder, Code, FunctionSignature, Slot, SlotBytes, SlotCount, SlotType, ValueType};
 use anyhow::{bail, Result};
 use std::{cell::RefCell, ops::Deref};
@@ -34,7 +33,6 @@ impl CodeContext {
                 index: locals.len() as u16,
                 purpose: SlotPurpose::Parameter,
                 value_type: *p,
-                is_initialized: true,
                 is_in_use: true,
             });
         }
@@ -43,7 +41,6 @@ impl CodeContext {
                 index: locals.len() as u16,
                 purpose: SlotPurpose::Return,
                 value_type: *r,
-                is_initialized: false,
                 is_in_use: true,
             });
         }
@@ -52,7 +49,6 @@ impl CodeContext {
                 index: locals.len() as u16,
                 purpose: SlotPurpose::Local,
                 value_type: s,
-                is_initialized: false,
                 is_in_use: true,
             });
         }
@@ -115,20 +111,17 @@ impl CodeContext {
     /// calls to `get_slot_for_use`.
     ///
     /// Returns `None` if the slot is out of range of all slots, or has `SlotPurpose::Instruction`
-    pub fn get_slot_for_use(&self, slot: Slot) -> Option<(SlotType, SlotBytes, bool)> {
+    pub fn get_slot_for_use(&self, slot: Slot) -> Option<(SlotType, SlotBytes)> {
         let mut locals = self.locals.borrow_mut();
         if let Some(slot_info) = locals.get_mut(slot as usize) {
             if SlotPurpose::Instruction == slot_info.purpose {
                 None
             } else {
-                let init = slot_info.is_initialized;
-                slot_info.is_initialized = true;
-
                 match slot_info.value_type {
-                    ValueType::I32 => Some((SlotType::Integer, SlotBytes::Four, init)),
-                    ValueType::I64 => Some((SlotType::Integer, SlotBytes::Eight, init)),
-                    ValueType::F32 => Some((SlotType::Float, SlotBytes::Four, init)),
-                    ValueType::F64 => Some((SlotType::Float, SlotBytes::Eight, init)),
+                    ValueType::I32 => Some((SlotType::Integer, SlotBytes::Four)),
+                    ValueType::I64 => Some((SlotType::Integer, SlotBytes::Eight)),
+                    ValueType::F32 => Some((SlotType::Float, SlotBytes::Four)),
+                    ValueType::F64 => Some((SlotType::Float, SlotBytes::Eight)),
                 }
             }
         } else {
@@ -138,7 +131,7 @@ impl CodeContext {
 
     /// Returns a list of all the slot indices that are `SlotPurpose::Return`
     pub fn return_slots(&self) -> Vec<Slot> {
-        let mut locals = self.locals.borrow_mut();
+        let locals = self.locals.borrow();
         locals
             .iter()
             .filter_map(|slot_info| {
@@ -167,7 +160,6 @@ impl CodeContext {
                 index: position as u16,
                 purpose: SlotPurpose::Instruction,
                 value_type: value_type,
-                is_initialized: true,
                 is_in_use: true,
             });
 
@@ -263,10 +255,6 @@ struct SlotInfo {
     // Defines the value held in this slot
     value_type: ValueType,
 
-    // The first time a slot it used, it is initialized to zero. This prevents random memory values from corrupting
-    // runs of the algorithm.
-    is_initialized: bool,
-
     // If the `purpose` is `Instruction`, the slot is used for a while and then is available for another instruction to
     // use it. Always `true` for all other purpose types.
     is_in_use: bool,
@@ -311,34 +299,14 @@ mod tests {
         let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Getting a parameter slot returns an initialized type
-        assert_eq!(
-            Some((SlotType::Integer, SlotBytes::Four, true)),
-            context.get_slot_for_use(0)
-        );
-        assert_eq!(
-            Some((SlotType::Float, SlotBytes::Eight, true)),
-            context.get_slot_for_use(1)
-        );
+        assert_eq!(Some((SlotType::Integer, SlotBytes::Four)), context.get_slot_for_use(0));
+        assert_eq!(Some((SlotType::Float, SlotBytes::Eight)), context.get_slot_for_use(1));
 
-        // Getting a return slot once, returns an un-initialized type. Getting it again says its initialized
-        assert_eq!(
-            Some((SlotType::Float, SlotBytes::Four, false)),
-            context.get_slot_for_use(2)
-        );
-        assert_eq!(
-            Some((SlotType::Float, SlotBytes::Four, true)),
-            context.get_slot_for_use(2)
-        );
+        // Getting a return slot, returns the type.
+        assert_eq!(Some((SlotType::Float, SlotBytes::Four)), context.get_slot_for_use(2));
 
-        // Getting a local slot once, returns an un-initialized type. Getting it again says its initialized
-        assert_eq!(
-            Some((SlotType::Integer, SlotBytes::Eight, false)),
-            context.get_slot_for_use(5)
-        );
-        assert_eq!(
-            Some((SlotType::Integer, SlotBytes::Eight, true)),
-            context.get_slot_for_use(5)
-        );
+        // Getting a local slot, returns the type.
+        assert_eq!(Some((SlotType::Integer, SlotBytes::Eight)), context.get_slot_for_use(5));
 
         // If you make an Instruction slot and try to get it, it returns None
         assert_eq!(6, *(context.get_unused_local(ValueType::I32)));
