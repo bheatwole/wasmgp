@@ -143,4 +143,43 @@ mod tests {
         // This test confirms that we can use local variables as a way to write generic code and have it work even after
         // a crossover operation.
     }
+
+    #[test]
+    #[ignore = "negative integers spin forever, see: https://github.com/misalcedo/wasm-ast/issues/40"]
+    fn negative_one() {
+        let mut builder = ModuleBuilder::new();
+        let one_i32 = ResultType::from(vec![ValueType::I32]);
+        let func_type = FunctionType::new(ResultType::empty(), one_i32);
+        let func_type_index = builder.add_function_type(func_type).unwrap();
+        let body: Expression = vec![
+            NumericInstruction::I32Constant(-1).into(),
+        ]
+        .into();
+        let main_func = Function::new(
+            func_type_index,
+            ResultType::empty(),
+            body,
+        );
+        let main_func_index = builder.add_function(main_func).unwrap();
+
+        let name = "spins_forever";
+        let export = Export::function(name.into(), main_func_index);
+        builder.add_export(export);
+        let module = builder.build();
+
+        let mut buffer = Vec::new();
+        emit_binary(&module, &mut buffer).unwrap();
+    }
+
+    #[test]
+    fn test_i128_shift() {
+        let high_bit_only: i128 = unsafe { std::mem::transmute(1u128 << 127) };
+        assert!(high_bit_only < 0);
+
+        let mut value = high_bit_only;
+        value >>= 7;
+
+        // This line shows that the high bit is still set after the shift
+        assert!(high_bit_only & value == high_bit_only);
+    }
 }

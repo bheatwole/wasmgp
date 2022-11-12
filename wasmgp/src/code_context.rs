@@ -1,7 +1,7 @@
 use crate::{code_builder::CodeBuilder, Code, FunctionSignature, Slot, SlotBytes, SlotCount, SlotType, ValueType};
 use anyhow::{bail, Result};
 use std::{cell::RefCell, ops::Deref};
-use wasm_ast::{Export, Function, FunctionType, LabelIndex, LocalIndex, ModuleBuilder, ResultType};
+use wasm_ast::{Export, Function, FunctionType, LabelIndex, LocalIndex, ModuleBuilder, ResultType, SignExtension};
 
 pub struct CodeContext {
     signature: FunctionSignature,
@@ -95,6 +95,14 @@ impl CodeContext {
         self.is_signed
     }
 
+    pub fn sign_extension(&self) -> SignExtension {
+        if self.is_signed {
+            SignExtension::Signed
+        } else {
+            SignExtension::Unsigned
+        }
+    }
+
     /// Returns a list of all the local variable types suitable for passing to wasm_ast::Function::new. Specifically,
     /// this list does NOT include the parameters as part of the list
     pub fn local_types(&self) -> Vec<wasm_ast::ValueType> {
@@ -112,8 +120,8 @@ impl CodeContext {
     ///
     /// Returns `None` if the slot is out of range of all slots, or has `SlotPurpose::Instruction`
     pub fn get_slot_for_use(&self, slot: Slot) -> Option<(SlotType, SlotBytes)> {
-        let mut locals = self.locals.borrow_mut();
-        if let Some(slot_info) = locals.get_mut(slot as usize) {
+        let locals = self.locals.borrow();
+        if let Some(slot_info) = locals.get(slot as usize) {
             if SlotPurpose::Instruction == slot_info.purpose {
                 None
             } else {
