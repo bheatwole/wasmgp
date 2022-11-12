@@ -1,4 +1,4 @@
-use crate::{code_builder::CodeBuilder, Code, FunctionSignature, Slot, SlotBytes, SlotCount, SlotType, ValueType};
+use crate::{code_builder::CodeBuilder, Code, FunctionSignature, Slot, SlotCount, ValueType};
 use anyhow::{bail, Result};
 use std::{cell::RefCell, ops::Deref};
 use wasm_ast::{Export, Function, FunctionType, LabelIndex, LocalIndex, ModuleBuilder, ResultType, SignExtension};
@@ -119,18 +119,13 @@ impl CodeContext {
     /// calls to `get_slot_for_use`.
     ///
     /// Returns `None` if the slot is out of range of all slots, or has `SlotPurpose::Instruction`
-    pub fn get_slot_for_use(&self, slot: Slot) -> Option<(SlotType, SlotBytes)> {
+    pub fn get_slot_for_use(&self, slot: Slot) -> Option<ValueType> {
         let locals = self.locals.borrow();
         if let Some(slot_info) = locals.get(slot as usize) {
             if SlotPurpose::Instruction == slot_info.purpose {
                 None
             } else {
-                match slot_info.value_type {
-                    ValueType::I32 => Some((SlotType::Integer, SlotBytes::Four)),
-                    ValueType::I64 => Some((SlotType::Integer, SlotBytes::Eight)),
-                    ValueType::F32 => Some((SlotType::Float, SlotBytes::Four)),
-                    ValueType::F64 => Some((SlotType::Float, SlotBytes::Eight)),
-                }
+                Some(slot_info.value_type)
             }
         } else {
             None
@@ -270,7 +265,7 @@ struct SlotInfo {
 
 #[cfg(test)]
 mod tests {
-    use crate::{FunctionSignature, SlotBytes, SlotType, ValueType};
+    use crate::{FunctionSignature, ValueType};
 
     use super::CodeContext;
 
@@ -307,14 +302,14 @@ mod tests {
         let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Getting a parameter slot returns an initialized type
-        assert_eq!(Some((SlotType::Integer, SlotBytes::Four)), context.get_slot_for_use(0));
-        assert_eq!(Some((SlotType::Float, SlotBytes::Eight)), context.get_slot_for_use(1));
+        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
+        assert_eq!(Some(ValueType::F64), context.get_slot_for_use(1));
 
         // Getting a return slot, returns the type.
-        assert_eq!(Some((SlotType::Float, SlotBytes::Four)), context.get_slot_for_use(2));
+        assert_eq!(Some(ValueType::F32), context.get_slot_for_use(2));
 
         // Getting a local slot, returns the type.
-        assert_eq!(Some((SlotType::Integer, SlotBytes::Eight)), context.get_slot_for_use(5));
+        assert_eq!(Some(ValueType::I64), context.get_slot_for_use(5));
 
         // If you make an Instruction slot and try to get it, it returns None
         assert_eq!(6, *(context.get_unused_local(ValueType::I32)));

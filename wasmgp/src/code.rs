@@ -1,5 +1,4 @@
 use crate::{code_builder::CodeBuilder, code_context::CodeContext, FloatSlot, IntegerSlot, Slot, ValueType};
-use crate::{SlotBytes, SlotType};
 use anyhow::Result;
 use wasm_ast::{
     BlockType, ControlInstruction, Expression, FloatType, Instruction, IntegerType, NumberType, NumericInstruction,
@@ -172,22 +171,23 @@ impl CodeBuilder for Code {
             Code::ConstI32(slot, value) => {
                 instruction_list.push(NumericInstruction::I32Constant(*value).into());
                 match context.get_slot_for_use(*slot).unwrap() {
-                    (SlotType::Integer, SlotBytes::Four) => {}
-                    (SlotType::Integer, SlotBytes::Eight) => {
+                    ValueType::I32 => {}
+                    ValueType::I64 => {
                         instruction_list
                             .push(NumericInstruction::ExtendWithSignExtension(context.sign_extension()).into());
                     }
-                    (SlotType::Float, SlotBytes::Four) => {
+                    ValueType::F32 => {
                         instruction_list.push(
                             NumericInstruction::Convert(FloatType::F32, IntegerType::I32, context.sign_extension())
                                 .into(),
                         );
                     }
-                    (SlotType::Float, SlotBytes::Eight) => {
+                    ValueType::F64 => {
                         instruction_list.push(
                             NumericInstruction::Convert(FloatType::F64, IntegerType::I32, context.sign_extension())
                                 .into(),
-                        );}
+                        );
+                    }
                 }
                 instruction_list.push(VariableInstruction::LocalSet(*slot as u32).into());
             }
@@ -255,7 +255,7 @@ mod tests {
     use wasm_ast::{emit_binary, ModuleBuilder};
     use wasmtime::{Engine, Instance, Store};
 
-    use crate::{Code, CodeContext, FunctionSignature, SlotBytes, SlotCount, SlotType, ValueType};
+    use crate::{Code, CodeContext, FunctionSignature, SlotCount, ValueType};
 
     fn build_code(context: CodeContext, code: Vec<Code>) -> (Store<()>, Instance) {
         let mut builder = ModuleBuilder::new();
@@ -336,7 +336,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some((SlotType::Integer, SlotBytes::Eight)), context.get_slot_for_use(0));
+        assert_eq!(Some(ValueType::I64), context.get_slot_for_use(0));
 
         // Code: because we're using unsigned math in Wasm, -1 should be 0xFFFFFFFF in u32/u64
         let code = vec![Code::ConstI32(0, -1), Code::Return];
@@ -362,7 +362,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some((SlotType::Float, SlotBytes::Four)), context.get_slot_for_use(0));
+        assert_eq!(Some(ValueType::F32), context.get_slot_for_use(0));
 
         // Code
         let code = vec![Code::ConstI32(0, 42), Code::Return];
@@ -388,7 +388,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some((SlotType::Float, SlotBytes::Eight)), context.get_slot_for_use(0));
+        assert_eq!(Some(ValueType::F64), context.get_slot_for_use(0));
 
         // Code
         let code = vec![Code::ConstI32(0, 42), Code::Return];

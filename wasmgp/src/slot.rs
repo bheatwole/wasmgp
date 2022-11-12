@@ -9,23 +9,6 @@ pub type IntegerSlot = u8;
 /// This type references a slot that can be an F32 or F64.
 pub type FloatSlot = u8;
 
-/// When dealing with generic slots, we need to know whether it holds an integer or float
-#[derive(Debug, Eq, PartialEq)]
-pub enum SlotType {
-    Integer,
-    Float,
-}
-
-/// When dealing with slots, we need to know its size
-#[derive(Debug, Eq, PartialEq)]
-pub enum SlotBytes {
-    /// I32 or F32
-    Four,
-
-    /// I64 or F64
-    Eight,
-}
-
 /// When setting up the genetic algorithm, we give the code a certain number of local 'slots' to use in calculations.
 /// Typically its best to choose one type (I32, F64, etc) and only use slots of that type, but in some algorithms it
 /// may be necessary to use multiple types.
