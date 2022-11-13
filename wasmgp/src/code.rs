@@ -1,3 +1,4 @@
+use crate::convert::SetSlotConvert;
 use crate::{code_builder::CodeBuilder, code_context::CodeContext, FloatSlot, IntegerSlot, Slot, ValueType};
 use anyhow::Result;
 use wasm_ast::{
@@ -170,26 +171,19 @@ impl CodeBuilder for Code {
         match self {
             Code::ConstI32(slot, value) => {
                 instruction_list.push(NumericInstruction::I32Constant(*value).into());
-                match context.get_slot_for_use(*slot).unwrap() {
-                    ValueType::I32 => {}
-                    ValueType::I64 => {
-                        instruction_list
-                            .push(NumericInstruction::ExtendWithSignExtension(context.sign_extension()).into());
-                    }
-                    ValueType::F32 => {
-                        instruction_list.push(
-                            NumericInstruction::Convert(FloatType::F32, IntegerType::I32, context.sign_extension())
-                                .into(),
-                        );
-                    }
-                    ValueType::F64 => {
-                        instruction_list.push(
-                            NumericInstruction::Convert(FloatType::F64, IntegerType::I32, context.sign_extension())
-                                .into(),
-                        );
-                    }
-                }
-                instruction_list.push(VariableInstruction::LocalSet(*slot as u32).into());
+                SetSlotConvert::convert(*slot, ValueType::I32, context, instruction_list)?;
+            }
+            Code::ConstI64(slot, value) => {
+                instruction_list.push(NumericInstruction::I64Constant(*value).into());
+                SetSlotConvert::convert(*slot, ValueType::I64, context, instruction_list)?;
+            }
+            Code::ConstF32(slot, value) => {
+                instruction_list.push(NumericInstruction::F32Constant(*value).into());
+                SetSlotConvert::convert(*slot, ValueType::F32, context, instruction_list)?;
+            }
+            Code::ConstF64(slot, value) => {
+                instruction_list.push(NumericInstruction::F64Constant(*value).into());
+                SetSlotConvert::convert(*slot, ValueType::F64, context, instruction_list)?;
             }
             Code::Return => {
                 for slot in context.return_slots().iter() {
@@ -392,6 +386,372 @@ mod tests {
 
         // Code
         let code = vec![Code::ConstI32(0, 42), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), f64, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(42.0, result);
+    }
+
+    #[test]
+    #[ignore = "negative integers spin forever, see: https://github.com/misalcedo/wasm-ast/issues/40"]
+    fn const_i64_and_return_i32() {
+        // Context
+        let name = "const_i64_and_return_i32";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
+
+        // Code: 
+        let code = vec![Code::ConstI64(0, -1), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), i32, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(-1, result);
+    }
+
+    #[test]
+    #[ignore = "negative integers spin forever, see: https://github.com/misalcedo/wasm-ast/issues/40"]
+    fn const_i64_and_return_u64() {
+        // Context
+        let name = "const_i64_and_return_u64";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I64]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::I64), context.get_slot_for_use(0));
+
+        // Code: because we're using unsigned math in Wasm, -1 should be 0xFFFFFFFF in u32/u64
+        let code = vec![Code::ConstI64(0, -1), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), u64, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(0xFFFFFFFF, result);
+    }
+
+    #[test]
+    fn const_i64_and_return_f32() {
+        // Context
+        let name = "const_i64_and_return_f32";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::F32]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::F32), context.get_slot_for_use(0));
+
+        // Code
+        let code = vec![Code::ConstI64(0, 42), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), f32, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(42.0, result);
+    }
+
+    #[test]
+    fn const_i64_and_return_f64() {
+        // Context
+        let name = "const_i64_and_return_f64";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::F64]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::F64), context.get_slot_for_use(0));
+
+        // Code
+        let code = vec![Code::ConstI64(0, 42), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), f64, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(42.0, result);
+    }
+
+    #[test]
+    fn const_f32_and_return_i32() {
+        // Context
+        let name = "const_f32_and_return_i32";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
+
+        // Code: unsigned math, -1 saturates to 0
+        let code = vec![Code::ConstF32(0, -1.0), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), i32, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(0, result);
+    }
+
+    #[test]
+    fn const_f32_signed_and_return_i32() {
+        // Context
+        let name = "const_f32_signed_and_return_i32";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, true).unwrap();
+        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
+
+        // Code: signed math, -1.0 saturates to -1
+        let code = vec![Code::ConstF32(0, -1.0), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), i32, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(-1, result);
+    }
+
+    #[test]
+    fn const_f32_and_return_u64() {
+        // Context
+        let name = "const_f32_and_return_u64";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I64]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::I64), context.get_slot_for_use(0));
+
+        // Code: because we're using unsigned math in Wasm, -1.0 should be 0 in u32/u64
+        let code = vec![Code::ConstF32(0, -1.0), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), u64, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(0, result);
+    }
+
+    #[test]
+    fn const_f32_and_return_f32() {
+        // Context
+        let name = "const_f32_and_return_f32";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::F32]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::F32), context.get_slot_for_use(0));
+
+        // Code
+        let code = vec![Code::ConstF32(0, 42.0), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), f32, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(42.0, result);
+    }
+
+    #[test]
+    fn const_f32_and_return_f64() {
+        // Context
+        let name = "const_f32_and_return_f64";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::F64]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::F64), context.get_slot_for_use(0));
+
+        // Code
+        let code = vec![Code::ConstF32(0, 42.0), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), f64, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(42.0, result);
+    }
+
+    #[test]
+    fn const_f64_and_return_i32() {
+        // Context
+        let name = "const_f64_and_return_i32";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
+
+        // Code: unsigned math, -1 saturates to 0
+        let code = vec![Code::ConstF64(0, -1.0), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), i32, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(0, result);
+    }
+
+    #[test]
+    fn const_f64_signed_and_return_i32() {
+        // Context
+        let name = "const_f64_signed_and_return_i32";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, true).unwrap();
+        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
+
+        // Code: signed math, -1.0 saturates to -1
+        let code = vec![Code::ConstF64(0, -1.0), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), i32, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(-1, result);
+    }
+
+    #[test]
+    fn const_f64_and_return_u64() {
+        // Context
+        let name = "const_f64_and_return_u64";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I64]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::I64), context.get_slot_for_use(0));
+
+        // Code: because we're using unsigned math in Wasm, -1.0 should be 0 in u32/u64
+        let code = vec![Code::ConstF64(0, -1.0), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), u64, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(0, result);
+    }
+
+    #[test]
+    fn const_f64_and_return_f32() {
+        // Context
+        let name = "const_f64_and_return_f32";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::F32]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::F32), context.get_slot_for_use(0));
+
+        // Code
+        let code = vec![Code::ConstF64(0, 42.0), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), f32, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(42.0, result);
+    }
+
+    #[test]
+    fn const_f64_and_return_f64() {
+        // Context
+        let name = "const_f64_and_return_f64";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::F64]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+        assert_eq!(Some(ValueType::F64), context.get_slot_for_use(0));
+
+        // Code
+        let code = vec![Code::ConstF64(0, 42.0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
