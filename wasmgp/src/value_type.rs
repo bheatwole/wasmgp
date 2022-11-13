@@ -20,6 +20,16 @@ impl Into<wasm_ast::ValueType> for ValueType {
     }
 }
 
+impl Into<wasm_ast::IntegerType> for ValueType {
+    fn into(self) -> wasm_ast::IntegerType {
+        match &self {
+            ValueType::I32 => wasm_ast::IntegerType::I32,
+            ValueType::I64 => wasm_ast::IntegerType::I64,
+            _ => panic!("unsupported conversion of float to integer")
+        }
+    }
+}
+
 impl From<wasmtime::ValType> for ValueType {
     fn from(value: wasmtime::ValType) -> Self {
         match value {

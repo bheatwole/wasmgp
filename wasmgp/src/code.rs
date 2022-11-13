@@ -1,8 +1,8 @@
-use crate::convert::SetSlotConvert;
+use crate::convert::{GetSlotConvert, SetSlotConvert};
 use crate::{code_builder::CodeBuilder, code_context::CodeContext, FloatSlot, IntegerSlot, Slot, ValueType};
-use anyhow::Result;
+use anyhow::{bail, Result};
 use wasm_ast::{
-    BlockType, ControlInstruction, Expression, FloatType, Instruction, IntegerType, NumberType, NumericInstruction,
+    BlockType, ControlInstruction, Expression, Instruction, IntegerType, NumberType, NumericInstruction,
     VariableInstruction,
 };
 
@@ -184,6 +184,16 @@ impl CodeBuilder for Code {
             Code::ConstF64(slot, value) => {
                 instruction_list.push(NumericInstruction::F64Constant(*value).into());
                 SetSlotConvert::convert(*slot, ValueType::F64, context, instruction_list)?;
+            }
+            Code::CountLeadingZeros(src, dest) => {
+                let convert_to = match context.get_slot_for_use(*src) {
+                    None => bail!("invalid slot {}", src),
+                    Some(ValueType::I32) => ValueType::I32,
+                    Some(_) => ValueType::I64,
+                };
+                GetSlotConvert::convert(*src, convert_to, context, instruction_list)?;
+                instruction_list.push(NumericInstruction::CountLeadingZeros(convert_to.into()).into());
+                SetSlotConvert::convert(*dest, convert_to, context, instruction_list)?;
             }
             Code::Return => {
                 for slot in context.return_slots().iter() {
@@ -411,7 +421,7 @@ mod tests {
         let context = CodeContext::new(&fs, slots, false).unwrap();
         assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
 
-        // Code: 
+        // Code:
         let code = vec![Code::ConstI64(0, -1), Code::Return];
 
         // Compile and get function pointer to it
@@ -760,5 +770,55 @@ mod tests {
         // Call the function and confirm we get the constant
         let result = typed_func.call(&mut store, ()).unwrap();
         assert_eq!(42.0, result);
+    }
+
+    #[test]
+    fn count_leading_zeros_i32() {
+        // Context
+        let name = "count_leading_zeros_i32";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 0,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+
+        // Code
+        let code = vec![Code::ConstI32(0, 1), Code::CountLeadingZeros(0, 0), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), u32, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(31, result);
+    }
+
+    #[test]
+    fn count_leading_zeros_f32() {
+        // Context
+        let name = "count_leading_zeros_f32";
+        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
+        let slots = SlotCount {
+            i32: 0,
+            i64: 0,
+            f32: 1,
+            f64: 0,
+        };
+        let context = CodeContext::new(&fs, slots, false).unwrap();
+
+        // Code: all float -> integer conversions use 64 bit integers
+        let code = vec![Code::ConstF32(1, 1.0), Code::CountLeadingZeros(1, 0), Code::Return];
+
+        // Compile and get function pointer to it
+        let (mut store, instance) = build_code(context, code);
+        let typed_func = instance.get_typed_func::<(), u32, _>(&mut store, name).unwrap();
+
+        // Call the function and confirm we get the constant
+        let result = typed_func.call(&mut store, ()).unwrap();
+        assert_eq!(63, result);
     }
 }
