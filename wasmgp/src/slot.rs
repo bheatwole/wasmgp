@@ -3,12 +3,6 @@ use crate::ValueType;
 /// The genetic code references variables by 'slots'. This type references a slot that can be an I32, I64, F32 or F64.
 pub type Slot = u8;
 
-/// This type references a slot that can be an I32 or I64.
-pub type IntegerSlot = u8;
-
-/// This type references a slot that can be an F32 or F64.
-pub type FloatSlot = u8;
-
 /// When setting up the genetic algorithm, we give the code a certain number of local 'slots' to use in calculations.
 /// Typically its best to choose one type (I32, F64, etc) and only use slots of that type, but in some algorithms it
 /// may be necessary to use multiple types.

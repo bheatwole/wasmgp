@@ -1,5 +1,5 @@
 use crate::convert::{GetSlotConvert, SetSlotConvert};
-use crate::{code_builder::CodeBuilder, code_context::CodeContext, FloatSlot, IntegerSlot, Slot, ValueType};
+use crate::{code_builder::CodeBuilder, code_context::CodeContext, Slot, ValueType};
 use anyhow::Result;
 use wasm_ast::{
     BlockType, ControlInstruction, Expression, Instruction, IntegerType, NumberType, NumericInstruction,
@@ -9,115 +9,115 @@ use wasm_ast::{
 pub enum Code {
     /// ConstI32(slot, value): Loads the specified value into a four-byte integer into the specified work variable
     /// slot. If the slot is for floating-point values, it will be cast to a float.
-    ConstI32(IntegerSlot, i32),
+    ConstI32(Slot, i32),
 
     /// ConstI64(slot, value): Loads the specified value into a eight-byte integer into the specified work variable
     /// slot. If the slot is for floating-point values, it will be cast to a float.
-    ConstI64(IntegerSlot, i64),
+    ConstI64(Slot, i64),
 
     /// ConstF32(slot, value): Loads the specified value into a four-byte work variable slot. If the slot is for
     /// integer values, it will be truncated.
-    ConstF32(FloatSlot, f32),
+    ConstF32(Slot, f32),
 
     /// ConstF64(slot, value): Loads the specified value into a eight-byte work variable slot. If the slot is for
     /// integer values, it will be truncated.
-    ConstF64(FloatSlot, f64),
+    ConstF64(Slot, f64),
 
     /// CountLeadingZeros(source_slot, destination_slot): Counts the number of leading zero bits in the specified source
     /// slot and places it into the destination_slot.
-    CountLeadingZeros(IntegerSlot, IntegerSlot),
+    CountLeadingZeros(Slot, Slot),
 
     /// CountTrailingZeros(source_slot, destination_slot): Counts the number of trailing zero bits in the specified
     /// source slot and places it into the destination_slot.
-    CountTrailingZeros(IntegerSlot, IntegerSlot),
+    CountTrailingZeros(Slot, Slot),
 
     /// PopulationCount(source_slot, destination_slot): Counts the number of one bits in the specified source slot and
     /// places it into the destination_slot.
-    PopulationCount(IntegerSlot, IntegerSlot),
+    PopulationCount(Slot, Slot),
 
     /// AddInteger(left_slot, right_slot, result_slot): Places the result of left + right in the result slot.
-    AddInteger(IntegerSlot, IntegerSlot, IntegerSlot),
+    AddInteger(Slot, Slot, Slot),
 
     /// AddFloat(left_slot, right_slot, result_slot): Places the result of left + right in the result slot.
-    AddFloat(FloatSlot, FloatSlot, FloatSlot),
+    AddFloat(Slot, Slot, Slot),
 
     /// SubtractInteger(left_slot, right_slot, result_slot): Places the result of left - right in the result slot.
-    SubtractInteger(IntegerSlot, IntegerSlot, IntegerSlot),
+    SubtractInteger(Slot, Slot, Slot),
 
     /// SubtractFloat(left_slot, right_slot, result_slot): Places the result of left - right in the result slot.
-    SubtractFloat(FloatSlot, FloatSlot, FloatSlot),
+    SubtractFloat(Slot, Slot, Slot),
 
     /// MultiplyInteger(left_slot, right_slot, result_slot): Places the result of left * right in the result slot.
-    MultiplyInteger(IntegerSlot, IntegerSlot, IntegerSlot),
+    MultiplyInteger(Slot, Slot, Slot),
 
     /// MultiplyFloat(left_slot, right_slot, result_slot): Places the result of left * right in the result slot.
-    MultiplyFloat(FloatSlot, FloatSlot, FloatSlot),
+    MultiplyFloat(Slot, Slot, Slot),
 
     /// Divide(dividend_slot, divisor_slot, result_slot): Places the result of dividend / divisor in the result
     /// slot. The code will leave the result untouched if the divisor is zero.
-    Divide(IntegerSlot, IntegerSlot, IntegerSlot),
+    Divide(Slot, Slot, Slot),
 
     /// DivideFloat(dividend_slot, divisor_slot, result_slot): Places the result of dividend / divisor in the result
     /// slot. The code will leave the result untouched if the divisor is zero.
-    DivideFloat(FloatSlot, FloatSlot, FloatSlot),
+    DivideFloat(Slot, Slot, Slot),
 
     /// Remainder(dividend_slot, divisor_slot, result_slot): Places the result of dividend % divisor in the result
     /// slot. The code will leave the result untouched if the divisor is zero.
-    Remainder(IntegerSlot, IntegerSlot, IntegerSlot),
+    Remainder(Slot, Slot, Slot),
 
-    And(IntegerSlot, IntegerSlot, IntegerSlot),
-    Or(IntegerSlot, IntegerSlot, IntegerSlot),
-    Xor(IntegerSlot, IntegerSlot, IntegerSlot),
-    ShiftLeft(IntegerSlot, IntegerSlot, IntegerSlot),
-    ShiftRight(IntegerSlot, IntegerSlot, IntegerSlot),
-    RotateLeft(IntegerSlot, IntegerSlot, IntegerSlot),
-    RotateRight(IntegerSlot, IntegerSlot, IntegerSlot),
-    AbsoluteValue(FloatSlot, FloatSlot),
-    Negate(FloatSlot, FloatSlot),
-    SquareRoot(FloatSlot, FloatSlot),
-    Ceiling(FloatSlot, FloatSlot),
-    Floor(FloatSlot, FloatSlot),
-    Nearest(FloatSlot, FloatSlot),
-    Min(FloatSlot, FloatSlot, FloatSlot),
-    Max(FloatSlot, FloatSlot, FloatSlot),
-    CopySign(FloatSlot, FloatSlot, FloatSlot),
-    IsEqualZero(IntegerSlot, IntegerSlot),
-    AreEqualInteger(IntegerSlot, IntegerSlot, IntegerSlot),
-    AreNotEqualInteger(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsLessThan(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsGreaterThan(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsLessThanOrEqual(IntegerSlot, IntegerSlot, IntegerSlot),
-    IsGreaterThanOrEqual(IntegerSlot, IntegerSlot, IntegerSlot),
-    AreEqualFloat(FloatSlot, FloatSlot, FloatSlot),
-    AreNotEqualFloat(FloatSlot, FloatSlot, FloatSlot),
-    IsLessThanFloat(FloatSlot, FloatSlot, FloatSlot),
-    IsGreaterThanFloat(FloatSlot, FloatSlot, FloatSlot),
-    IsLessThanOrEqualFloat(FloatSlot, FloatSlot, FloatSlot),
-    IsGreaterThanOrEqualFloat(FloatSlot, FloatSlot, FloatSlot),
+    And(Slot, Slot, Slot),
+    Or(Slot, Slot, Slot),
+    Xor(Slot, Slot, Slot),
+    ShiftLeft(Slot, Slot, Slot),
+    ShiftRight(Slot, Slot, Slot),
+    RotateLeft(Slot, Slot, Slot),
+    RotateRight(Slot, Slot, Slot),
+    AbsoluteValue(Slot, Slot),
+    Negate(Slot, Slot),
+    SquareRoot(Slot, Slot),
+    Ceiling(Slot, Slot),
+    Floor(Slot, Slot),
+    Nearest(Slot, Slot),
+    Min(Slot, Slot, Slot),
+    Max(Slot, Slot, Slot),
+    CopySign(Slot, Slot, Slot),
+    IsEqualZero(Slot, Slot),
+    AreEqualInteger(Slot, Slot, Slot),
+    AreNotEqualInteger(Slot, Slot, Slot),
+    IsLessThan(Slot, Slot, Slot),
+    IsGreaterThan(Slot, Slot, Slot),
+    IsLessThanOrEqual(Slot, Slot, Slot),
+    IsGreaterThanOrEqual(Slot, Slot, Slot),
+    AreEqualFloat(Slot, Slot, Slot),
+    AreNotEqualFloat(Slot, Slot, Slot),
+    IsLessThanFloat(Slot, Slot, Slot),
+    IsGreaterThanFloat(Slot, Slot, Slot),
+    IsLessThanOrEqualFloat(Slot, Slot, Slot),
+    IsGreaterThanOrEqualFloat(Slot, Slot, Slot),
 
     /// LoadI8(offset_slot, result_slot): Loads the i8 value at the memory index indicated by the offset into the result
     /// slot. The memory index will be cast into an integer and the calculation `offset % mem_size` applied before
     /// attempting to read the memory. The i8 value will be cast into the result slot type.
-    LoadI8(IntegerSlot, IntegerSlot),
-    LoadU8(IntegerSlot, IntegerSlot),
-    LoadI16(IntegerSlot, IntegerSlot),
-    LoadU16(IntegerSlot, IntegerSlot),
-    LoadI32(IntegerSlot, IntegerSlot),
-    LoadU32(IntegerSlot, IntegerSlot),
-    LoadI64(IntegerSlot, IntegerSlot),
-    LoadU64(IntegerSlot, IntegerSlot),
-    LoadF32(IntegerSlot, FloatSlot),
-    LoadF64(IntegerSlot, FloatSlot),
-    StoreI8(IntegerSlot, IntegerSlot),
-    StoreU8(IntegerSlot, IntegerSlot),
-    StoreI16(IntegerSlot, IntegerSlot),
-    StoreU16(IntegerSlot, IntegerSlot),
-    StoreI32(IntegerSlot, IntegerSlot),
-    StoreU32(IntegerSlot, IntegerSlot),
-    StoreI64(IntegerSlot, IntegerSlot),
-    StoreU64(IntegerSlot, IntegerSlot),
-    StoreF32(IntegerSlot, FloatSlot),
-    StoreF64(IntegerSlot, FloatSlot),
+    LoadI8(Slot, Slot),
+    LoadU8(Slot, Slot),
+    LoadI16(Slot, Slot),
+    LoadU16(Slot, Slot),
+    LoadI32(Slot, Slot),
+    LoadU32(Slot, Slot),
+    LoadI64(Slot, Slot),
+    LoadU64(Slot, Slot),
+    LoadF32(Slot, Slot),
+    LoadF64(Slot, Slot),
+    StoreI8(Slot, Slot),
+    StoreU8(Slot, Slot),
+    StoreI16(Slot, Slot),
+    StoreU16(Slot, Slot),
+    StoreI32(Slot, Slot),
+    StoreU32(Slot, Slot),
+    StoreI64(Slot, Slot),
+    StoreU64(Slot, Slot),
+    StoreF32(Slot, Slot),
+    StoreF64(Slot, Slot),
 
     /// Returns from a function. There are work variables of the appropriate types set aside to hold the return values.
     /// The function should set the values of those slots prior to calling Return, however they are always initialized
@@ -132,19 +132,19 @@ pub enum Code {
     Call(u32, Vec<Slot>, Vec<Slot>),
 
     /// If(compare_slot, do): If the value in the compare_slot is not zero, than the code listed in 'do' will execute.
-    If(IntegerSlot, Vec<Code>),
+    If(Slot, Vec<Code>),
 
     /// IfElse(compare_slot, do, else_do): If the value in the compare_slot is not zero, than the code listed in 'do'
     /// will execute. Otherwise, the code listed in 'else_do' will execute.
-    IfElse(IntegerSlot, Vec<Code>, Vec<Code>),
+    IfElse(Slot, Vec<Code>, Vec<Code>),
 
     /// DoUntil(compare_slot, do): Will execute the code listed in 'do' until the value in the compare_slot is not zero.
     /// This will execute the 'do' block at least once.
-    DoUntil(IntegerSlot, Vec<Code>),
+    DoUntil(Slot, Vec<Code>),
 
     /// DoWhile(compare_slot, do): Will execute the code listed in 'do' while the value in the compare_slot is not zero.
     /// This will check the compare value before executing the 'do' code and so 'do' might never run.
-    DoWhile(IntegerSlot, Vec<Code>),
+    DoWhile(Slot, Vec<Code>),
 
     /// DoFor(times, do): Runs the code listed in 'do' a specific number of times chosen by the genetic algorithm (at
     /// code compile-time, not while the VM is running). Max of 65_535 loops
@@ -156,7 +156,7 @@ pub enum Code {
 
     /// BreakIf(compare_slot) If the code is currently in the middle of a 'do' loop, exits the loop if the value in the
     /// compare_slot is not zero. If the code is not in a loop, this is a null-op.
-    BreakIf(IntegerSlot),
+    BreakIf(Slot),
 }
 
 impl Code {
