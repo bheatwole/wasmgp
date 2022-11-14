@@ -1,5 +1,7 @@
+use crate::code_builder::CodeBuilder;
 use crate::convert::{GetSlotConvert, SetSlotConvert};
-use crate::{code_builder::CodeBuilder, code_context::CodeContext, Slot, ValueType};
+use crate::CodeContext;
+use crate::{ConstF32, ConstF64, ConstI32, ConstI64, Slot, ValueType};
 use anyhow::Result;
 use wasm_ast::{
     BlockType, ControlInstruction, Expression, Instruction, IntegerType, NumberType, NumericInstruction,
@@ -9,19 +11,19 @@ use wasm_ast::{
 pub enum Code {
     /// ConstI32(slot, value): Loads the specified value into a four-byte integer into the specified work variable
     /// slot. If the slot is for floating-point values, it will be cast to a float.
-    ConstI32(Slot, i32),
+    ConstI32(ConstI32),
 
     /// ConstI64(slot, value): Loads the specified value into a eight-byte integer into the specified work variable
     /// slot. If the slot is for floating-point values, it will be cast to a float.
-    ConstI64(Slot, i64),
+    ConstI64(ConstI64),
 
     /// ConstF32(slot, value): Loads the specified value into a four-byte work variable slot. If the slot is for
     /// integer values, it will be truncated.
-    ConstF32(Slot, f32),
+    ConstF32(ConstF32),
 
     /// ConstF64(slot, value): Loads the specified value into a eight-byte work variable slot. If the slot is for
     /// integer values, it will be truncated.
-    ConstF64(Slot, f64),
+    ConstF64(ConstF64),
 
     /// CountLeadingZeros(source_slot, destination_slot): Counts the number of leading zero bits in the specified source
     /// slot and places it into the destination_slot.
@@ -169,21 +171,17 @@ impl Code {
 impl CodeBuilder for Code {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
         match self {
-            Code::ConstI32(slot, value) => {
-                instruction_list.push(NumericInstruction::I32Constant(*value).into());
-                SetSlotConvert::convert(*slot, ValueType::I32, context, instruction_list)?;
+            Code::ConstI32(instruction) => {
+                instruction.append_code(context, instruction_list)?;
             }
-            Code::ConstI64(slot, value) => {
-                instruction_list.push(NumericInstruction::I64Constant(*value).into());
-                SetSlotConvert::convert(*slot, ValueType::I64, context, instruction_list)?;
+            Code::ConstI64(instruction) => {
+                instruction.append_code(context, instruction_list)?;
             }
-            Code::ConstF32(slot, value) => {
-                instruction_list.push(NumericInstruction::F32Constant(*value).into());
-                SetSlotConvert::convert(*slot, ValueType::F32, context, instruction_list)?;
+            Code::ConstF32(instruction) => {
+                instruction.append_code(context, instruction_list)?;
             }
-            Code::ConstF64(slot, value) => {
-                instruction_list.push(NumericInstruction::F64Constant(*value).into());
-                SetSlotConvert::convert(*slot, ValueType::F64, context, instruction_list)?;
+            Code::ConstF64(instruction) => {
+                instruction.append_code(context, instruction_list)?;
             }
             Code::CountLeadingZeros(src, dest) => {
                 let convert_to = match context.get_slot_value_type(*src)? {
@@ -258,7 +256,7 @@ mod tests {
     use wasm_ast::{emit_binary, ModuleBuilder};
     use wasmtime::{Engine, Instance, Store};
 
-    use crate::{Code, CodeContext, FunctionSignature, SlotCount, ValueType};
+    use crate::{Code, CodeContext, ConstF32, ConstF64, ConstI32, ConstI64, FunctionSignature, SlotCount, ValueType};
 
     fn build_code(context: CodeContext, code: Vec<Code>) -> (Store<()>, Instance) {
         let mut builder = ModuleBuilder::new();
@@ -290,7 +288,7 @@ mod tests {
         let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Code
-        let code = vec![Code::ConstI32(0, 42), Code::Return];
+        let code = vec![ConstI32::new(0, 42), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -342,7 +340,7 @@ mod tests {
         assert_eq!(ValueType::I64, context.get_slot_value_type(0).unwrap());
 
         // Code: because we're using unsigned math in Wasm, -1 should be 0xFFFFFFFF in u32/u64
-        let code = vec![Code::ConstI32(0, -1), Code::Return];
+        let code = vec![ConstI32::new(0, -1), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -368,7 +366,7 @@ mod tests {
         assert_eq!(ValueType::F32, context.get_slot_value_type(0).unwrap());
 
         // Code
-        let code = vec![Code::ConstI32(0, 42), Code::Return];
+        let code = vec![ConstI32::new(0, 42), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -394,7 +392,7 @@ mod tests {
         assert_eq!(ValueType::F64, context.get_slot_value_type(0).unwrap());
 
         // Code
-        let code = vec![Code::ConstI32(0, 42), Code::Return];
+        let code = vec![ConstI32::new(0, 42), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -421,7 +419,7 @@ mod tests {
         assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
 
         // Code:
-        let code = vec![Code::ConstI64(0, -1), Code::Return];
+        let code = vec![ConstI64::new(0, -1), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -448,7 +446,7 @@ mod tests {
         assert_eq!(ValueType::I64, context.get_slot_value_type(0).unwrap());
 
         // Code: because we're using unsigned math in Wasm, -1 should be 0xFFFFFFFF in u32/u64
-        let code = vec![Code::ConstI64(0, -1), Code::Return];
+        let code = vec![ConstI64::new(0, -1), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -474,7 +472,7 @@ mod tests {
         assert_eq!(ValueType::F32, context.get_slot_value_type(0).unwrap());
 
         // Code
-        let code = vec![Code::ConstI64(0, 42), Code::Return];
+        let code = vec![ConstI64::new(0, 42), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -500,7 +498,7 @@ mod tests {
         assert_eq!(ValueType::F64, context.get_slot_value_type(0).unwrap());
 
         // Code
-        let code = vec![Code::ConstI64(0, 42), Code::Return];
+        let code = vec![ConstI64::new(0, 42), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -526,7 +524,7 @@ mod tests {
         assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
 
         // Code: unsigned math, -1 saturates to 0
-        let code = vec![Code::ConstF32(0, -1.0), Code::Return];
+        let code = vec![ConstF32::new(0, -1.0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -552,7 +550,7 @@ mod tests {
         assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
 
         // Code: signed math, -1.0 saturates to -1
-        let code = vec![Code::ConstF32(0, -1.0), Code::Return];
+        let code = vec![ConstF32::new(0, -1.0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -578,7 +576,7 @@ mod tests {
         assert_eq!(ValueType::I64, context.get_slot_value_type(0).unwrap());
 
         // Code: because we're using unsigned math in Wasm, -1.0 should be 0 in u32/u64
-        let code = vec![Code::ConstF32(0, -1.0), Code::Return];
+        let code = vec![ConstF32::new(0, -1.0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -604,7 +602,7 @@ mod tests {
         assert_eq!(ValueType::F32, context.get_slot_value_type(0).unwrap());
 
         // Code
-        let code = vec![Code::ConstF32(0, 42.0), Code::Return];
+        let code = vec![ConstF32::new(0, 42.0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -630,7 +628,7 @@ mod tests {
         assert_eq!(ValueType::F64, context.get_slot_value_type(0).unwrap());
 
         // Code
-        let code = vec![Code::ConstF32(0, 42.0), Code::Return];
+        let code = vec![ConstF32::new(0, 42.0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -656,7 +654,7 @@ mod tests {
         assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
 
         // Code: unsigned math, -1 saturates to 0
-        let code = vec![Code::ConstF64(0, -1.0), Code::Return];
+        let code = vec![ConstF64::new(0, -1.0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -682,7 +680,7 @@ mod tests {
         assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
 
         // Code: signed math, -1.0 saturates to -1
-        let code = vec![Code::ConstF64(0, -1.0), Code::Return];
+        let code = vec![ConstF64::new(0, -1.0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -708,7 +706,7 @@ mod tests {
         assert_eq!(ValueType::I64, context.get_slot_value_type(0).unwrap());
 
         // Code: because we're using unsigned math in Wasm, -1.0 should be 0 in u32/u64
-        let code = vec![Code::ConstF64(0, -1.0), Code::Return];
+        let code = vec![ConstF64::new(0, -1.0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -734,7 +732,7 @@ mod tests {
         assert_eq!(ValueType::F32, context.get_slot_value_type(0).unwrap());
 
         // Code
-        let code = vec![Code::ConstF64(0, 42.0), Code::Return];
+        let code = vec![ConstF64::new(0, 42.0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -760,7 +758,7 @@ mod tests {
         assert_eq!(ValueType::F64, context.get_slot_value_type(0).unwrap());
 
         // Code
-        let code = vec![Code::ConstF64(0, 42.0), Code::Return];
+        let code = vec![ConstF64::new(0, 42.0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -785,7 +783,7 @@ mod tests {
         let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Code
-        let code = vec![Code::ConstI32(0, 1), Code::CountLeadingZeros(0, 0), Code::Return];
+        let code = vec![ConstI32::new(0, 1), Code::CountLeadingZeros(0, 0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -810,7 +808,7 @@ mod tests {
         let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Code: all float -> integer conversions use 64 bit integers
-        let code = vec![Code::ConstF32(1, 1.0), Code::CountLeadingZeros(1, 0), Code::Return];
+        let code = vec![ConstF32::new(1, 1.0), Code::CountLeadingZeros(1, 0), Code::Return];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
