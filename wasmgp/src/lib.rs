@@ -2,6 +2,7 @@ mod code;
 mod code_builder;
 mod code_context;
 mod convert;
+mod error;
 mod function_signature;
 mod main_entry_point;
 mod migration_algorithm;
@@ -15,6 +16,7 @@ mod world_configuration;
 
 pub use code::Code;
 pub use code_context::CodeContext;
+pub use error::WasmgpError;
 pub use function_signature::FunctionSignature;
 pub use main_entry_point::MainEntryPoint;
 pub use migration_algorithm::MigrationAlgorithm;

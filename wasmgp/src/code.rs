@@ -1,3 +1,4 @@
+use crate::WasmgpError;
 use crate::convert::{GetSlotConvert, SetSlotConvert};
 use crate::{code_builder::CodeBuilder, code_context::CodeContext, FloatSlot, IntegerSlot, Slot, ValueType};
 use anyhow::{bail, Result};
@@ -187,7 +188,7 @@ impl CodeBuilder for Code {
             }
             Code::CountLeadingZeros(src, dest) => {
                 let convert_to = match context.get_slot_for_use(*src) {
-                    None => bail!("invalid slot {}", src),
+                    None => return Err(WasmgpError::InvalidSlot(*src).into()),
                     Some(ValueType::I32) => ValueType::I32,
                     Some(_) => ValueType::I64,
                 };

@@ -1,3 +1,4 @@
+use crate::{slot, WasmgpError};
 use crate::{code_builder::CodeBuilder, Code, FunctionSignature, Slot, SlotCount, ValueType};
 use anyhow::{bail, Result};
 use std::{cell::RefCell, ops::Deref};
@@ -24,7 +25,7 @@ impl CodeContext {
     pub fn new(signature: &FunctionSignature, slots: SlotCount, is_signed: bool) -> Result<CodeContext> {
         let slot_count = signature.params().len() + signature.results().len() + slots.len();
         if slot_count > 256 {
-            bail!("The total number of slots used across all parameters, return and locals must be 256 or fewer, but got {}", slot_count);
+            return Err(WasmgpError::SlotCountTooLarge(slot_count).into());
         }
 
         let mut locals = Vec::with_capacity(slot_count);

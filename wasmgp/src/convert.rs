@@ -1,5 +1,5 @@
 use crate::code_builder::CodeBuilder;
-use crate::{CodeContext, Slot, ValueType};
+use crate::{CodeContext, Slot, ValueType, WasmgpError};
 use anyhow::{bail, Result};
 use wasm_ast::{FloatType, Instruction, IntegerType, NumericInstruction, VariableInstruction};
 
@@ -23,14 +23,14 @@ impl GetSlotConvert {
 
 impl CodeBuilder for GetSlotConvert {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
-        // Load the slot onto the stack
-        instruction_list.push(VariableInstruction::LocalGet(self.slot as u32).into());
-
-        // Perform a conversion of the type that our slot produced, to the type the next operation expects
         if let Some(source_type) = context.get_slot_for_use(self.slot) {
+            // Load the slot onto the stack
+            instruction_list.push(VariableInstruction::LocalGet(self.slot as u32).into());
+
+            // Perform a conversion of the type that our slot produced, to the type the next operation expects
             StackConvert::convert(source_type, self.stack_type, context, instruction_list)?;
         } else {
-            bail!("invalid slot");
+            return Err(WasmgpError::InvalidSlot(self.slot).into());
         }
 
         Ok(())
@@ -61,7 +61,7 @@ impl CodeBuilder for SetSlotConvert {
         if let Some(destination_type) = context.get_slot_for_use(self.slot) {
             StackConvert::convert(self.stack_type, destination_type, context, instruction_list)?;
         } else {
-            bail!("invalid slot");
+            return Err(WasmgpError::InvalidSlot(self.slot).into());
         }
 
         // The top of the stack can now be set because the types are the same.
