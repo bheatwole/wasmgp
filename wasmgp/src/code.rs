@@ -1,7 +1,6 @@
-use crate::WasmgpError;
 use crate::convert::{GetSlotConvert, SetSlotConvert};
 use crate::{code_builder::CodeBuilder, code_context::CodeContext, FloatSlot, IntegerSlot, Slot, ValueType};
-use anyhow::{bail, Result};
+use anyhow::Result;
 use wasm_ast::{
     BlockType, ControlInstruction, Expression, Instruction, IntegerType, NumberType, NumericInstruction,
     VariableInstruction,
@@ -187,10 +186,9 @@ impl CodeBuilder for Code {
                 SetSlotConvert::convert(*slot, ValueType::F64, context, instruction_list)?;
             }
             Code::CountLeadingZeros(src, dest) => {
-                let convert_to = match context.get_slot_for_use(*src) {
-                    None => return Err(WasmgpError::InvalidSlot(*src).into()),
-                    Some(ValueType::I32) => ValueType::I32,
-                    Some(_) => ValueType::I64,
+                let convert_to = match context.get_slot_value_type(*src)? {
+                    ValueType::I32 => ValueType::I32,
+                    _ => ValueType::I64,
                 };
                 GetSlotConvert::convert(*src, convert_to, context, instruction_list)?;
                 instruction_list.push(NumericInstruction::CountLeadingZeros(convert_to.into()).into());
@@ -341,7 +339,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::I64), context.get_slot_for_use(0));
+        assert_eq!(ValueType::I64, context.get_slot_value_type(0).unwrap());
 
         // Code: because we're using unsigned math in Wasm, -1 should be 0xFFFFFFFF in u32/u64
         let code = vec![Code::ConstI32(0, -1), Code::Return];
@@ -367,7 +365,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::F32), context.get_slot_for_use(0));
+        assert_eq!(ValueType::F32, context.get_slot_value_type(0).unwrap());
 
         // Code
         let code = vec![Code::ConstI32(0, 42), Code::Return];
@@ -393,7 +391,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::F64), context.get_slot_for_use(0));
+        assert_eq!(ValueType::F64, context.get_slot_value_type(0).unwrap());
 
         // Code
         let code = vec![Code::ConstI32(0, 42), Code::Return];
@@ -420,7 +418,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
+        assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
 
         // Code:
         let code = vec![Code::ConstI64(0, -1), Code::Return];
@@ -447,7 +445,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::I64), context.get_slot_for_use(0));
+        assert_eq!(ValueType::I64, context.get_slot_value_type(0).unwrap());
 
         // Code: because we're using unsigned math in Wasm, -1 should be 0xFFFFFFFF in u32/u64
         let code = vec![Code::ConstI64(0, -1), Code::Return];
@@ -473,7 +471,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::F32), context.get_slot_for_use(0));
+        assert_eq!(ValueType::F32, context.get_slot_value_type(0).unwrap());
 
         // Code
         let code = vec![Code::ConstI64(0, 42), Code::Return];
@@ -499,7 +497,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::F64), context.get_slot_for_use(0));
+        assert_eq!(ValueType::F64, context.get_slot_value_type(0).unwrap());
 
         // Code
         let code = vec![Code::ConstI64(0, 42), Code::Return];
@@ -525,7 +523,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
+        assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
 
         // Code: unsigned math, -1 saturates to 0
         let code = vec![Code::ConstF32(0, -1.0), Code::Return];
@@ -551,7 +549,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, true).unwrap();
-        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
+        assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
 
         // Code: signed math, -1.0 saturates to -1
         let code = vec![Code::ConstF32(0, -1.0), Code::Return];
@@ -577,7 +575,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::I64), context.get_slot_for_use(0));
+        assert_eq!(ValueType::I64, context.get_slot_value_type(0).unwrap());
 
         // Code: because we're using unsigned math in Wasm, -1.0 should be 0 in u32/u64
         let code = vec![Code::ConstF32(0, -1.0), Code::Return];
@@ -603,7 +601,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::F32), context.get_slot_for_use(0));
+        assert_eq!(ValueType::F32, context.get_slot_value_type(0).unwrap());
 
         // Code
         let code = vec![Code::ConstF32(0, 42.0), Code::Return];
@@ -629,7 +627,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::F64), context.get_slot_for_use(0));
+        assert_eq!(ValueType::F64, context.get_slot_value_type(0).unwrap());
 
         // Code
         let code = vec![Code::ConstF32(0, 42.0), Code::Return];
@@ -655,7 +653,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
+        assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
 
         // Code: unsigned math, -1 saturates to 0
         let code = vec![Code::ConstF64(0, -1.0), Code::Return];
@@ -681,7 +679,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, true).unwrap();
-        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
+        assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
 
         // Code: signed math, -1.0 saturates to -1
         let code = vec![Code::ConstF64(0, -1.0), Code::Return];
@@ -707,7 +705,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::I64), context.get_slot_for_use(0));
+        assert_eq!(ValueType::I64, context.get_slot_value_type(0).unwrap());
 
         // Code: because we're using unsigned math in Wasm, -1.0 should be 0 in u32/u64
         let code = vec![Code::ConstF64(0, -1.0), Code::Return];
@@ -733,7 +731,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::F32), context.get_slot_for_use(0));
+        assert_eq!(ValueType::F32, context.get_slot_value_type(0).unwrap());
 
         // Code
         let code = vec![Code::ConstF64(0, 42.0), Code::Return];
@@ -759,7 +757,7 @@ mod tests {
             f64: 0,
         };
         let context = CodeContext::new(&fs, slots, false).unwrap();
-        assert_eq!(Some(ValueType::F64), context.get_slot_for_use(0));
+        assert_eq!(ValueType::F64, context.get_slot_value_type(0).unwrap());
 
         // Code
         let code = vec![Code::ConstF64(0, 42.0), Code::Return];

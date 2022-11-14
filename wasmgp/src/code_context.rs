@@ -1,6 +1,7 @@
-use crate::{slot, WasmgpError};
-use crate::{code_builder::CodeBuilder, Code, FunctionSignature, Slot, SlotCount, ValueType};
-use anyhow::{bail, Result};
+use crate::code_builder::CodeBuilder;
+use crate::WasmgpError;
+use crate::{Code, FunctionSignature, Slot, SlotCount, ValueType};
+use anyhow::Result;
 use std::{cell::RefCell, ops::Deref};
 use wasm_ast::{Export, Function, FunctionType, LabelIndex, LocalIndex, ModuleBuilder, ResultType, SignExtension};
 
@@ -115,21 +116,18 @@ impl CodeContext {
             .collect()
     }
 
-    /// Returns a tuple of (SlotType, SlotBytes, is_initialized) for a slot that the code generator would like to use.
-    /// If the slot was not initialized, false will be returned, but the slot will be marked as initialized for future
-    /// calls to `get_slot_for_use`.
-    ///
-    /// Returns `None` if the slot is out of range of all slots, or has `SlotPurpose::Instruction`
-    pub fn get_slot_for_use(&self, slot: Slot) -> Option<ValueType> {
+    /// Returns the ValueType of the slot. Returns an error if the slot is out of range of all slots, or has
+    /// `SlotPurpose::Instruction`
+    pub fn get_slot_value_type(&self, slot: Slot) -> Result<ValueType> {
         let locals = self.locals.borrow();
         if let Some(slot_info) = locals.get(slot as usize) {
             if SlotPurpose::Instruction == slot_info.purpose {
-                None
+                Err(WasmgpError::InvalidSlot(slot).into())
             } else {
-                Some(slot_info.value_type)
+                Ok(slot_info.value_type)
             }
         } else {
-            None
+            Err(WasmgpError::InvalidSlot(slot).into())
         }
     }
 
@@ -292,7 +290,7 @@ mod tests {
     }
 
     #[test]
-    fn get_slot_for_use() {
+    fn get_slot_value_type() {
         let fs = FunctionSignature::new("test", vec![ValueType::I32, ValueType::F64], vec![ValueType::F32]);
         let slots = crate::SlotCount {
             i32: 0,
@@ -303,21 +301,21 @@ mod tests {
         let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Getting a parameter slot returns an initialized type
-        assert_eq!(Some(ValueType::I32), context.get_slot_for_use(0));
-        assert_eq!(Some(ValueType::F64), context.get_slot_for_use(1));
+        assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
+        assert_eq!(ValueType::F64, context.get_slot_value_type(1).unwrap());
 
         // Getting a return slot, returns the type.
-        assert_eq!(Some(ValueType::F32), context.get_slot_for_use(2));
+        assert_eq!(ValueType::F32, context.get_slot_value_type(2).unwrap());
 
         // Getting a local slot, returns the type.
-        assert_eq!(Some(ValueType::I64), context.get_slot_for_use(5));
+        assert_eq!(ValueType::I64, context.get_slot_value_type(5).unwrap());
 
         // If you make an Instruction slot and try to get it, it returns None
         assert_eq!(6, *(context.get_unused_local(ValueType::I32)));
-        assert_eq!(None, context.get_slot_for_use(6));
+        assert!(context.get_slot_value_type(6).is_err());
 
         // Getting a slot that doesn't exist also returns None
-        assert_eq!(None, context.get_slot_for_use(200));
+        assert!(context.get_slot_value_type(200).is_err());
     }
 
     #[test]
