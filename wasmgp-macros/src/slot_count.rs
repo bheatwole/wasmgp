@@ -11,7 +11,7 @@ impl Parse for SlotCount {
         let mut slot_counts = vec![];
         let mut is_signed = false;
 
-        while !input.is_empty() {
+        if !input.is_empty() {
             let flag: Ident = input.parse()?;
             is_signed = flag == "signed" || flag == "s" || flag == "i";
             if !is_signed {
@@ -23,10 +23,9 @@ impl Parse for SlotCount {
                 }
             }
 
-            if input.is_empty() {
-                break;
+            if !input.is_empty() {
+                let _comma: Token![,] = input.parse()?;
             }
-            let _comma: Token![,] = input.parse()?;
         }
 
         while !input.is_empty() {
