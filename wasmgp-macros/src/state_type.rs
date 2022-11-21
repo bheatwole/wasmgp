@@ -1,23 +1,17 @@
-use proc_macro2::{Span, TokenStream};
-use quote::ToTokens;
-use syn::punctuated::Punctuated;
+use proc_macro2::{Delimiter, Group, TokenStream, TokenTree};
+use quote::{ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
 use syn::*;
 
 /// The state used for wasm_code is either an empty tuple () or a specific named type
 pub enum StateType {
-    Empty(TypeTuple),
+    Empty,
     Named(Ident),
 }
 
 impl StateType {
     pub fn empty() -> StateType {
-        StateType::Empty(TypeTuple {
-            paren_token: token::Paren {
-                span: Span::call_site(),
-            },
-            elems: Punctuated::new(),
-        })
+        StateType::Empty
     }
 
     pub fn named(ident: Ident) -> StateType {
@@ -75,7 +69,10 @@ impl StateType {
 impl ToTokens for StateType {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
-            StateType::Empty(tuple) => tuple.to_tokens(tokens),
+            StateType::Empty => tokens.append(TokenTree::Group(Group::new(
+                Delimiter::Parenthesis,
+                TokenStream::new(),
+            ))),
             StateType::Named(ident) => ident.to_tokens(tokens),
         }
     }
