@@ -3,6 +3,7 @@ use syn::*;
 
 mod slot_count;
 mod state_type;
+mod var_list_type;
 mod wasm_code;
 
 use slot_count::SlotCount;
