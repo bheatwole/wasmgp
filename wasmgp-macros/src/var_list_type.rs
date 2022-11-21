@@ -1,5 +1,5 @@
-use proc_macro2::{Delimiter, Group, TokenStream, TokenTree};
-use quote::{ToTokens, TokenStreamExt};
+use proc_macro2::{Delimiter, Group, Span, TokenStream, TokenTree};
+use quote::{quote, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::*;
@@ -47,6 +47,13 @@ impl VarListType {
     pub fn for_generic_params<'a>(&'a self) -> VarListTypeGenericParams<'a> {
         VarListTypeGenericParams { list: self }
     }
+
+    pub fn for_value_types<'a>(&'a self, crate_path: &Path) -> VarListTypeValueTypes<'a> {
+        VarListTypeValueTypes {
+            crate_path: crate_path.clone(),
+            list: self,
+        }
+    }
 }
 
 pub struct VarListTypeGenericParams<'a> {
@@ -77,6 +84,53 @@ impl<'a> ToTokens for VarListTypeGenericParams<'a> {
             Delimiter::Parenthesis,
             inner_ts,
         )))
+    }
+}
+
+pub struct VarListTypeValueTypes<'a> {
+    crate_path: Path,
+    list: &'a VarListType,
+}
+
+impl<'a> ToTokens for VarListTypeValueTypes<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let span = Span::call_site();
+        let crate_path = &self.crate_path;
+
+        // The inner part of the list is a punctuated list of wasmgp::ValueType::?
+        let mut contents: Punctuated<_, Token!(,)> = Punctuated::new();
+        for var in self.list.vars.iter() {
+            let vt = match var.to_string().as_str() {
+                "i32" | "u32" => Ident::new("I32", span.clone()),
+                "i64" | "u64" => Ident::new("I64", span.clone()),
+                "f32" => Ident::new("F32", span.clone()),
+                "f64" => Ident::new("F64", span.clone()),
+                _ => panic!("'var' should always be one of [i32, i64, u32, u64, f32, f64]"),
+            };
+            contents.push(quote! {
+                #crate_path::ValueType::#vt
+            });
+        }
+
+        // Write the contents to a temporary TokenStream that will be used by the macro
+        let inner_ts = contents.to_token_stream();
+
+        // Create the code for `vec![inner_ts]`
+        let mut vec = Punctuated::new();
+        vec.push(PathSegment {
+            ident: Ident::new("vec", span.clone()),
+            arguments: PathArguments::None,
+        });
+        Macro {
+            path: Path {
+                leading_colon: None,
+                segments: vec,
+            },
+            bang_token: syn::token::Bang(span.clone()),
+            delimiter: MacroDelimiter::Bracket(syn::token::Bracket(span.clone())),
+            tokens: inner_ts,
+        }
+        .to_tokens(tokens);
     }
 }
 
