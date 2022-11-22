@@ -46,6 +46,9 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
     let param_value_types = param_var_list_type.for_value_types(&wasmgp);
     let result_value_types = result_var_list_type.for_value_types(&wasmgp);
 
+    // Handle the slot_count construction
+    let slot_count_constructor = slot_count.for_constructor(&wasmgp);
+
     Ok(quote! {
         #(#docs)*
         #visibility struct #struct_name {
@@ -57,13 +60,8 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
             fn new() -> anyhow::Result<#struct_name> {
                 let name = #function_name_lit;
                 let fs = #wasmgp::FunctionSignature::new(name, #param_value_types, #result_value_types);
-                let slots = #wasmgp::SlotCount {
-                    i32: 0,
-                    i64: 0,
-                    f32: 0,
-                    f64: 0,
-                };
-                let context = #wasmgp::CodeContext::new(&fs, slots, false)?;
+                let slots = #slot_count_constructor;
+                let context = #wasmgp::CodeContext::new(&fs, slots, #slot_count)?;
                 let code = vec![Code::Add(0, 0, 1), Code::Return];
                 let mut builder = wasm_ast::ModuleBuilder::new();
                 context.build(&mut builder, &code[..])?;
