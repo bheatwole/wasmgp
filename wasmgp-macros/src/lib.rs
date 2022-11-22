@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use syn::*;
 
+mod block_stmts;
 mod slot_count;
 mod state_type;
 mod var_list_type;

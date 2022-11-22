@@ -1,3 +1,4 @@
+use crate::block_stmts::BlockStmts;
 use crate::slot_count::SlotCount;
 use crate::state_type::StateType;
 use crate::var_list_type::VarListType;
@@ -49,6 +50,9 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
     // Handle the slot_count construction
     let slot_count_constructor = slot_count.for_constructor(&wasmgp);
 
+    // Pull out the body for use
+    let body_block = BlockStmts::new(&inner_fn.block);
+
     Ok(quote! {
         #(#docs)*
         #visibility struct #struct_name {
@@ -62,7 +66,7 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
                 let fs = #wasmgp::FunctionSignature::new(name, #param_value_types, #result_value_types);
                 let slots = #slot_count_constructor;
                 let context = #wasmgp::CodeContext::new(&fs, slots, #slot_count)?;
-                let code = vec![Code::Add(0, 0, 1), Code::Return];
+                let code = vec!#body_block;
                 let mut builder = wasm_ast::ModuleBuilder::new();
                 context.build(&mut builder, &code[..])?;
                 let module = builder.build();
