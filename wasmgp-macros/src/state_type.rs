@@ -1,9 +1,10 @@
 use proc_macro2::{Delimiter, Group, TokenStream, TokenTree};
-use quote::{ToTokens, TokenStreamExt};
+use quote::{quote, ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
 use syn::*;
 
 /// The state used for wasm_code is either an empty tuple () or a specific named type
+#[derive(Clone)]
 pub enum StateType {
     Empty,
     Named(Ident),
@@ -64,6 +65,18 @@ impl StateType {
 
         return Ok(StateType::named(type_param.ident.clone()));
     }
+
+    pub fn for_fn_args(&self) -> StateTypeFnArgs {
+        StateTypeFnArgs {
+            state_type: self.clone(),
+        }
+    }
+
+    pub fn for_store_arg(&self) -> StateTypeStoreArg {
+        StateTypeStoreArg {
+            state_type: self.clone(),
+        }
+    }
 }
 
 impl ToTokens for StateType {
@@ -74,6 +87,34 @@ impl ToTokens for StateType {
                 TokenStream::new(),
             ))),
             StateType::Named(ident) => ident.to_tokens(tokens),
+        }
+    }
+}
+
+/// Allows turning StateType into the args for `fn new(state: StateType)`
+pub struct StateTypeFnArgs {
+    state_type: StateType,
+}
+
+impl ToTokens for StateTypeFnArgs {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match &self.state_type {
+            StateType::Empty => {}
+            StateType::Named(ident) => tokens.extend(quote!(state: #ident)),
+        }
+    }
+}
+
+/// Allows turning StateType into the args for `Store::new(&engine, StateType)`
+pub struct StateTypeStoreArg {
+    state_type: StateType,
+}
+
+impl ToTokens for StateTypeStoreArg {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match &self.state_type {
+            StateType::Empty => tokens.extend(quote!(())),
+            StateType::Named(_) => tokens.extend(quote!(state)),
         }
     }
 }

@@ -34,6 +34,8 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
 
     // The state name is read from the generic parameters of the function
     let state_ident = StateType::from_generics(&inner_fn.sig.generics)?;
+    let state_new_args = state_ident.for_fn_args();
+    let state_store_arg = state_ident.for_store_arg();
 
     // Read the fn params and results into variables
     let param_var_list_type = VarListType::from_fn_args(inner_fn)?;
@@ -61,7 +63,7 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
         }
 
         impl #struct_name {
-            fn new() -> anyhow::Result<#struct_name> {
+            fn new(#state_new_args) -> anyhow::Result<#struct_name> {
                 let name = #function_name_lit;
                 let fs = #wasmgp::FunctionSignature::new(name, #param_value_types, #result_value_types);
                 let slots = #slot_count_constructor;
@@ -74,7 +76,7 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
                 wasm_ast::emit_binary(&module, &mut buffer)?;
                 let engine = wasmtime::Engine::default();
                 let module = wasmtime::Module::new(&engine, &buffer[..])?;
-                let mut store = wasmtime::Store::new(&engine, ());
+                let mut store = wasmtime::Store::new(&engine, #state_store_arg);
                 let instance = wasmtime::Instance::new(&mut store, &module, &vec![])?;
                 let func = instance.get_typed_func::<#param_generic, #result_generic, _>(&mut store, name)?;
     
