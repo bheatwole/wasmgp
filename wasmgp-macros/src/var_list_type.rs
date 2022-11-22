@@ -54,6 +54,14 @@ impl VarListType {
             list: self,
         }
     }
+
+    pub fn for_call_fn_args<'a>(&'a self) -> VarListTypeCallFnArgs<'a> {
+        VarListTypeCallFnArgs { list: self }
+    }
+
+    pub fn for_call_args<'a>(&'a self) -> VarListTypeCallArgs<'a> {
+        VarListTypeCallArgs { list: self }
+    }
 }
 
 pub struct VarListTypeGenericParams<'a> {
@@ -131,6 +139,37 @@ impl<'a> ToTokens for VarListTypeValueTypes<'a> {
             tokens: inner_ts,
         }
         .to_tokens(tokens);
+    }
+}
+
+/// Prints the var_list formatted for the arguments of `fn call(&self, v1: u32, v2: i32)`
+pub struct VarListTypeCallFnArgs<'a> {
+    list: &'a VarListType,
+}
+
+impl<'a> ToTokens for VarListTypeCallFnArgs<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        for (i, var) in self.list.vars.iter().enumerate() {
+            let var_name: Ident = syn::parse_str::<Ident>(&format!("v{}", i + 1)).unwrap();
+            tokens.extend(quote!(, #var_name: #var));
+        }
+    }
+}
+
+/// Prints the var_list formatted for the arguments of `self.func.call(store.deref_mut(), (v1, v2))?;`
+pub struct VarListTypeCallArgs<'a> {
+    list: &'a VarListType,
+}
+
+impl<'a> ToTokens for VarListTypeCallArgs<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let mut contents: Punctuated<_, Token!(,)> = Punctuated::new();
+        for i in 0..self.list.vars.len() {
+            let var_name: Ident = syn::parse_str::<Ident>(&format!("v{}", i + 1)).unwrap();
+            contents.push(quote!(#var_name));
+        }
+
+        tokens.extend(quote!((#contents)));
     }
 }
 

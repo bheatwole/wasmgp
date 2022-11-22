@@ -49,6 +49,10 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
     let param_value_types = param_var_list_type.for_value_types(&wasmgp);
     let result_value_types = result_var_list_type.for_value_types(&wasmgp);
 
+    // The `call` function requries the parameters to be formatted in two additional forms
+    let param_call_fn_args = param_var_list_type.for_call_fn_args();
+    let param_call_args = param_var_list_type.for_call_args();
+
     // Handle the slot_count construction
     let slot_count_constructor = slot_count.for_constructor(&wasmgp);
 
@@ -86,10 +90,10 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
                 })
             }
     
-            fn call(&self, value: u32) -> anyhow::Result<#result_generic> {
+            fn call(&self #param_call_fn_args) -> anyhow::Result<#result_generic> {
                 use std::ops::DerefMut;
                 let mut store = self.store.borrow_mut();
-                let results = self.func.call(store.deref_mut(), value)?;
+                let results = self.func.call(store.deref_mut(), #param_call_args)?;
                 Ok(results)
             }
         }
