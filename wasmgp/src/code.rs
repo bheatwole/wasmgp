@@ -38,10 +38,7 @@ pub enum Code {
     PopulationCount(Slot, Slot),
 
     /// AddInteger(left_slot, right_slot, result_slot): Places the result of left + right in the result slot.
-    AddInteger(Slot, Slot, Slot),
-
-    /// AddFloat(left_slot, right_slot, result_slot): Places the result of left + right in the result slot.
-    AddFloat(Slot, Slot, Slot),
+    Add(Slot, Slot, Slot),
 
     /// SubtractInteger(left_slot, right_slot, result_slot): Places the result of left - right in the result slot.
     SubtractInteger(Slot, Slot, Slot),
@@ -192,6 +189,18 @@ impl CodeBuilder for Code {
                 instruction_list.push(NumericInstruction::CountLeadingZeros(convert_to.into()).into());
                 SetSlotConvert::convert(*dest, convert_to, context, instruction_list)?;
             }
+            Code::Add(p1, p2, dest) => {
+                let (convert_to, number_type) = match context.get_slot_value_type(*dest)? {
+                    ValueType::I32 => (ValueType::I32, NumberType::I32),
+                    ValueType::I64 => (ValueType::I64, NumberType::I64),
+                    ValueType::F32 => (ValueType::F32, NumberType::F32),
+                    ValueType::F64 => (ValueType::F64, NumberType::F64),
+                };
+                GetSlotConvert::convert(*p1, convert_to, context, instruction_list)?;
+                GetSlotConvert::convert(*p2, convert_to, context, instruction_list)?;
+                instruction_list.push(NumericInstruction::Add(number_type).into());
+                SetSlotConvert::convert(*dest, convert_to, context, instruction_list)?;
+            }
             Code::Return => {
                 for slot in context.return_slots().iter() {
                     instruction_list.push(VariableInstruction::LocalGet(*slot as u32).into());
@@ -249,11 +258,13 @@ impl CodeBuilder for Code {
         Ok(())
     }
 }
+
 #[cfg(test)]
 mod tests {
     use std::vec;
 
     use wasm_ast::{emit_binary, ModuleBuilder};
+    use wasmgp_macros::wasm_code;
     use wasmtime::{Engine, Instance, Store};
 
     use crate::{Code, CodeContext, ConstF32, ConstF64, ConstI32, ConstI64, FunctionSignature, SlotCount, ValueType};
@@ -272,6 +283,18 @@ mod tests {
         let mut store = Store::new(&engine, ());
         let instance = Instance::new(&mut store, &module, &vec![]).unwrap();
         (store, instance)
+    }
+
+    #[wasm_code]
+    fn double(value: u32) -> u32 {
+        [Code::Add(0, 0, 1), Code::Return]
+    }
+
+    #[test]
+    fn test_add() {
+        let func = Double::new().unwrap();
+        assert_eq!(4, func.call(2).unwrap());
+        assert_eq!(30, func.call(15).unwrap());
     }
 
     #[test]
