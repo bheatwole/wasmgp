@@ -76,3 +76,238 @@ impl CodeBuilder for ConstF64 {
         SetSlotConvert::convert(self.slot, ValueType::F64, context, instruction_list)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use wasmgp_macros::wasm_code;
+
+    use crate::{Code, ConstF32, ConstF64, ConstI32, ConstI64};
+
+    #[wasm_code]
+    fn const_i32_and_return_i32() -> u32 {
+        [ConstI32::new(0, 42), Code::Return]
+    }
+
+    #[test]
+    fn const_i32_and_return_i32() {
+        let func = ConstI32AndReturnI32::new().unwrap();
+        assert_eq!(42u32, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_i32_and_return_i64() -> u64 {
+        [ConstI32::new(0, 42), Code::Return]
+    }
+
+    #[test]
+    fn const_i32_and_return_i64() {
+        let func = ConstI32AndReturnI64::new().unwrap();
+        assert_eq!(42u64, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_i32_and_return_f32() -> f32 {
+        [ConstI32::new(0, 42), Code::Return]
+    }
+
+    #[test]
+    fn const_i32_and_return_f32() {
+        let func = ConstI32AndReturnF32::new().unwrap();
+        assert_eq!(42f32, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_i32_and_return_f64() -> f64 {
+        [ConstI32::new(0, 42), Code::Return]
+    }
+
+    #[test]
+    fn const_i32_and_return_f64() {
+        let func = ConstI32AndReturnF64::new().unwrap();
+        assert_eq!(42f64, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_i64_and_return_i32() -> u32 {
+        [ConstI64::new(0, 42), Code::Return]
+    }
+
+    #[test]
+    fn const_i64_and_return_i32() {
+        let func = ConstI64AndReturnI32::new().unwrap();
+        assert_eq!(42u32, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_i64_and_return_i64() -> u64 {
+        [ConstI64::new(0, 42), Code::Return]
+    }
+
+    #[test]
+    fn const_i64_and_return_i64() {
+        let func = ConstI64AndReturnI64::new().unwrap();
+        assert_eq!(42u64, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_i64_and_return_f32() -> f32 {
+        [ConstI64::new(0, 42), Code::Return]
+    }
+
+    #[test]
+    fn const_i64_and_return_f32() {
+        let func = ConstI64AndReturnF32::new().unwrap();
+        assert_eq!(42f32, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_i64_and_return_f64() -> f64 {
+        [ConstI64::new(0, 42), Code::Return]
+    }
+
+    #[test]
+    fn const_i64_and_return_f64() {
+        let func = ConstI64AndReturnF64::new().unwrap();
+        assert_eq!(42f64, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_f32_and_return_u32() -> u32 {
+        [ConstF32::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f32_and_return_u32() {
+        let func = ConstF32AndReturnU32::new().unwrap();
+        // Code: unsigned math, -1 saturates to 0
+        assert_eq!(0u32, func.call().unwrap());
+    }
+
+    #[wasm_code(signed)]
+    fn const_f32_and_return_i32() -> i32 {
+        [ConstF32::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f32_and_return_i32() {
+        let func = ConstF32AndReturnI32::new().unwrap();
+        // Code: unsigned math, -1 saturates to -1
+        assert_eq!(-1i32, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_f32_and_return_u64() -> u64 {
+        [ConstF32::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f32_and_return_u64() {
+        let func = ConstF32AndReturnU64::new().unwrap();
+        // Code: unsigned math, -1 saturates to 0
+        assert_eq!(0u64, func.call().unwrap());
+    }
+
+    #[wasm_code(signed)]
+    fn const_f32_and_return_i64() -> i64 {
+        [ConstF32::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f32_and_return_i64() {
+        let func = ConstF32AndReturnI64::new().unwrap();
+        // Code: unsigned math, -1 saturates to -1
+        assert_eq!(-1i64, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_f32_and_return_f32() -> f32 {
+        [ConstF32::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f32_and_return_f32() {
+        let func = ConstF32AndReturnF32::new().unwrap();
+        assert_eq!(-1f32, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_f32_and_return_f64() -> f64 {
+        [ConstF32::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f32_and_return_f64() {
+        let func = ConstF32AndReturnF64::new().unwrap();
+        assert_eq!(-1f64, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_f64_and_return_u32() -> u32 {
+        [ConstF64::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f64_and_return_u32() {
+        let func = ConstF64AndReturnU32::new().unwrap();
+        // Code: unsigned math, -1 saturates to 0
+        assert_eq!(0u32, func.call().unwrap());
+    }
+
+    #[wasm_code(signed)]
+    fn const_f64_and_return_i32() -> i32 {
+        [ConstF64::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f64_and_return_i32() {
+        let func = ConstF64AndReturnI32::new().unwrap();
+        // Code: unsigned math, -1 saturates to -1
+        assert_eq!(-1i32, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_f64_and_return_u64() -> u64 {
+        [ConstF64::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f64_and_return_u64() {
+        let func = ConstF64AndReturnU64::new().unwrap();
+        // Code: unsigned math, -1 saturates to 0
+        assert_eq!(0u64, func.call().unwrap());
+    }
+
+    #[wasm_code(signed)]
+    fn const_f64_and_return_i64() -> i64 {
+        [ConstF64::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f64_and_return_i64() {
+        let func = ConstF64AndReturnI64::new().unwrap();
+        // Code: unsigned math, -1 saturates to -1
+        assert_eq!(-1i64, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_f64_and_return_f32() -> f32 {
+        [ConstF64::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f64_and_return_f32() {
+        let func = ConstF64AndReturnF32::new().unwrap();
+        assert_eq!(-1f32, func.call().unwrap());
+    }
+
+    #[wasm_code]
+    fn const_f64_and_return_f64() -> f64 {
+        [ConstF64::new(0, -1.0), Code::Return]
+    }
+
+    #[test]
+    fn const_f64_and_return_f64() {
+        let func = ConstF64AndReturnF64::new().unwrap();
+        assert_eq!(-1f64, func.call().unwrap());
+    }
+}
