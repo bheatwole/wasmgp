@@ -1,4 +1,4 @@
-use proc_macro2::{Delimiter, Group, Span, TokenStream, TokenTree};
+use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens, TokenStreamExt};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
@@ -82,16 +82,7 @@ impl<'a> ToTokens for VarListTypeGenericParams<'a> {
         for var in self.list.vars.iter() {
             contents.push(var.clone());
         }
-
-        // Make a new token stream with the contents of the tuple
-        let mut inner_ts = TokenStream::new();
-        contents.to_tokens(&mut inner_ts);
-
-        // Make a parenthesized group from the inner token stream
-        tokens.append(TokenTree::Group(Group::new(
-            Delimiter::Parenthesis,
-            inner_ts,
-        )))
+        tokens.extend(quote!((#contents)));
     }
 }
 
@@ -119,26 +110,7 @@ impl<'a> ToTokens for VarListTypeValueTypes<'a> {
                 #crate_path::ValueType::#vt
             });
         }
-
-        // Write the contents to a temporary TokenStream that will be used by the macro
-        let inner_ts = contents.to_token_stream();
-
-        // Create the code for `vec![inner_ts]`
-        let mut vec = Punctuated::new();
-        vec.push(PathSegment {
-            ident: Ident::new("vec", span.clone()),
-            arguments: PathArguments::None,
-        });
-        Macro {
-            path: Path {
-                leading_colon: None,
-                segments: vec,
-            },
-            bang_token: syn::token::Bang(span.clone()),
-            delimiter: MacroDelimiter::Bracket(syn::token::Bracket(span.clone())),
-            tokens: inner_ts,
-        }
-        .to_tokens(tokens);
+        tokens.extend(quote!(vec![#contents]));
     }
 }
 
