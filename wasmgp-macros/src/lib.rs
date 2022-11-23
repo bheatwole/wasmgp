@@ -4,6 +4,7 @@ use syn::*;
 mod block_stmts;
 mod slot_count;
 mod state_type;
+mod util;
 mod var_list_type;
 mod wasm_code;
 
