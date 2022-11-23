@@ -1,7 +1,7 @@
 use crate::code_builder::CodeBuilder;
 use crate::convert::{GetSlotConvert, SetSlotConvert};
 use crate::CodeContext;
-use crate::{ConstF32, ConstF64, ConstI32, ConstI64, Slot, ValueType};
+use crate::*;
 use anyhow::Result;
 use wasm_ast::{
     BlockType, ControlInstruction, Expression, Instruction, IntegerType, NumberType, NumericInstruction,
@@ -25,17 +25,16 @@ pub enum Code {
     /// integer values, it will be truncated.
     ConstF64(ConstF64),
 
-    /// CountLeadingZeros(source_slot, destination_slot): Counts the number of leading zero bits in the specified source
-    /// slot and places it into the destination_slot.
-    CountLeadingZeros(Slot, Slot),
-
-    /// CountTrailingZeros(source_slot, destination_slot): Counts the number of trailing zero bits in the specified
-    /// source slot and places it into the destination_slot.
-    CountTrailingZeros(Slot, Slot),
-
-    /// PopulationCount(source_slot, destination_slot): Counts the number of one bits in the specified source slot and
-    /// places it into the destination_slot.
-    PopulationCount(Slot, Slot),
+    CountLeadingZeros(CountLeadingZeros),
+    CountTrailingZeros(CountTrailingZeros),
+    PopulationCount(PopulationCount),
+    And(And),
+    Or(Or),
+    Xor(Xor),
+    ShiftLeft(ShiftLeft),
+    ShiftRight(ShiftRight),
+    RotateLeft(RotateLeft),
+    RotateRight(RotateRight),
 
     /// AddInteger(left_slot, right_slot, result_slot): Places the result of left + right in the result slot.
     Add(Slot, Slot, Slot),
@@ -64,13 +63,6 @@ pub enum Code {
     /// slot. The code will leave the result untouched if the divisor is zero.
     Remainder(Slot, Slot, Slot),
 
-    And(Slot, Slot, Slot),
-    Or(Slot, Slot, Slot),
-    Xor(Slot, Slot, Slot),
-    ShiftLeft(Slot, Slot, Slot),
-    ShiftRight(Slot, Slot, Slot),
-    RotateLeft(Slot, Slot, Slot),
-    RotateRight(Slot, Slot, Slot),
     AbsoluteValue(Slot, Slot),
     Negate(Slot, Slot),
     SquareRoot(Slot, Slot),
@@ -180,14 +172,35 @@ impl CodeBuilder for Code {
             Code::ConstF64(instruction) => {
                 instruction.append_code(context, instruction_list)?;
             }
-            Code::CountLeadingZeros(src, dest) => {
-                let convert_to = match context.get_slot_value_type(*src)? {
-                    ValueType::I32 => ValueType::I32,
-                    _ => ValueType::I64,
-                };
-                GetSlotConvert::convert(*src, convert_to, context, instruction_list)?;
-                instruction_list.push(NumericInstruction::CountLeadingZeros(convert_to.into()).into());
-                SetSlotConvert::convert(*dest, convert_to, context, instruction_list)?;
+            Code::CountLeadingZeros(instruction) => {
+                instruction.append_code(context, instruction_list)?;
+            }
+            Code::CountTrailingZeros(instruction) => {
+                instruction.append_code(context, instruction_list)?;
+            }
+            Code::PopulationCount(instruction) => {
+                instruction.append_code(context, instruction_list)?;
+            }
+            Code::And(instruction) => {
+                instruction.append_code(context, instruction_list)?;
+            }
+            Code::Or(instruction) => {
+                instruction.append_code(context, instruction_list)?;
+            }
+            Code::Xor(instruction) => {
+                instruction.append_code(context, instruction_list)?;
+            }
+            Code::ShiftLeft(instruction) => {
+                instruction.append_code(context, instruction_list)?;
+            }
+            Code::ShiftRight(instruction) => {
+                instruction.append_code(context, instruction_list)?;
+            }
+            Code::RotateLeft(instruction) => {
+                instruction.append_code(context, instruction_list)?;
+            }
+            Code::RotateRight(instruction) => {
+                instruction.append_code(context, instruction_list)?;
             }
             Code::Add(p1, p2, dest) => {
                 let (convert_to, number_type) = match context.get_slot_value_type(*dest)? {
@@ -267,7 +280,7 @@ mod tests {
     use wasmgp_macros::wasm_code;
     use wasmtime::{Engine, Instance, Store};
 
-    use crate::{Code, CodeContext, ConstF32, ConstI32, FunctionSignature, SlotCount, ValueType};
+    use crate::*;
 
     fn build_code(context: CodeContext, code: Vec<Code>) -> (Store<()>, Instance) {
         let mut builder = ModuleBuilder::new();
@@ -347,55 +360,5 @@ mod tests {
         // Call the function and confirm we get the constant
         let result = typed_func.call(&mut store, ()).unwrap();
         assert_eq!(0xFFFFFFFF, result);
-    }
-
-    #[test]
-    fn count_leading_zeros_i32() {
-        // Context
-        let name = "count_leading_zeros_i32";
-        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
-        let slots = SlotCount {
-            i32: 0,
-            i64: 0,
-            f32: 0,
-            f64: 0,
-        };
-        let context = CodeContext::new(&fs, slots, false).unwrap();
-
-        // Code
-        let code = vec![ConstI32::new(0, 1), Code::CountLeadingZeros(0, 0), Code::Return];
-
-        // Compile and get function pointer to it
-        let (mut store, instance) = build_code(context, code);
-        let typed_func = instance.get_typed_func::<(), u32, _>(&mut store, name).unwrap();
-
-        // Call the function and confirm we get the constant
-        let result = typed_func.call(&mut store, ()).unwrap();
-        assert_eq!(31, result);
-    }
-
-    #[test]
-    fn count_leading_zeros_f32() {
-        // Context
-        let name = "count_leading_zeros_f32";
-        let fs = FunctionSignature::new(name, vec![], vec![ValueType::I32]);
-        let slots = SlotCount {
-            i32: 0,
-            i64: 0,
-            f32: 1,
-            f64: 0,
-        };
-        let context = CodeContext::new(&fs, slots, false).unwrap();
-
-        // Code: all float -> integer conversions use 64 bit integers
-        let code = vec![ConstF32::new(1, 1.0), Code::CountLeadingZeros(1, 0), Code::Return];
-
-        // Compile and get function pointer to it
-        let (mut store, instance) = build_code(context, code);
-        let typed_func = instance.get_typed_func::<(), u32, _>(&mut store, name).unwrap();
-
-        // Call the function and confirm we get the constant
-        let result = typed_func.call(&mut store, ()).unwrap();
-        assert_eq!(63, result);
     }
 }

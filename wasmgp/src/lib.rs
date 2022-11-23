@@ -1,4 +1,5 @@
 mod code;
+mod code_bit_ops;
 mod code_builder;
 mod code_const;
 mod code_context;
@@ -16,7 +17,8 @@ mod world;
 mod world_configuration;
 
 pub use code::Code;
-pub use code_const::{ConstF32, ConstF64, ConstI32, ConstI64};
+pub use code_bit_ops::*;
+pub use code_const::*;
 pub use code_context::CodeContext;
 pub use error::WasmgpError;
 pub use function_signature::FunctionSignature;
