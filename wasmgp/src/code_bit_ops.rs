@@ -165,7 +165,7 @@ impl CodeBuilder for PopulationCount {
 /// use wasmgp::*;
 /// use wasmgp_macros::wasm_code;
 ///
-/// #[wasm_code(unsigned, 1)]
+/// #[wasm_code(unsigned)]
 /// fn and_i32(v1: u32, v2: u32) -> u32 {
 ///     [And::new(0, 1, 2), Code::Return]
 /// }
@@ -213,7 +213,7 @@ impl CodeBuilder for And {
 /// use wasmgp::*;
 /// use wasmgp_macros::wasm_code;
 ///
-/// #[wasm_code(unsigned, 1)]
+/// #[wasm_code(unsigned)]
 /// fn or_i32(v1: u32, v2: u32) -> u32 {
 ///     [Or::new(0, 1, 2), Code::Return]
 /// }
@@ -261,7 +261,7 @@ impl CodeBuilder for Or {
 /// use wasmgp::*;
 /// use wasmgp_macros::wasm_code;
 ///
-/// #[wasm_code(unsigned, 1)]
+/// #[wasm_code(unsigned)]
 /// fn xor_i32(v1: u32, v2: u32) -> u32 {
 ///     [Xor::new(0, 1, 2), Code::Return]
 /// }
@@ -303,17 +303,37 @@ impl CodeBuilder for Xor {
     }
 }
 
+/// Performs the bitwise shift left of a source integers by a specific number of bits and places the result in the
+///  destination slot
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(unsigned)]
+/// fn shift_left_i32(source: u32, bits: u32) -> u32 {
+///     [ShiftLeft::new(0, 1, 2), Code::Return]
+/// }
+/// let func = ShiftLeftI32::new().unwrap();
+/// assert_eq!(1, func.call(1, 0).unwrap());
+/// assert_eq!(2, func.call(1, 1).unwrap());
+/// assert_eq!(4, func.call(2, 1).unwrap());
+/// // Large numbers of bits are taken modulo the size of the integer
+/// assert_eq!(1, func.call(1, 32).unwrap());
+/// assert_eq!(2, func.call(1, 33).unwrap());
+/// assert_eq!(4, func.call(2, 33).unwrap());
+/// ```
 pub struct ShiftLeft {
-    left: Slot,
-    right: Slot,
+    source: Slot,
+    bits: Slot,
     destination: Slot,
 }
 
 impl ShiftLeft {
-    pub fn new(left: Slot, right: Slot, destination: Slot) -> Code {
+    pub fn new(source: Slot, bits: Slot, destination: Slot) -> Code {
         Code::ShiftLeft(ShiftLeft {
-            left,
-            right,
+            source,
+            bits,
             destination,
         })
     }
@@ -321,21 +341,71 @@ impl ShiftLeft {
 
 impl CodeBuilder for ShiftLeft {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
+        let operate_as = match context.get_slot_value_type(self.source)? {
+            ValueType::I32 => ValueType::I32,
+            _ => ValueType::I64,
+        };
+        GetSlotConvert::convert(self.source, operate_as, context, instruction_list)?;
+        GetSlotConvert::convert(self.bits, operate_as, context, instruction_list)?;
+        instruction_list.push(NumericInstruction::ShiftLeft(operate_as.into()).into());
+        SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
 }
 
+/// Performs the bitwise shift right of a source integers by a specific number of bits and places the result in the
+/// destination slot. If the context is signed, the signed bit will not be shifted
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(unsigned, 1)]
+/// fn shift_right_u32(source: u32, bits: u32) -> u32 {
+///     [ShiftRight::new(0, 1, 2), Code::Return]
+/// }
+/// let func = ShiftRightU32::new().unwrap();
+/// assert_eq!(4, func.call(4, 0).unwrap());
+/// assert_eq!(2, func.call(4, 1).unwrap());
+/// assert_eq!(1, func.call(4, 2).unwrap());
+/// assert_eq!(0, func.call(4, 3).unwrap());
+/// // Large numbers of bits are taken modulo the size of the integer
+/// assert_eq!(4, func.call(4, 32).unwrap());
+/// assert_eq!(2, func.call(4, 33).unwrap());
+/// assert_eq!(1, func.call(2, 33).unwrap());
+/// ```
+///
+/// Signed code keeps the sign
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(signed)]
+/// fn shift_right_i32(source: i32, bits: i32) -> i32 {
+///     [ShiftRight::new(0, 1, 2), Code::Return]
+/// }
+/// let func = ShiftRightI32::new().unwrap();
+/// assert_eq!(-4, func.call(-4, 0).unwrap());
+/// assert_eq!(-2, func.call(-4, 1).unwrap());
+/// assert_eq!(-1, func.call(-4, 2).unwrap());
+/// // Negative one shifted right any number of spots is still -1
+/// assert_eq!(-1, func.call(-4, 16).unwrap());
+/// // Large numbers of bits are taken modulo the size of the integer
+/// assert_eq!(-4, func.call(-4, 32).unwrap());
+/// assert_eq!(-2, func.call(-4, 33).unwrap());
+/// assert_eq!(-1, func.call(-2, 33).unwrap());
+/// ```
 pub struct ShiftRight {
-    left: Slot,
-    right: Slot,
+    source: Slot,
+    bits: Slot,
     destination: Slot,
 }
 
 impl ShiftRight {
-    pub fn new(left: Slot, right: Slot, destination: Slot) -> Code {
+    pub fn new(source: Slot, bits: Slot, destination: Slot) -> Code {
         Code::ShiftRight(ShiftRight {
-            left,
-            right,
+            source,
+            bits,
             destination,
         })
     }
@@ -343,21 +413,47 @@ impl ShiftRight {
 
 impl CodeBuilder for ShiftRight {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
+        let operate_as = match context.get_slot_value_type(self.source)? {
+            ValueType::I32 => ValueType::I32,
+            _ => ValueType::I64,
+        };
+        GetSlotConvert::convert(self.source, operate_as, context, instruction_list)?;
+        GetSlotConvert::convert(self.bits, operate_as, context, instruction_list)?;
+        instruction_list.push(NumericInstruction::ShiftRight(operate_as.into(), context.sign_extension()).into());
+        SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
 }
 
+/// Performs the bitwise rotate left of a source integers by a specific number of bits and places the result in the
+/// destination slot. Rotate does not take signedness into consideration
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(signed)]
+/// fn rotate_left_i32(source: i32, bits: i32) -> i32 {
+///     [RotateLeft::new(0, 1, 2), Code::Return]
+/// }
+/// let func = RotateLeftI32::new().unwrap();
+/// assert_eq!(1, func.call(1, 0).unwrap());
+/// assert_eq!(2, func.call(1, 1).unwrap());
+/// assert_eq!(4, func.call(1, 2).unwrap());
+/// assert_eq!(1, func.call(1, 32).unwrap());
+/// assert_eq!(i32::MIN, func.call(1, 31).unwrap());
+/// ```
 pub struct RotateLeft {
-    left: Slot,
-    right: Slot,
+    source: Slot,
+    bits: Slot,
     destination: Slot,
 }
 
 impl RotateLeft {
-    pub fn new(left: Slot, right: Slot, destination: Slot) -> Code {
+    pub fn new(source: Slot, bits: Slot, destination: Slot) -> Code {
         Code::RotateLeft(RotateLeft {
-            left,
-            right,
+            source,
+            bits,
             destination,
         })
     }
@@ -365,21 +461,47 @@ impl RotateLeft {
 
 impl CodeBuilder for RotateLeft {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
+        let operate_as = match context.get_slot_value_type(self.source)? {
+            ValueType::I32 => ValueType::I32,
+            _ => ValueType::I64,
+        };
+        GetSlotConvert::convert(self.source, operate_as, context, instruction_list)?;
+        GetSlotConvert::convert(self.bits, operate_as, context, instruction_list)?;
+        instruction_list.push(NumericInstruction::RotateLeft(operate_as.into()).into());
+        SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
 }
 
+/// Performs the bitwise rotate right of a source integers by a specific number of bits and places the result in the
+/// destination slot. Rotate does not take signedness into consideration
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(signed)]
+/// fn rotate_right_i32(source: i32, bits: i32) -> i32 {
+///     [RotateRight::new(0, 1, 2), Code::Return]
+/// }
+/// let func = RotateRightI32::new().unwrap();
+/// assert_eq!(1, func.call(1, 0).unwrap());
+/// assert_eq!(i32::MIN, func.call(1, 1).unwrap());
+/// assert_eq!(1, func.call(1, 32).unwrap());
+/// assert_eq!(2, func.call(1, 31).unwrap());
+/// ```
+
 pub struct RotateRight {
-    left: Slot,
-    right: Slot,
+    source: Slot,
+    bits: Slot,
     destination: Slot,
 }
 
 impl RotateRight {
-    pub fn new(left: Slot, right: Slot, destination: Slot) -> Code {
+    pub fn new(source: Slot, bits: Slot, destination: Slot) -> Code {
         Code::RotateRight(RotateRight {
-            left,
-            right,
+            source,
+            bits,
             destination,
         })
     }
@@ -387,6 +509,14 @@ impl RotateRight {
 
 impl CodeBuilder for RotateRight {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
+        let operate_as = match context.get_slot_value_type(self.source)? {
+            ValueType::I32 => ValueType::I32,
+            _ => ValueType::I64,
+        };
+        GetSlotConvert::convert(self.source, operate_as, context, instruction_list)?;
+        GetSlotConvert::convert(self.bits, operate_as, context, instruction_list)?;
+        instruction_list.push(NumericInstruction::RotateRight(operate_as.into()).into());
+        SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
 }
