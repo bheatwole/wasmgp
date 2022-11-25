@@ -34,30 +34,24 @@ pub enum Code {
     Remainder(Remainder),
 
     // Float
-    AbsoluteValue(Slot, Slot),
-    Negate(Slot, Slot),
-    SquareRoot(Slot, Slot),
-    Ceiling(Slot, Slot),
-    Floor(Slot, Slot),
-    Nearest(Slot, Slot),
-    Min(Slot, Slot, Slot),
-    Max(Slot, Slot, Slot),
-    CopySign(Slot, Slot, Slot),
+    AbsoluteValue(AbsoluteValue),
+    Negate(Negate),
+    SquareRoot(SquareRoot),
+    Ceiling(Ceiling),
+    Floor(Floor),
+    Nearest(Nearest),
+    Min(Min),
+    Max(Max),
+    CopySign(CopySign),
 
     // Comparison
     IsEqualZero(Slot, Slot),
-    AreEqualInteger(Slot, Slot, Slot),
-    AreNotEqualInteger(Slot, Slot, Slot),
+    AreEqual(Slot, Slot, Slot),
+    AreNotEqual(Slot, Slot, Slot),
     IsLessThan(Slot, Slot, Slot),
     IsGreaterThan(Slot, Slot, Slot),
     IsLessThanOrEqual(Slot, Slot, Slot),
     IsGreaterThanOrEqual(Slot, Slot, Slot),
-    AreEqualFloat(Slot, Slot, Slot),
-    AreNotEqualFloat(Slot, Slot, Slot),
-    IsLessThanFloat(Slot, Slot, Slot),
-    IsGreaterThanFloat(Slot, Slot, Slot),
-    IsLessThanOrEqualFloat(Slot, Slot, Slot),
-    IsGreaterThanOrEqualFloat(Slot, Slot, Slot),
 
     /// LoadI8(offset_slot, result_slot): Loads the i8 value at the memory index indicated by the offset into the result
     /// slot. The memory index will be cast into an integer and the calculation `offset % mem_size` applied before
@@ -152,6 +146,15 @@ impl CodeBuilder for Code {
             Code::Multiply(instruction) => instruction.append_code(context, instruction_list)?,
             Code::Divide(instruction) => instruction.append_code(context, instruction_list)?,
             Code::Remainder(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::AbsoluteValue(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Negate(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::SquareRoot(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Ceiling(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Floor(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Nearest(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Min(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Max(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::CopySign(instruction) => instruction.append_code(context, instruction_list)?,
             Code::Return => {
                 for slot in context.return_slots().iter() {
                     instruction_list.push(VariableInstruction::LocalGet(*slot as u32).into());
