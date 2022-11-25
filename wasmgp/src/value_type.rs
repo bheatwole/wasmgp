@@ -9,13 +9,12 @@ pub enum ValueType {
     F64,
 }
 
-impl Into<wasm_ast::ValueType> for ValueType {
-    fn into(self) -> wasm_ast::ValueType {
-        match &self {
-            ValueType::I32 => wasm_ast::ValueType::I32,
-            ValueType::I64 => wasm_ast::ValueType::I64,
-            ValueType::F32 => wasm_ast::ValueType::F32,
-            ValueType::F64 => wasm_ast::ValueType::F64,
+impl ValueType {
+    #[inline]
+    pub fn is_float(&self) -> bool {
+        match self {
+            ValueType::F32 | ValueType::F64 => true,
+            _ => false,
         }
     }
 }
@@ -25,7 +24,28 @@ impl Into<wasm_ast::IntegerType> for ValueType {
         match &self {
             ValueType::I32 => wasm_ast::IntegerType::I32,
             ValueType::I64 => wasm_ast::IntegerType::I64,
-            _ => panic!("unsupported conversion of float to integer")
+            _ => panic!("unsupported conversion of float to integer"),
+        }
+    }
+}
+
+impl Into<wasm_ast::FloatType> for ValueType {
+    fn into(self) -> wasm_ast::FloatType {
+        match &self {
+            ValueType::F32 => wasm_ast::FloatType::F32,
+            ValueType::F64 => wasm_ast::FloatType::F64,
+            _ => panic!("unsupported conversion of integer to float"),
+        }
+    }
+}
+
+impl Into<wasm_ast::NumberType> for ValueType {
+    fn into(self) -> wasm_ast::NumberType {
+        match &self {
+            ValueType::I32 => wasm_ast::NumberType::I32,
+            ValueType::I64 => wasm_ast::NumberType::I64,
+            ValueType::F32 => wasm_ast::NumberType::F32,
+            ValueType::F64 => wasm_ast::NumberType::F64,
         }
     }
 }

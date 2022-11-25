@@ -1,5 +1,4 @@
 use crate::code_builder::CodeBuilder;
-use crate::convert::{GetSlotConvert, SetSlotConvert};
 use crate::CodeContext;
 use crate::*;
 use anyhow::Result;
@@ -9,22 +8,13 @@ use wasm_ast::{
 };
 
 pub enum Code {
-    /// ConstI32(slot, value): Loads the specified value into a four-byte integer into the specified work variable
-    /// slot. If the slot is for floating-point values, it will be cast to a float.
+    // Const
     ConstI32(ConstI32),
-
-    /// ConstI64(slot, value): Loads the specified value into a eight-byte integer into the specified work variable
-    /// slot. If the slot is for floating-point values, it will be cast to a float.
     ConstI64(ConstI64),
-
-    /// ConstF32(slot, value): Loads the specified value into a four-byte work variable slot. If the slot is for
-    /// integer values, it will be truncated.
     ConstF32(ConstF32),
-
-    /// ConstF64(slot, value): Loads the specified value into a eight-byte work variable slot. If the slot is for
-    /// integer values, it will be truncated.
     ConstF64(ConstF64),
 
+    // Bitwise
     CountLeadingZeros(CountLeadingZeros),
     CountTrailingZeros(CountTrailingZeros),
     PopulationCount(PopulationCount),
@@ -36,33 +26,14 @@ pub enum Code {
     RotateLeft(RotateLeft),
     RotateRight(RotateRight),
 
-    /// AddInteger(left_slot, right_slot, result_slot): Places the result of left + right in the result slot.
-    Add(Slot, Slot, Slot),
+    // Arithmetic
+    Add(Add),
+    Subtract(Subtract),
+    Multiply(Multiply),
+    Divide(Divide),
+    Remainder(Remainder),
 
-    /// SubtractInteger(left_slot, right_slot, result_slot): Places the result of left - right in the result slot.
-    SubtractInteger(Slot, Slot, Slot),
-
-    /// SubtractFloat(left_slot, right_slot, result_slot): Places the result of left - right in the result slot.
-    SubtractFloat(Slot, Slot, Slot),
-
-    /// MultiplyInteger(left_slot, right_slot, result_slot): Places the result of left * right in the result slot.
-    MultiplyInteger(Slot, Slot, Slot),
-
-    /// MultiplyFloat(left_slot, right_slot, result_slot): Places the result of left * right in the result slot.
-    MultiplyFloat(Slot, Slot, Slot),
-
-    /// Divide(dividend_slot, divisor_slot, result_slot): Places the result of dividend / divisor in the result
-    /// slot. The code will leave the result untouched if the divisor is zero.
-    Divide(Slot, Slot, Slot),
-
-    /// DivideFloat(dividend_slot, divisor_slot, result_slot): Places the result of dividend / divisor in the result
-    /// slot. The code will leave the result untouched if the divisor is zero.
-    DivideFloat(Slot, Slot, Slot),
-
-    /// Remainder(dividend_slot, divisor_slot, result_slot): Places the result of dividend % divisor in the result
-    /// slot. The code will leave the result untouched if the divisor is zero.
-    Remainder(Slot, Slot, Slot),
-
+    // Float
     AbsoluteValue(Slot, Slot),
     Negate(Slot, Slot),
     SquareRoot(Slot, Slot),
@@ -72,6 +43,8 @@ pub enum Code {
     Min(Slot, Slot, Slot),
     Max(Slot, Slot, Slot),
     CopySign(Slot, Slot, Slot),
+
+    // Comparison
     IsEqualZero(Slot, Slot),
     AreEqualInteger(Slot, Slot, Slot),
     AreNotEqualInteger(Slot, Slot, Slot),
@@ -160,60 +133,25 @@ impl Code {
 impl CodeBuilder for Code {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
         match self {
-            Code::ConstI32(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::ConstI64(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::ConstF32(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::ConstF64(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::CountLeadingZeros(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::CountTrailingZeros(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::PopulationCount(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::And(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::Or(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::Xor(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::ShiftLeft(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::ShiftRight(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::RotateLeft(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::RotateRight(instruction) => {
-                instruction.append_code(context, instruction_list)?;
-            }
-            Code::Add(p1, p2, dest) => {
-                let (convert_to, number_type) = match context.get_slot_value_type(*dest)? {
-                    ValueType::I32 => (ValueType::I32, NumberType::I32),
-                    ValueType::I64 => (ValueType::I64, NumberType::I64),
-                    ValueType::F32 => (ValueType::F32, NumberType::F32),
-                    ValueType::F64 => (ValueType::F64, NumberType::F64),
-                };
-                GetSlotConvert::convert(*p1, convert_to, context, instruction_list)?;
-                GetSlotConvert::convert(*p2, convert_to, context, instruction_list)?;
-                instruction_list.push(NumericInstruction::Add(number_type).into());
-                SetSlotConvert::convert(*dest, convert_to, context, instruction_list)?;
-            }
+            Code::ConstI32(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::ConstI64(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::ConstF32(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::ConstF64(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::CountLeadingZeros(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::CountTrailingZeros(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::PopulationCount(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::And(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Or(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Xor(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::ShiftLeft(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::ShiftRight(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::RotateLeft(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::RotateRight(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Add(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Subtract(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Multiply(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Divide(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::Remainder(instruction) => instruction.append_code(context, instruction_list)?,
             Code::Return => {
                 for slot in context.return_slots().iter() {
                     instruction_list.push(VariableInstruction::LocalGet(*slot as u32).into());
@@ -277,7 +215,6 @@ mod tests {
     use std::vec;
 
     use wasm_ast::{emit_binary, ModuleBuilder};
-    use wasmgp_macros::wasm_code;
     use wasmtime::{Engine, Instance, Store};
 
     use crate::*;
@@ -296,18 +233,6 @@ mod tests {
         let mut store = Store::new(&engine, ());
         let instance = Instance::new(&mut store, &module, &vec![]).unwrap();
         (store, instance)
-    }
-
-    #[wasm_code]
-    fn double(value: u32) -> u32 {
-        [Code::Add(0, 0, 1), Code::Return]
-    }
-
-    #[test]
-    fn test_add() {
-        let func = Double::new().unwrap();
-        assert_eq!(4, func.call(2).unwrap());
-        assert_eq!(30, func.call(15).unwrap());
     }
 
     #[test]

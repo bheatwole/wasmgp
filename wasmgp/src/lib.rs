@@ -1,4 +1,5 @@
 mod code;
+mod code_arithmetic;
 mod code_bit_ops;
 mod code_builder;
 mod code_const;
@@ -17,6 +18,7 @@ mod world;
 mod world_configuration;
 
 pub use code::Code;
+pub use code_arithmetic::*;
 pub use code_bit_ops::*;
 pub use code_const::*;
 pub use code_context::CodeContext;
