@@ -45,13 +45,13 @@ pub enum Code {
     CopySign(CopySign),
 
     // Comparison
-    IsEqualZero(Slot, Slot),
-    AreEqual(Slot, Slot, Slot),
-    AreNotEqual(Slot, Slot, Slot),
-    IsLessThan(Slot, Slot, Slot),
-    IsGreaterThan(Slot, Slot, Slot),
-    IsLessThanOrEqual(Slot, Slot, Slot),
-    IsGreaterThanOrEqual(Slot, Slot, Slot),
+    IsEqualZero(IsEqualZero),
+    AreEqual(AreEqual),
+    AreNotEqual(AreNotEqual),
+    IsLessThan(IsLessThan),
+    IsGreaterThan(IsGreaterThan),
+    IsLessThanOrEqual(IsLessThanOrEqual),
+    IsGreaterThanOrEqual(IsGreaterThanOrEqual),
 
     /// LoadI8(offset_slot, result_slot): Loads the i8 value at the memory index indicated by the offset into the result
     /// slot. The memory index will be cast into an integer and the calculation `offset % mem_size` applied before
@@ -155,6 +155,13 @@ impl CodeBuilder for Code {
             Code::Min(instruction) => instruction.append_code(context, instruction_list)?,
             Code::Max(instruction) => instruction.append_code(context, instruction_list)?,
             Code::CopySign(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::IsEqualZero(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::AreEqual(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::AreNotEqual(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::IsLessThan(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::IsGreaterThan(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::IsLessThanOrEqual(instruction) => instruction.append_code(context, instruction_list)?,
+            Code::IsGreaterThanOrEqual(instruction) => instruction.append_code(context, instruction_list)?,
             Code::Return => {
                 for slot in context.return_slots().iter() {
                     instruction_list.push(VariableInstruction::LocalGet(*slot as u32).into());
