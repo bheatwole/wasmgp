@@ -138,8 +138,6 @@ impl CodeBuilder for Code {
             Code::DoFor(instruction) => instruction.append_code(context, instruction_list)?,
             Code::Break(instruction) => instruction.append_code(context, instruction_list)?,
             Code::BreakIf(instruction) => instruction.append_code(context, instruction_list)?,
-
-            _ => unimplemented!(),
         }
 
         Ok(())
