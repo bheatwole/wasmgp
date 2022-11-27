@@ -4,6 +4,53 @@ use crate::*;
 use anyhow::Result;
 use wasm_ast::{BlockType, ControlInstruction, Expression, Instruction, NumericInstruction, VariableInstruction};
 
+/// Copies the value from one slot to another. The type will be converted if necessary
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code]
+/// fn copy_slot_i32(value: i32) -> i32 {
+///     [ CopySlot::new(0, 1), Return::new(), ]
+/// }
+/// let func = CopySlotI32::new().unwrap();
+/// assert_eq!(1, func.call(1).unwrap());
+/// assert_eq!(-2, func.call(-2).unwrap());
+/// ```
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(signed)]
+/// fn copy_slot_f32(value: i32) -> f32 {
+///     [ CopySlot::new(0, 1), Return::new(), ]
+/// }
+/// let func = CopySlotF32::new().unwrap();
+/// assert_eq!(1.0, func.call(1).unwrap());
+/// assert_eq!(-2.0, func.call(-2).unwrap());
+/// ```
+pub struct CopySlot {
+    source: Slot,
+    destination: Slot,
+}
+
+impl CopySlot {
+    pub fn new(source: Slot, destination: Slot) -> Code {
+        Code::CopySlot(CopySlot { source, destination })
+    }
+}
+
+impl CodeBuilder for CopySlot {
+    fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
+        let operate_as = context.get_slot_value_type(self.source)?;
+        GetSlotConvert::convert(self.source, operate_as, context, instruction_list)?;
+        SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
+        Ok(())
+    }
+}
+
 /// Returns from a function. There are work variables of the appropriate types set aside to hold the return values.
 /// The function should set the values of those slots prior to calling Return, however they are always initialized
 /// to zero at the top of the function.
@@ -52,7 +99,29 @@ impl CodeBuilder for Call {
     }
 }
 
-/// If(compare_slot, do): If the value in the compare_slot is not zero, than the code listed in 'do' will execute.
+/// If the value in the compare_slot is not zero, than the code listed in 'do' will execute.
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(unsigned, 2)]
+/// fn double_odds(value: u32) -> u32 {
+///     [
+///         ConstI32::new(2, 0),
+///         ConstI32::new(3, 2),
+///         Add::new(0, 2, 1),
+///         Remainder::new(0, 3, 3),
+///         If::new(3, vec![Add::new(0, 0, 1)]),
+///         Return::new(),
+///     ]
+/// }
+/// let func = DoubleOdds::new().unwrap();
+/// assert_eq!(2, func.call(1).unwrap());
+/// assert_eq!(2, func.call(2).unwrap());
+/// assert_eq!(6, func.call(3).unwrap());
+/// assert_eq!(4, func.call(4).unwrap());
+/// ```
 pub struct If {
     if_not_zero: Slot,
     do_this: Vec<Code>,
@@ -66,13 +135,38 @@ impl If {
 
 impl CodeBuilder for If {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
-        unimplemented!();
+        let mut inner_instructions: Vec<Instruction> = vec![];
+        self.do_this.append_code(context, &mut inner_instructions)?;
+
+        GetSlotConvert::convert(self.if_not_zero, ValueType::I32, context, instruction_list)?;
+        instruction_list
+            .push(ControlInstruction::If(BlockType::None, Expression::new(inner_instructions), None).into());
         Ok(())
     }
 }
 
-/// IfElse(compare_slot, do, else_do): If the value in the compare_slot is not zero, than the code listed in 'do'
-/// will execute. Otherwise, the code listed in 'else_do' will execute.
+/// If the value in the compare_slot is not zero, than the code listed in `do_this` will execute. Otherwise, the code
+/// listed in 'else_do_this' will execute.
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(unsigned, 1)]
+/// fn double_odds_triple_evens(value: u32) -> u32 {
+///     [
+///         ConstI32::new(2, 2),
+///         Remainder::new(0, 2, 2),
+///         IfElse::new(2, vec![Add::new(0, 0, 1)], vec![Add::new(0, 0, 1), Add::new(0, 1, 1)]),
+///         Return::new(),
+///     ]
+/// }
+/// let func = DoubleOddsTripleEvens::new().unwrap();
+/// assert_eq!(2, func.call(1).unwrap());
+/// assert_eq!(6, func.call(2).unwrap());
+/// assert_eq!(6, func.call(3).unwrap());
+/// assert_eq!(12, func.call(4).unwrap());
+/// ```
 pub struct IfElse {
     if_not_zero: Slot,
     do_this: Vec<Code>,
@@ -91,13 +185,54 @@ impl IfElse {
 
 impl CodeBuilder for IfElse {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
-        unimplemented!();
+        let mut if_instructions: Vec<Instruction> = vec![];
+        self.do_this.append_code(context, &mut if_instructions)?;
+        let mut else_instructions: Vec<Instruction> = vec![];
+        self.else_do_this.append_code(context, &mut else_instructions)?;
+
+        GetSlotConvert::convert(self.if_not_zero, ValueType::I32, context, instruction_list)?;
+        instruction_list.push(
+            ControlInstruction::If(
+                BlockType::None,
+                Expression::new(if_instructions),
+                Some(Expression::new(else_instructions)),
+            )
+            .into(),
+        );
         Ok(())
     }
 }
 
-/// DoUntil(compare_slot, do): Will execute the code listed in 'do' until the value in the compare_slot is not zero.
-/// This will execute the 'do' block at least once.
+/// DoUntil will execute the code listed in `do_this` until the value in the compare_slot is not zero. This will execute
+/// the `do_this` block at least once.
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(unsigned, 4)]
+/// fn make_multiple_of_three(value: u32) -> u32 {
+///     [
+///         ConstI32::new(2, 1),
+///         ConstI32::new(3, 3),
+///         ConstI32::new(4, 0),
+///         CopySlot::new(0, 1),
+///         Remainder::new(1, 3, 5),
+///         AreEqual::new(5, 4, 5),
+///         DoUntil::new(5, vec![
+///             Add::new(1, 2, 1),
+///             Remainder::new(1, 3, 5),
+///             AreEqual::new(5, 4, 5),
+///         ]),
+///         Return::new(),
+///     ]
+/// }
+/// let func = MakeMultipleOfThree::new().unwrap();
+/// assert_eq!(3, func.call(1).unwrap());
+/// assert_eq!(3, func.call(2).unwrap());
+/// // Because the 'do' loop runs at least one, we get the next multiple
+/// assert_eq!(6, func.call(3).unwrap());
+/// ```
 pub struct DoUntil {
     until_not_zero: Slot,
     do_this: Vec<Code>,
@@ -114,13 +249,74 @@ impl DoUntil {
 
 impl CodeBuilder for DoUntil {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
-        unimplemented!();
+        // Create the code for the innermost loop. A branch of '0' will bring us to the top of this loop and a
+        // branch of '1' will bring us to the end of the block surrounding the loop
+        let mut inner_instructions: Vec<Instruction> = vec![];
+
+        // 'Do' the code. When the `loop_label` is dropped, it indicates we can't break from that loop anymore
+        {
+            let loop_label = context.entering_loop(1);
+            self.do_this.append_code(context, &mut inner_instructions)?;
+            drop(loop_label);
+        }
+
+        // Branch to the end of the outer block if the condition is not zero
+        // br_if 1 (i32.ne 0 (get_local $x) )
+        GetSlotConvert::convert(self.until_not_zero, ValueType::I32, context, &mut inner_instructions)?;
+        inner_instructions.push(NumericInstruction::I32Constant(0).into());
+        inner_instructions.push(NumericInstruction::NotEqual(ValueType::I32.into()).into());
+        inner_instructions.push(ControlInstruction::BranchIf(1).into());
+
+        // If our condition did not get hit, branch to the loop top
+        inner_instructions.push(ControlInstruction::Branch(0).into());
+
+        // Create a `loop` as the target or our 'keep going' jump. The loop does not enter or exit with any new
+        // stack values
+        let loop_expression = Expression::new(vec![ControlInstruction::Loop(
+            BlockType::None,
+            Expression::new(inner_instructions),
+        )
+        .into()]);
+
+        // Create a `block` as the target of our 'exit' jump. The block does not enter or exit with any new
+        // stack values
+        instruction_list.push(ControlInstruction::Block(BlockType::None, loop_expression).into());
+
         Ok(())
     }
 }
 
 /// DoWhile(compare_slot, do): Will execute the code listed in 'do' while the value in the compare_slot is not zero.
 /// This will check the compare value before executing the 'do' code and so 'do' might never run.
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(unsigned, 4)]
+/// fn make_multiple_of_three(value: u32) -> u32 {
+///     [
+///         ConstI32::new(2, 1),
+///         ConstI32::new(3, 3),
+///         ConstI32::new(4, 0),
+///         CopySlot::new(0, 1),
+///         Remainder::new(1, 3, 5),
+///         AreEqual::new(5, 4, 5),
+///         DoWhile::new(5, vec![
+///             Add::new(1, 2, 1),
+///             Remainder::new(1, 3, 5),
+///             AreEqual::new(5, 4, 5),
+///         ]),
+///         Return::new(),
+///     ]
+/// }
+/// let func = MakeMultipleOfThree::new().unwrap();
+/// assert_eq!(3, func.call(1).unwrap());
+/// assert_eq!(3, func.call(2).unwrap());
+/// // Because the 'do' loop checks the condition first, we exit before adding any
+/// assert_eq!(3, func.call(3).unwrap());
+/// assert_eq!(6, func.call(4).unwrap());
+/// ```
 pub struct DoWhile {
     while_not_zero: Slot,
     do_this: Vec<Code>,
@@ -137,7 +333,39 @@ impl DoWhile {
 
 impl CodeBuilder for DoWhile {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
-        unimplemented!();
+        // Create the code for the innermost loop. A branch of '0' will bring us to the top of this loop and a
+        // branch of '1' will bring us to the end of the block surrounding the loop
+        let mut inner_instructions: Vec<Instruction> = vec![];
+
+        // Branch to the end of the outer block if the condition is not zero
+        // br_if 1 (i32.ne 0 (get_local $x) )
+        GetSlotConvert::convert(self.while_not_zero, ValueType::I32, context, &mut inner_instructions)?;
+        inner_instructions.push(NumericInstruction::I32Constant(0).into());
+        inner_instructions.push(NumericInstruction::NotEqual(ValueType::I32.into()).into());
+        inner_instructions.push(ControlInstruction::BranchIf(1).into());
+
+        // 'Do' the code. When the `loop_label` is dropped, it indicates we can't break from that loop anymore
+        {
+            let loop_label = context.entering_loop(1);
+            self.do_this.append_code(context, &mut inner_instructions)?;
+            drop(loop_label);
+        }
+
+        // If our condition did not get hit, branch to the loop top
+        inner_instructions.push(ControlInstruction::Branch(0).into());
+
+        // Create a `loop` as the target or our 'keep going' jump. The loop does not enter or exit with any new
+        // stack values
+        let loop_expression = Expression::new(vec![ControlInstruction::Loop(
+            BlockType::None,
+            Expression::new(inner_instructions),
+        )
+        .into()]);
+
+        // Create a `block` as the target of our 'exit' jump. The block does not enter or exit with any new
+        // stack values
+        instruction_list.push(ControlInstruction::Block(BlockType::None, loop_expression).into());
+
         Ok(())
     }
 }
