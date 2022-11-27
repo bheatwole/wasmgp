@@ -56,31 +56,31 @@ pub enum Code {
     /// LoadI8(offset_slot, result_slot): Loads the i8 value at the memory index indicated by the offset into the result
     /// slot. The memory index will be cast into an integer and the calculation `offset % mem_size` applied before
     /// attempting to read the memory. The i8 value will be cast into the result slot type.
-    LoadI8(Slot, Slot),
-    LoadU8(Slot, Slot),
-    LoadI16(Slot, Slot),
-    LoadU16(Slot, Slot),
-    LoadI32(Slot, Slot),
-    LoadU32(Slot, Slot),
-    LoadI64(Slot, Slot),
-    LoadU64(Slot, Slot),
-    LoadF32(Slot, Slot),
-    LoadF64(Slot, Slot),
-    StoreI8(Slot, Slot),
-    StoreU8(Slot, Slot),
-    StoreI16(Slot, Slot),
-    StoreU16(Slot, Slot),
-    StoreI32(Slot, Slot),
-    StoreU32(Slot, Slot),
-    StoreI64(Slot, Slot),
-    StoreU64(Slot, Slot),
-    StoreF32(Slot, Slot),
-    StoreF64(Slot, Slot),
+    // LoadI8(Slot, Slot),
+    // LoadU8(Slot, Slot),
+    // LoadI16(Slot, Slot),
+    // LoadU16(Slot, Slot),
+    // LoadI32(Slot, Slot),
+    // LoadU32(Slot, Slot),
+    // LoadI64(Slot, Slot),
+    // LoadU64(Slot, Slot),
+    // LoadF32(Slot, Slot),
+    // LoadF64(Slot, Slot),
+    // StoreI8(Slot, Slot),
+    // StoreU8(Slot, Slot),
+    // StoreI16(Slot, Slot),
+    // StoreU16(Slot, Slot),
+    // StoreI32(Slot, Slot),
+    // StoreU32(Slot, Slot),
+    // StoreI64(Slot, Slot),
+    // StoreU64(Slot, Slot),
+    // StoreF32(Slot, Slot),
+    // StoreF64(Slot, Slot),
 
     /// Returns from a function. There are work variables of the appropriate types set aside to hold the return values.
     /// The function should set the values of those slots prior to calling Return, however they are always initialized
     /// to zero at the top of the function.
-    Return,
+    Return(Return),
 
     /// Call(function_index, parameter_slots, return_slots): Calls the host or code function with the specified index
     /// (remainder the number of functions) and uses the specified list of work variables as parameters. If more work
@@ -162,11 +162,7 @@ impl CodeBuilder for Code {
             Code::IsGreaterThan(instruction) => instruction.append_code(context, instruction_list)?,
             Code::IsLessThanOrEqual(instruction) => instruction.append_code(context, instruction_list)?,
             Code::IsGreaterThanOrEqual(instruction) => instruction.append_code(context, instruction_list)?,
-            Code::Return => {
-                for slot in context.return_slots().iter() {
-                    instruction_list.push(VariableInstruction::LocalGet(*slot as u32).into());
-                }
-            }
+            Code::Return(instruction) => instruction.append_code(context, instruction_list)?,
             Code::DoFor(times, do_block) => {
                 // Set a new local with the number of loops remaining (might be zero already)
                 let local_index = context.get_unused_local(ValueType::I32);
@@ -259,7 +255,7 @@ mod tests {
         let context = CodeContext::new(&fs, slots, false).unwrap();
 
         // Code
-        let code = vec![Code::Return];
+        let code = vec![Return::new()];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
@@ -286,7 +282,7 @@ mod tests {
         assert_eq!(ValueType::I64, context.get_slot_value_type(0).unwrap());
 
         // Code: because we're using unsigned math in Wasm, -1 should be 0xFFFFFFFF in u32/u64
-        let code = vec![ConstI32::new(0, -1), Code::Return];
+        let code = vec![ConstI32::new(0, -1), Return::new()];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);

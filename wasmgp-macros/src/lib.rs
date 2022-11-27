@@ -18,7 +18,7 @@ use slot_count::SlotCount;
 /// fn double(value: u32) -> u64 {
 ///     [
 ///         Code::Add(0, 0, 1),
-///         Code::Return,
+///         Return::new(),
 ///     ]
 /// }
 /// ```
@@ -48,7 +48,7 @@ use slot_count::SlotCount;
 ///         let context = wasmgp::CodeContext::new(&fs, slots, false)?;
 ///         let code = vec![
 ///             Code::Add(0, 0, 1),
-///             Code::Return
+///             Return::new()
 ///         ];
 ///         let mut builder = wasm_ast::ModuleBuilder::new();
 ///         context.build(&mut builder, &code[..])?;
@@ -88,7 +88,7 @@ use slot_count::SlotCount;
 /// fn double_with_state<MyState>(value: u32) -> u64 {
 ///     [
 ///         Code::Add(0, 0, 1),
-///         Code::Return,
+///         Return::new(),
 ///     ]
 /// }
 /// ```

@@ -13,7 +13,7 @@ use wasm_ast::{BlockType, ControlInstruction, Expression, Instruction, NumericIn
 ///
 /// #[wasm_code(signed)]
 /// fn add_i32(v1: i32, v2: i32) -> i32 {
-///     [Add::new(0, 1, 2), Code::Return]
+///     [Add::new(0, 1, 2), Return::new()]
 /// }
 /// let func = AddI32::new().unwrap();
 /// assert_eq!(39, func.call(0, 39).unwrap());
@@ -27,7 +27,7 @@ use wasm_ast::{BlockType, ControlInstruction, Expression, Instruction, NumericIn
 ///
 /// #[wasm_code(signed)]
 /// fn add_f32(v1: f32, v2: f32) -> u32 {
-///     [Add::new(0, 1, 2), Code::Return]
+///     [Add::new(0, 1, 2), Return::new()]
 /// }
 /// let func = AddF32::new().unwrap();
 /// assert_eq!(39, func.call(0.0, 39.0).unwrap());
@@ -72,7 +72,7 @@ impl CodeBuilder for Add {
 ///
 /// #[wasm_code(signed)]
 /// fn subtract_i32(v1: i32, v2: i32) -> i32 {
-///     [Subtract::new(0, 1, 2), Code::Return]
+///     [Subtract::new(0, 1, 2), Return::new()]
 /// }
 /// let func = SubtractI32::new().unwrap();
 /// assert_eq!(-39, func.call(0, 39).unwrap());
@@ -86,7 +86,7 @@ impl CodeBuilder for Add {
 ///
 /// #[wasm_code(signed)]
 /// fn subtract_f32(v1: f32, v2: f32) -> i32 {
-///     [Subtract::new(0, 1, 2), Code::Return]
+///     [Subtract::new(0, 1, 2), Return::new()]
 /// }
 /// let func = SubtractF32::new().unwrap();
 /// assert_eq!(-39, func.call(0.0, 39.0).unwrap());
@@ -131,7 +131,7 @@ impl CodeBuilder for Subtract {
 ///
 /// #[wasm_code(signed)]
 /// fn multiply_i32(v1: i32, v2: i32) -> i32 {
-///     [Multiply::new(0, 1, 2), Code::Return]
+///     [Multiply::new(0, 1, 2), Return::new()]
 /// }
 /// let func = MultiplyI32::new().unwrap();
 /// assert_eq!(0, func.call(0, 39).unwrap());
@@ -145,7 +145,7 @@ impl CodeBuilder for Subtract {
 ///
 /// #[wasm_code(signed)]
 /// fn multiply_f32(v1: f32, v2: f32) -> i32 {
-///     [Multiply::new(0, 1, 2), Code::Return]
+///     [Multiply::new(0, 1, 2), Return::new()]
 /// }
 /// let func = MultiplyF32::new().unwrap();
 /// assert_eq!(0, func.call(0.0, 39.0).unwrap());
@@ -190,7 +190,7 @@ impl CodeBuilder for Multiply {
 ///
 /// #[wasm_code(signed)]
 /// fn divide_i32(v1: i32, v2: i32) -> i32 {
-///     [Divide::new(0, 1, 2), Code::Return]
+///     [Divide::new(0, 1, 2), Return::new()]
 /// }
 /// let func = DivideI32::new().unwrap();
 /// assert_eq!(0, func.call(0, 39).unwrap());
@@ -206,7 +206,7 @@ impl CodeBuilder for Multiply {
 ///
 /// #[wasm_code(signed)]
 /// fn divide_f32(v1: f32, v2: f32) -> i32 {
-///     [Divide::new(0, 1, 2), Code::Return]
+///     [Divide::new(0, 1, 2), Return::new()]
 /// }
 /// let func = DivideF32::new().unwrap();
 /// assert_eq!(0, func.call(0.0, 39.0).unwrap());
@@ -222,7 +222,7 @@ impl CodeBuilder for Multiply {
 ///
 /// #[wasm_code(signed)]
 /// fn divide_f64(v1: f64, v2: f64) -> f64 {
-///     [Divide::new(0, 1, 2), Code::Return]
+///     [Divide::new(0, 1, 2), Return::new()]
 /// }
 /// let func = DivideF64::new().unwrap();
 /// assert_eq!(0.0, func.call(0.0, 39.0).unwrap());
@@ -295,7 +295,7 @@ impl CodeBuilder for Divide {
 ///
 /// #[wasm_code(signed)]
 /// fn remainder_i32(v1: i32, v2: i32) -> i32 {
-///     [Remainder::new(0, 1, 2), Code::Return]
+///     [Remainder::new(0, 1, 2), Return::new()]
 /// }
 /// let func = RemainderI32::new().unwrap();
 /// assert_eq!(0, func.call(0, 39).unwrap());
@@ -311,7 +311,7 @@ impl CodeBuilder for Divide {
 ///
 /// #[wasm_code(signed)]
 /// fn remainder_f32(v1: f32, v2: f32) -> i32 {
-///     [Remainder::new(0, 1, 2), Code::Return]
+///     [Remainder::new(0, 1, 2), Return::new()]
 /// }
 /// let func = RemainderF32::new().unwrap();
 /// assert_eq!(0, func.call(0.0, 39.0).unwrap());

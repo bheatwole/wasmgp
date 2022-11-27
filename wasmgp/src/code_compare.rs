@@ -12,7 +12,7 @@ use wasm_ast::{Instruction, NumericInstruction};
 ///
 /// #[wasm_code(signed)]
 /// fn is_equal_zero_f32(value: f32) -> i32 {
-///     [IsEqualZero::new(0, 1), Code::Return]
+///     [IsEqualZero::new(0, 1), Return::new()]
 /// }
 /// let func = IsEqualZeroF32::new().unwrap();
 /// assert_eq!(0, func.call(3.3).unwrap());
@@ -26,7 +26,7 @@ use wasm_ast::{Instruction, NumericInstruction};
 ///
 /// #[wasm_code(signed)]
 /// fn is_equal_zero_i32(value: i32) -> i32 {
-///     [IsEqualZero::new(0, 1), Code::Return]
+///     [IsEqualZero::new(0, 1), Return::new()]
 /// }
 /// let func = IsEqualZeroI32::new().unwrap();
 /// assert_eq!(0, func.call(3).unwrap());
@@ -72,7 +72,7 @@ impl CodeBuilder for IsEqualZero {
 ///
 /// #[wasm_code(signed)]
 /// fn are_equal_f32(left: f32, right: f32) -> i32 {
-///     [AreEqual::new(0, 1, 2), Code::Return]
+///     [AreEqual::new(0, 1, 2), Return::new()]
 /// }
 /// let func = AreEqualF32::new().unwrap();
 /// assert_eq!(1, func.call(3.3, 3.3).unwrap());
@@ -87,7 +87,7 @@ impl CodeBuilder for IsEqualZero {
 ///
 /// #[wasm_code(signed)]
 /// fn are_equal_i32(left: i32, right: i32) -> i32 {
-///     [AreEqual::new(0, 1, 2), Code::Return]
+///     [AreEqual::new(0, 1, 2), Return::new()]
 /// }
 /// let func = AreEqualI32::new().unwrap();
 /// assert_eq!(1, func.call(3, 3).unwrap());
@@ -140,7 +140,7 @@ impl CodeBuilder for AreEqual {
 ///
 /// #[wasm_code(signed)]
 /// fn are_not_equal_f32(left: f32, right: f32) -> i32 {
-///     [AreNotEqual::new(0, 1, 2), Code::Return]
+///     [AreNotEqual::new(0, 1, 2), Return::new()]
 /// }
 /// let func = AreNotEqualF32::new().unwrap();
 /// assert_eq!(0, func.call(3.3, 3.3).unwrap());
@@ -155,7 +155,7 @@ impl CodeBuilder for AreEqual {
 ///
 /// #[wasm_code(signed)]
 /// fn are_not_equal_i32(left: i32, right: i32) -> i32 {
-///     [AreNotEqual::new(0, 1, 2), Code::Return]
+///     [AreNotEqual::new(0, 1, 2), Return::new()]
 /// }
 /// let func = AreNotEqualI32::new().unwrap();
 /// assert_eq!(0, func.call(3, 3).unwrap());
@@ -208,7 +208,7 @@ impl CodeBuilder for AreNotEqual {
 ///
 /// #[wasm_code(signed)]
 /// fn is_less_than_f32(left: f32, right: f32) -> i32 {
-///     [IsLessThan::new(0, 1, 2), Code::Return]
+///     [IsLessThan::new(0, 1, 2), Return::new()]
 /// }
 /// let func = IsLessThanF32::new().unwrap();
 /// assert_eq!(0, func.call(3.3, 3.3).unwrap());
@@ -223,7 +223,7 @@ impl CodeBuilder for AreNotEqual {
 ///
 /// #[wasm_code(signed)]
 /// fn is_less_than_i32(left: i32, right: i32) -> i32 {
-///     [IsLessThan::new(0, 1, 2), Code::Return]
+///     [IsLessThan::new(0, 1, 2), Return::new()]
 /// }
 /// let func = IsLessThanI32::new().unwrap();
 /// assert_eq!(0, func.call(3, 3).unwrap());
@@ -281,7 +281,7 @@ impl CodeBuilder for IsLessThan {
 ///
 /// #[wasm_code(signed)]
 /// fn is_greater_than_f32(left: f32, right: f32) -> i32 {
-///     [IsGreaterThan::new(0, 1, 2), Code::Return]
+///     [IsGreaterThan::new(0, 1, 2), Return::new()]
 /// }
 /// let func = IsGreaterThanF32::new().unwrap();
 /// assert_eq!(0, func.call(3.3, 3.3).unwrap());
@@ -296,7 +296,7 @@ impl CodeBuilder for IsLessThan {
 ///
 /// #[wasm_code(signed)]
 /// fn is_greater_than_i32(left: i32, right: i32) -> i32 {
-///     [IsGreaterThan::new(0, 1, 2), Code::Return]
+///     [IsGreaterThan::new(0, 1, 2), Return::new()]
 /// }
 /// let func = IsGreaterThanI32::new().unwrap();
 /// assert_eq!(0, func.call(3, 3).unwrap());
@@ -354,7 +354,7 @@ impl CodeBuilder for IsGreaterThan {
 ///
 /// #[wasm_code(signed)]
 /// fn is_less_than_or_equal_f32(left: f32, right: f32) -> i32 {
-///     [IsLessThanOrEqual::new(0, 1, 2), Code::Return]
+///     [IsLessThanOrEqual::new(0, 1, 2), Return::new()]
 /// }
 /// let func = IsLessThanOrEqualF32::new().unwrap();
 /// assert_eq!(1, func.call(3.3, 3.3).unwrap());
@@ -369,7 +369,7 @@ impl CodeBuilder for IsGreaterThan {
 ///
 /// #[wasm_code(signed)]
 /// fn is_less_than_or_equal_i32(left: i32, right: i32) -> i32 {
-///     [IsLessThanOrEqual::new(0, 1, 2), Code::Return]
+///     [IsLessThanOrEqual::new(0, 1, 2), Return::new()]
 /// }
 /// let func = IsLessThanOrEqualI32::new().unwrap();
 /// assert_eq!(1, func.call(3, 3).unwrap());
@@ -427,7 +427,7 @@ impl CodeBuilder for IsLessThanOrEqual {
 ///
 /// #[wasm_code(signed)]
 /// fn is_greater_than_or_equal_f32(left: f32, right: f32) -> i32 {
-///     [IsGreaterThanOrEqual::new(0, 1, 2), Code::Return]
+///     [IsGreaterThanOrEqual::new(0, 1, 2), Return::new()]
 /// }
 /// let func = IsGreaterThanOrEqualF32::new().unwrap();
 /// assert_eq!(1, func.call(3.3, 3.3).unwrap());
@@ -442,7 +442,7 @@ impl CodeBuilder for IsLessThanOrEqual {
 ///
 /// #[wasm_code(signed)]
 /// fn is_greater_than_or_equal_i32(left: i32, right: i32) -> i32 {
-///     [IsGreaterThanOrEqual::new(0, 1, 2), Code::Return]
+///     [IsGreaterThanOrEqual::new(0, 1, 2), Return::new()]
 /// }
 /// let func = IsGreaterThanOrEqualI32::new().unwrap();
 /// assert_eq!(1, func.call(3, 3).unwrap());

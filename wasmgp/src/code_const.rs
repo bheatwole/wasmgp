@@ -81,11 +81,11 @@ impl CodeBuilder for ConstF64 {
 mod tests {
     use wasmgp_macros::wasm_code;
 
-    use crate::{Code, ConstF32, ConstF64, ConstI32, ConstI64};
+    use crate::{ConstF32, ConstF64, ConstI32, ConstI64, Return};
 
     #[wasm_code]
     fn const_i32_and_return_i32() -> u32 {
-        [ConstI32::new(0, 42), Code::Return]
+        [ConstI32::new(0, 42), Return::new()]
     }
 
     #[test]
@@ -96,7 +96,7 @@ mod tests {
 
     #[wasm_code]
     fn const_i32_and_return_i64() -> u64 {
-        [ConstI32::new(0, 42), Code::Return]
+        [ConstI32::new(0, 42), Return::new()]
     }
 
     #[test]
@@ -107,7 +107,7 @@ mod tests {
 
     #[wasm_code]
     fn const_i32_and_return_f32() -> f32 {
-        [ConstI32::new(0, 42), Code::Return]
+        [ConstI32::new(0, 42), Return::new()]
     }
 
     #[test]
@@ -118,7 +118,7 @@ mod tests {
 
     #[wasm_code]
     fn const_i32_and_return_f64() -> f64 {
-        [ConstI32::new(0, 42), Code::Return]
+        [ConstI32::new(0, 42), Return::new()]
     }
 
     #[test]
@@ -129,7 +129,7 @@ mod tests {
 
     #[wasm_code]
     fn const_i64_and_return_i32() -> u32 {
-        [ConstI64::new(0, 42), Code::Return]
+        [ConstI64::new(0, 42), Return::new()]
     }
 
     #[test]
@@ -140,7 +140,7 @@ mod tests {
 
     #[wasm_code]
     fn const_i64_and_return_i64() -> u64 {
-        [ConstI64::new(0, 42), Code::Return]
+        [ConstI64::new(0, 42), Return::new()]
     }
 
     #[test]
@@ -151,7 +151,7 @@ mod tests {
 
     #[wasm_code]
     fn const_i64_and_return_f32() -> f32 {
-        [ConstI64::new(0, 42), Code::Return]
+        [ConstI64::new(0, 42), Return::new()]
     }
 
     #[test]
@@ -162,7 +162,7 @@ mod tests {
 
     #[wasm_code]
     fn const_i64_and_return_f64() -> f64 {
-        [ConstI64::new(0, 42), Code::Return]
+        [ConstI64::new(0, 42), Return::new()]
     }
 
     #[test]
@@ -173,7 +173,7 @@ mod tests {
 
     #[wasm_code]
     fn const_f32_and_return_u32() -> u32 {
-        [ConstF32::new(0, -1.0), Code::Return]
+        [ConstF32::new(0, -1.0), Return::new()]
     }
 
     #[test]
@@ -185,7 +185,7 @@ mod tests {
 
     #[wasm_code(signed)]
     fn const_f32_and_return_i32() -> i32 {
-        [ConstF32::new(0, -1.0), Code::Return]
+        [ConstF32::new(0, -1.0), Return::new()]
     }
 
     #[test]
@@ -197,7 +197,7 @@ mod tests {
 
     #[wasm_code]
     fn const_f32_and_return_u64() -> u64 {
-        [ConstF32::new(0, -1.0), Code::Return]
+        [ConstF32::new(0, -1.0), Return::new()]
     }
 
     #[test]
@@ -209,7 +209,7 @@ mod tests {
 
     #[wasm_code(signed)]
     fn const_f32_and_return_i64() -> i64 {
-        [ConstF32::new(0, -1.0), Code::Return]
+        [ConstF32::new(0, -1.0), Return::new()]
     }
 
     #[test]
@@ -221,7 +221,7 @@ mod tests {
 
     #[wasm_code]
     fn const_f32_and_return_f32() -> f32 {
-        [ConstF32::new(0, -1.0), Code::Return]
+        [ConstF32::new(0, -1.0), Return::new()]
     }
 
     #[test]
@@ -232,7 +232,7 @@ mod tests {
 
     #[wasm_code]
     fn const_f32_and_return_f64() -> f64 {
-        [ConstF32::new(0, -1.0), Code::Return]
+        [ConstF32::new(0, -1.0), Return::new()]
     }
 
     #[test]
@@ -243,7 +243,7 @@ mod tests {
 
     #[wasm_code]
     fn const_f64_and_return_u32() -> u32 {
-        [ConstF64::new(0, -1.0), Code::Return]
+        [ConstF64::new(0, -1.0), Return::new()]
     }
 
     #[test]
@@ -255,7 +255,7 @@ mod tests {
 
     #[wasm_code(signed)]
     fn const_f64_and_return_i32() -> i32 {
-        [ConstF64::new(0, -1.0), Code::Return]
+        [ConstF64::new(0, -1.0), Return::new()]
     }
 
     #[test]
@@ -267,7 +267,7 @@ mod tests {
 
     #[wasm_code]
     fn const_f64_and_return_u64() -> u64 {
-        [ConstF64::new(0, -1.0), Code::Return]
+        [ConstF64::new(0, -1.0), Return::new()]
     }
 
     #[test]
@@ -279,7 +279,7 @@ mod tests {
 
     #[wasm_code(signed)]
     fn const_f64_and_return_i64() -> i64 {
-        [ConstF64::new(0, -1.0), Code::Return]
+        [ConstF64::new(0, -1.0), Return::new()]
     }
 
     #[test]
@@ -291,7 +291,7 @@ mod tests {
 
     #[wasm_code]
     fn const_f64_and_return_f32() -> f32 {
-        [ConstF64::new(0, -1.0), Code::Return]
+        [ConstF64::new(0, -1.0), Return::new()]
     }
 
     #[test]
@@ -302,7 +302,7 @@ mod tests {
 
     #[wasm_code]
     fn const_f64_and_return_f64() -> f64 {
-        [ConstF64::new(0, -1.0), Code::Return]
+        [ConstF64::new(0, -1.0), Return::new()]
     }
 
     #[test]

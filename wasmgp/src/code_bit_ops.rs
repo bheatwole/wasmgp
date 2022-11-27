@@ -13,7 +13,7 @@ use wasm_ast::{Instruction, NumericInstruction};
 ///
 /// #[wasm_code]
 /// fn count_leading_zeros_i32() -> u32 {
-///     [ConstI32::new(0, 1), CountLeadingZeros::new(0, 0), Code::Return]
+///     [ConstI32::new(0, 1), CountLeadingZeros::new(0, 0), Return::new()]
 /// }
 /// let func = CountLeadingZerosI32::new().unwrap();
 /// assert_eq!(31, func.call().unwrap());
@@ -26,7 +26,7 @@ use wasm_ast::{Instruction, NumericInstruction};
 ///
 /// #[wasm_code(unsigned, 0, 0, 1, 0)]
 /// fn count_leading_zeros_f32() -> u32 {
-///     [ConstF32::new(1, 1.0), CountLeadingZeros::new(1, 0), Code::Return]
+///     [ConstF32::new(1, 1.0), CountLeadingZeros::new(1, 0), Return::new()]
 /// }
 /// let func = CountLeadingZerosF32::new().unwrap();
 /// assert_eq!(63, func.call().unwrap());
@@ -65,7 +65,7 @@ impl CodeBuilder for CountLeadingZeros {
 ///
 /// #[wasm_code]
 /// fn count_trailing_zeros_i32() -> u32 {
-///     [ConstI32::new(0, 4), CountTrailingZeros::new(0, 0), Code::Return]
+///     [ConstI32::new(0, 4), CountTrailingZeros::new(0, 0), Return::new()]
 /// }
 /// let func = CountTrailingZerosI32::new().unwrap();
 /// assert_eq!(2, func.call().unwrap());
@@ -78,7 +78,7 @@ impl CodeBuilder for CountLeadingZeros {
 ///
 /// #[wasm_code(unsigned, 0, 0, 1, 0)]
 /// fn count_trailing_zeros_f32() -> u32 {
-///     [ConstF32::new(1, 4.0), CountTrailingZeros::new(1, 0), Code::Return]
+///     [ConstF32::new(1, 4.0), CountTrailingZeros::new(1, 0), Return::new()]
 /// }
 /// let func = CountTrailingZerosF32::new().unwrap();
 /// assert_eq!(2, func.call().unwrap());
@@ -116,7 +116,7 @@ impl CodeBuilder for CountTrailingZeros {
 ///
 /// #[wasm_code]
 /// fn population_count_i32() -> u32 {
-///     [ConstI32::new(0, 3), PopulationCount::new(0, 0), Code::Return]
+///     [ConstI32::new(0, 3), PopulationCount::new(0, 0), Return::new()]
 /// }
 /// let func = PopulationCountI32::new().unwrap();
 /// assert_eq!(2, func.call().unwrap());
@@ -129,7 +129,7 @@ impl CodeBuilder for CountTrailingZeros {
 ///
 /// #[wasm_code(unsigned, 0, 0, 1, 0)]
 /// fn population_count_f32() -> u32 {
-///     [ConstF32::new(1, 7.1), PopulationCount::new(1, 0), Code::Return]
+///     [ConstF32::new(1, 7.1), PopulationCount::new(1, 0), Return::new()]
 /// }
 /// let func = PopulationCountF32::new().unwrap();
 /// assert_eq!(3, func.call().unwrap());
@@ -167,7 +167,7 @@ impl CodeBuilder for PopulationCount {
 ///
 /// #[wasm_code(unsigned)]
 /// fn and_i32(v1: u32, v2: u32) -> u32 {
-///     [And::new(0, 1, 2), Code::Return]
+///     [And::new(0, 1, 2), Return::new()]
 /// }
 /// let func = AndI32::new().unwrap();
 /// assert_eq!(0, func.call(0, 39).unwrap());
@@ -215,7 +215,7 @@ impl CodeBuilder for And {
 ///
 /// #[wasm_code(unsigned)]
 /// fn or_i32(v1: u32, v2: u32) -> u32 {
-///     [Or::new(0, 1, 2), Code::Return]
+///     [Or::new(0, 1, 2), Return::new()]
 /// }
 /// let func = OrI32::new().unwrap();
 /// assert_eq!(39, func.call(0, 39).unwrap());
@@ -263,7 +263,7 @@ impl CodeBuilder for Or {
 ///
 /// #[wasm_code(unsigned)]
 /// fn xor_i32(v1: u32, v2: u32) -> u32 {
-///     [Xor::new(0, 1, 2), Code::Return]
+///     [Xor::new(0, 1, 2), Return::new()]
 /// }
 /// let func = XorI32::new().unwrap();
 /// assert_eq!(39, func.call(0, 39).unwrap());
@@ -312,7 +312,7 @@ impl CodeBuilder for Xor {
 ///
 /// #[wasm_code(unsigned)]
 /// fn shift_left_i32(source: u32, bits: u32) -> u32 {
-///     [ShiftLeft::new(0, 1, 2), Code::Return]
+///     [ShiftLeft::new(0, 1, 2), Return::new()]
 /// }
 /// let func = ShiftLeftI32::new().unwrap();
 /// assert_eq!(1, func.call(1, 0).unwrap());
@@ -362,7 +362,7 @@ impl CodeBuilder for ShiftLeft {
 ///
 /// #[wasm_code(unsigned, 1)]
 /// fn shift_right_u32(source: u32, bits: u32) -> u32 {
-///     [ShiftRight::new(0, 1, 2), Code::Return]
+///     [ShiftRight::new(0, 1, 2), Return::new()]
 /// }
 /// let func = ShiftRightU32::new().unwrap();
 /// assert_eq!(4, func.call(4, 0).unwrap());
@@ -382,7 +382,7 @@ impl CodeBuilder for ShiftLeft {
 ///
 /// #[wasm_code(signed)]
 /// fn shift_right_i32(source: i32, bits: i32) -> i32 {
-///     [ShiftRight::new(0, 1, 2), Code::Return]
+///     [ShiftRight::new(0, 1, 2), Return::new()]
 /// }
 /// let func = ShiftRightI32::new().unwrap();
 /// assert_eq!(-4, func.call(-4, 0).unwrap());
@@ -434,7 +434,7 @@ impl CodeBuilder for ShiftRight {
 ///
 /// #[wasm_code(signed)]
 /// fn rotate_left_i32(source: i32, bits: i32) -> i32 {
-///     [RotateLeft::new(0, 1, 2), Code::Return]
+///     [RotateLeft::new(0, 1, 2), Return::new()]
 /// }
 /// let func = RotateLeftI32::new().unwrap();
 /// assert_eq!(1, func.call(1, 0).unwrap());
@@ -482,7 +482,7 @@ impl CodeBuilder for RotateLeft {
 ///
 /// #[wasm_code(signed)]
 /// fn rotate_right_i32(source: i32, bits: i32) -> i32 {
-///     [RotateRight::new(0, 1, 2), Code::Return]
+///     [RotateRight::new(0, 1, 2), Return::new()]
 /// }
 /// let func = RotateRightI32::new().unwrap();
 /// assert_eq!(1, func.call(1, 0).unwrap());

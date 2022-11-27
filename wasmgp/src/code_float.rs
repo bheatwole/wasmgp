@@ -12,7 +12,7 @@ use wasm_ast::{Instruction, NumericInstruction};
 ///
 /// #[wasm_code(signed)]
 /// fn absolute_value_f32(value: f32) -> f32 {
-///     [AbsoluteValue::new(0, 1), Code::Return]
+///     [AbsoluteValue::new(0, 1), Return::new()]
 /// }
 /// let func = AbsoluteValueF32::new().unwrap();
 /// assert_eq!(3.0, func.call(3.0).unwrap());
@@ -25,7 +25,7 @@ use wasm_ast::{Instruction, NumericInstruction};
 ///
 /// #[wasm_code(signed)]
 /// fn absolute_value_i32(value: i32) -> i32 {
-///     [AbsoluteValue::new(0, 1), Code::Return]
+///     [AbsoluteValue::new(0, 1), Return::new()]
 /// }
 /// let func = AbsoluteValueI32::new().unwrap();
 /// assert_eq!(3, func.call(3).unwrap());
@@ -63,7 +63,7 @@ impl CodeBuilder for AbsoluteValue {
 ///
 /// #[wasm_code(signed)]
 /// fn negate_f32(value: f32) -> f32 {
-///     [Negate::new(0, 1), Code::Return]
+///     [Negate::new(0, 1), Return::new()]
 /// }
 /// let func = NegateF32::new().unwrap();
 /// assert_eq!(-3.0, func.call(3.0).unwrap());
@@ -76,7 +76,7 @@ impl CodeBuilder for AbsoluteValue {
 ///
 /// #[wasm_code(signed)]
 /// fn negate_i32(value: i32) -> i32 {
-///     [Negate::new(0, 1), Code::Return]
+///     [Negate::new(0, 1), Return::new()]
 /// }
 /// let func = NegateI32::new().unwrap();
 /// assert_eq!(-3, func.call(3).unwrap());
@@ -114,7 +114,7 @@ impl CodeBuilder for Negate {
 ///
 /// #[wasm_code(signed)]
 /// fn square_root_f32(value: f32) -> f32 {
-///     [SquareRoot::new(0, 1), Code::Return]
+///     [SquareRoot::new(0, 1), Return::new()]
 /// }
 /// let func = SquareRootF32::new().unwrap();
 /// assert_eq!(3.0, func.call(9.0).unwrap());
@@ -129,7 +129,7 @@ impl CodeBuilder for Negate {
 ///
 /// #[wasm_code(signed)]
 /// fn square_root_i32(value: i32) -> i32 {
-///     [SquareRoot::new(0, 1), Code::Return]
+///     [SquareRoot::new(0, 1), Return::new()]
 /// }
 /// let func = SquareRootI32::new().unwrap();
 /// assert_eq!(3, func.call(9).unwrap());
@@ -169,7 +169,7 @@ impl CodeBuilder for SquareRoot {
 ///
 /// #[wasm_code(signed)]
 /// fn ceiling_f32(value: f32) -> f32 {
-///     [Ceiling::new(0, 1), Code::Return]
+///     [Ceiling::new(0, 1), Return::new()]
 /// }
 /// let func = CeilingF32::new().unwrap();
 /// assert_eq!(3.0, func.call(2.1).unwrap());
@@ -209,7 +209,7 @@ impl CodeBuilder for Ceiling {
 ///
 /// #[wasm_code(signed)]
 /// fn floor_f32(value: f32) -> f32 {
-///     [Floor::new(0, 1), Code::Return]
+///     [Floor::new(0, 1), Return::new()]
 /// }
 /// let func = FloorF32::new().unwrap();
 /// assert_eq!(2.0, func.call(2.1).unwrap());
@@ -249,7 +249,7 @@ impl CodeBuilder for Floor {
 ///
 /// #[wasm_code(signed)]
 /// fn nearest_f32(value: f32) -> f32 {
-///     [Nearest::new(0, 1), Code::Return]
+///     [Nearest::new(0, 1), Return::new()]
 /// }
 /// let func = NearestF32::new().unwrap();
 /// assert_eq!(2.0, func.call(2.1).unwrap());
@@ -292,7 +292,7 @@ impl CodeBuilder for Nearest {
 ///
 /// #[wasm_code(signed)]
 /// fn min_f32(left: f32, right: f32) -> f32 {
-///     [Min::new(0, 1, 2), Code::Return]
+///     [Min::new(0, 1, 2), Return::new()]
 /// }
 /// let func = MinF32::new().unwrap();
 /// assert_eq!(3.0, func.call(3.0, 9.0).unwrap());
@@ -306,7 +306,7 @@ impl CodeBuilder for Nearest {
 ///
 /// #[wasm_code(signed)]
 /// fn min_i32(left: i32, right: i32) -> i32 {
-///     [Min::new(0, 1, 2), Code::Return]
+///     [Min::new(0, 1, 2), Return::new()]
 /// }
 /// let func = MinI32::new().unwrap();
 /// assert_eq!(3, func.call(3, 9).unwrap());
@@ -353,7 +353,7 @@ impl CodeBuilder for Min {
 ///
 /// #[wasm_code(signed)]
 /// fn max_f32(left: f32, right: f32) -> f32 {
-///     [Max::new(0, 1, 2), Code::Return]
+///     [Max::new(0, 1, 2), Return::new()]
 /// }
 /// let func = MaxF32::new().unwrap();
 /// assert_eq!(9.0, func.call(3.0, 9.0).unwrap());
@@ -367,7 +367,7 @@ impl CodeBuilder for Min {
 ///
 /// #[wasm_code(signed)]
 /// fn max_i32(left: i32, right: i32) -> i32 {
-///     [Max::new(0, 1, 2), Code::Return]
+///     [Max::new(0, 1, 2), Return::new()]
 /// }
 /// let func = MaxI32::new().unwrap();
 /// assert_eq!(9, func.call(3, 9).unwrap());
@@ -414,7 +414,7 @@ impl CodeBuilder for Max {
 ///
 /// #[wasm_code(signed)]
 /// fn copy_sign_f32(left: f32, right: f32) -> f32 {
-///     [CopySign::new(0, 1, 2), Code::Return]
+///     [CopySign::new(0, 1, 2), Return::new()]
 /// }
 /// let func = CopySignF32::new().unwrap();
 /// assert_eq!(3.0, func.call(3.0, 9.0).unwrap());
@@ -428,7 +428,7 @@ impl CodeBuilder for Max {
 ///
 /// #[wasm_code(signed)]
 /// fn copy_sign_i32(left: i32, right: i32) -> i32 {
-///     [CopySign::new(0, 1, 2), Code::Return]
+///     [CopySign::new(0, 1, 2), Return::new()]
 /// }
 /// let func = CopySignI32::new().unwrap();
 /// assert_eq!(3, func.call(3, 9).unwrap());
