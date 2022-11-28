@@ -454,6 +454,49 @@ impl CodeBuilder for DoFor {
 
 /// Break: If the code is currently in the middle of a 'do' loop, exits the loop unconditionally. If the code is not
 /// in a loop, this is a null-op.
+///
+/// A complicated way of returning the same value:
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code]
+/// fn identity(value: u32) -> u32 {
+///     [
+///         DoFor::new(3, vec![
+///             Add::new(0, 1, 1),
+///             Break::new(),
+///         ]),
+///         Return::new(),
+///     ]
+/// }
+/// let func = Identity::new().unwrap();
+/// assert_eq!(1, func.call(1).unwrap());
+/// assert_eq!(2, func.call(2).unwrap());
+/// assert_eq!(3, func.call(3).unwrap());
+/// assert_eq!(0, func.call(0).unwrap());
+/// ```
+///
+/// Breaking while not in a loop does nothing:
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code]
+/// fn double(value: u32) -> u32 {
+///     [
+///         Add::new(0, 1, 1),
+///         Break::new(),
+///         Add::new(0, 1, 1),
+///         Return::new(),
+///     ]
+/// }
+/// let func = Double::new().unwrap();
+/// assert_eq!(2, func.call(1).unwrap());
+/// assert_eq!(4, func.call(2).unwrap());
+/// assert_eq!(6, func.call(3).unwrap());
+/// assert_eq!(0, func.call(0).unwrap());
+/// ```
 pub struct Break {}
 
 impl Break {
@@ -464,13 +507,61 @@ impl Break {
 
 impl CodeBuilder for Break {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
-        unimplemented!();
+        if let Some(label_index) = context.can_break() {
+            instruction_list.push(ControlInstruction::Branch(label_index).into());
+        }
         Ok(())
     }
 }
 
 /// BreakIf(compare_slot) If the code is currently in the middle of a 'do' loop, exits the loop if the value in the
 /// compare_slot is not zero. If the code is not in a loop, this is a null-op.
+///
+/// This code triples a number, but stops before the max value is reached
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(unsigned, 1)]
+/// fn triples_up_to_max(value: u32, max: u32) -> u32 {
+///     [
+///         DoFor::new(3, vec![
+///             Add::new(0, 2, 2),
+///             IsGreaterThan::new(2, 1, 3),
+///             BreakIf::new(3),
+///         ]),
+///         Return::new(),
+///     ]
+/// }
+/// let func = TriplesUpToMax::new().unwrap();
+/// assert_eq!(3, func.call(1, 5).unwrap());
+/// assert_eq!(6, func.call(2, 5).unwrap());
+/// assert_eq!(6, func.call(3, 5).unwrap());
+/// ```
+///
+/// Breaking while not in a loop does nothing:
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(unsigned, 1)]
+/// fn another_triples_up_to_max(value: u32, max: u32) -> u32 {
+///     [
+///         Add::new(0, 2, 2),
+///         IsGreaterThan::new(2, 1, 3),
+///         BreakIf::new(3),
+///         Add::new(0, 2, 2),
+///         IsGreaterThan::new(2, 1, 3),
+///         BreakIf::new(3),
+///         Add::new(0, 2, 2),
+///         Return::new(),
+///     ]
+/// }
+/// let func = AnotherTriplesUpToMax::new().unwrap();
+/// assert_eq!(3, func.call(1, 5).unwrap());
+/// assert_eq!(6, func.call(2, 5).unwrap());
+/// assert_eq!(9, func.call(3, 5).unwrap());
+/// ```
 pub struct BreakIf {
     break_if_not_zero: Slot,
 }
@@ -483,7 +574,10 @@ impl BreakIf {
 
 impl CodeBuilder for BreakIf {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
-        unimplemented!();
+        if let Some(label_index) = context.can_break() {
+            GetSlotConvert::convert(self.break_if_not_zero, ValueType::I32, context, instruction_list)?;
+            instruction_list.push(ControlInstruction::BranchIf(label_index).into());
+        }
         Ok(())
     }
 }
