@@ -73,14 +73,14 @@ impl CodeContext {
         let function_type = FunctionType::new(ResultType::from(params), ResultType::from(results));
         let function_type_index = builder.add_function_type(function_type)?;
 
-        // Create the list of local variables
-        let locals = ResultType::new(self.local_types());
-
-        // Build the code
+        // Build the code. Some instructions may create more local variables for internal processing
         let mut instruction_list = vec![];
         for c in code.iter() {
             c.append_code(&self, &mut instruction_list)?;
         }
+
+        // Create the list of local variables
+        let locals = ResultType::new(self.local_types());
 
         // Create the function
         let function = Function::new(function_type_index, locals, instruction_list.into());

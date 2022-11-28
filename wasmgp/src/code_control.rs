@@ -372,13 +372,33 @@ impl CodeBuilder for DoWhile {
 
 /// DoFor(times, do): Runs the code listed in 'do' a specific number of times chosen by the genetic algorithm (at
 /// code compile-time, not while the VM is running). Max of 65_535 loops
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code]
+/// fn triple(value: u32) -> u32 {
+///     [
+///         DoFor::new(3, vec![
+///             Add::new(0, 1, 1),
+///         ]),
+///         Return::new(),
+///     ]
+/// }
+/// let func = Triple::new().unwrap();
+/// assert_eq!(3, func.call(1).unwrap());
+/// assert_eq!(6, func.call(2).unwrap());
+/// assert_eq!(9, func.call(3).unwrap());
+/// assert_eq!(0, func.call(0).unwrap());
+/// ```
 pub struct DoFor {
     do_this: Vec<Code>,
     times: u16,
 }
 
 impl DoFor {
-    pub fn new(do_this: Vec<Code>, times: u16) -> Code {
+    pub fn new(times: u16, do_this: Vec<Code>) -> Code {
         Code::DoFor(DoFor { do_this, times })
     }
 }
