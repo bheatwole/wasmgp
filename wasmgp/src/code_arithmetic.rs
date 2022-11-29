@@ -1,7 +1,9 @@
 use crate::code_builder::CodeBuilder;
 use crate::convert::{GetSlotConvert, SetSlotConvert};
+use crate::indentation::Indentation;
 use crate::*;
 use anyhow::Result;
+use std::fmt::Write;
 use wasm_ast::{BlockType, ControlInstruction, Expression, Instruction, NumericInstruction};
 
 /// Adds the values in the `left` and `right` slots, placing the results in the `destination` slot. All operands are
@@ -60,6 +62,14 @@ impl CodeBuilder for Add {
         instruction_list.push(NumericInstruction::Add(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}Add::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
     }
 }
 
@@ -120,6 +130,14 @@ impl CodeBuilder for Subtract {
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}Subtract::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
+    }
 }
 
 /// Multiplies the values in the `left` and `right` slots, placing the results in the `destination` slot. All operands
@@ -178,6 +196,14 @@ impl CodeBuilder for Multiply {
         instruction_list.push(NumericInstruction::Multiply(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}Multiply::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
     }
 }
 
@@ -284,6 +310,14 @@ impl CodeBuilder for Divide {
         instruction_list.push(ControlInstruction::Block(BlockType::None, Expression::new(inner_instructions)).into());
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}Divide::new({}, {}, {}),",
+            indentation, self.dividend, self.divisor, self.destination
+        )
+    }
 }
 
 /// Divides the `dividend` value by the `divisor` using integer division, and places the remainder in the `destination`
@@ -362,5 +396,13 @@ impl CodeBuilder for Remainder {
         instruction_list.push(ControlInstruction::Block(BlockType::None, Expression::new(inner_instructions)).into());
 
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}Remainder::new({}, {}, {}),",
+            indentation, self.dividend, self.divisor, self.destination
+        )
     }
 }

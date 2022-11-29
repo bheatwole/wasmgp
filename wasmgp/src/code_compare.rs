@@ -1,7 +1,9 @@
 use crate::code_builder::CodeBuilder;
 use crate::convert::{GetSlotConvert, SetSlotConvert};
+use crate::indentation::Indentation;
 use crate::*;
 use anyhow::Result;
+use std::fmt::Write;
 use wasm_ast::{Instruction, NumericInstruction};
 
 /// Returns the greater of two source numbers and places it in the destination.
@@ -61,6 +63,14 @@ impl CodeBuilder for IsEqualZero {
         }
         SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}IsEqualZero::new({}, {}),",
+            indentation, self.source, self.destination
+        )
     }
 }
 
@@ -130,6 +140,14 @@ impl CodeBuilder for AreEqual {
         SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}AreEqual::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
+    }
 }
 
 /// Returns the greater of two source numbers and places it in the destination.
@@ -197,6 +215,14 @@ impl CodeBuilder for AreNotEqual {
         instruction_list.push(NumericInstruction::NotEqual(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}AreNotEqual::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
     }
 }
 
@@ -271,6 +297,14 @@ impl CodeBuilder for IsLessThan {
         SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}IsLessThan::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
+    }
 }
 
 /// Returns the greater of two source numbers and places it in the destination.
@@ -343,6 +377,14 @@ impl CodeBuilder for IsGreaterThan {
         }
         SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}IsGreaterThan::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
     }
 }
 
@@ -417,6 +459,14 @@ impl CodeBuilder for IsLessThanOrEqual {
         SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}IsLessThanOrEqual::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
+    }
 }
 
 /// Returns the greater of two source numbers and places it in the destination.
@@ -490,5 +540,13 @@ impl CodeBuilder for IsGreaterThanOrEqual {
         }
         SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}IsGreaterThanOrEqual::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
     }
 }

@@ -10,6 +10,7 @@ mod code_float;
 mod convert;
 mod error;
 mod function_signature;
+mod indentation;
 mod main_entry_point;
 mod migration_algorithm;
 mod selection_curve;

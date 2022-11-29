@@ -1,8 +1,10 @@
 use anyhow::Result;
+use std::fmt::Write;
 use wasm_ast::{Instruction, NumericInstruction};
 
 use crate::code_builder::CodeBuilder;
 use crate::convert::SetSlotConvert;
+use crate::indentation::Indentation;
 use crate::{Code, CodeContext, Slot, ValueType};
 
 pub struct ConstI32 {
@@ -20,6 +22,10 @@ impl CodeBuilder for ConstI32 {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
         instruction_list.push(NumericInstruction::I32Constant(self.value).into());
         SetSlotConvert::convert(self.slot, ValueType::I32, context, instruction_list)
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}ConstI32::new({}, {}),", indentation, self.slot, self.value)
     }
 }
 
@@ -39,6 +45,10 @@ impl CodeBuilder for ConstI64 {
         instruction_list.push(NumericInstruction::I64Constant(self.value).into());
         SetSlotConvert::convert(self.slot, ValueType::I64, context, instruction_list)
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}ConstI64::new({}, {}),", indentation, self.slot, self.value)
+    }
 }
 
 pub struct ConstF32 {
@@ -57,6 +67,10 @@ impl CodeBuilder for ConstF32 {
         instruction_list.push(NumericInstruction::F32Constant(self.value).into());
         SetSlotConvert::convert(self.slot, ValueType::F32, context, instruction_list)
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}ConstF32::new({}, {}f32),", indentation, self.slot, self.value)
+    }
 }
 
 pub struct ConstF64 {
@@ -74,6 +88,10 @@ impl CodeBuilder for ConstF64 {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
         instruction_list.push(NumericInstruction::F64Constant(self.value).into());
         SetSlotConvert::convert(self.slot, ValueType::F64, context, instruction_list)
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}ConstF64::new({}, {}f64),", indentation, self.slot, self.value)
     }
 }
 

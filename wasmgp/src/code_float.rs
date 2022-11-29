@@ -1,7 +1,9 @@
 use crate::code_builder::CodeBuilder;
 use crate::convert::{GetSlotConvert, SetSlotConvert};
+use crate::indentation::Indentation;
 use crate::*;
 use anyhow::Result;
+use std::fmt::Write;
 use wasm_ast::{Instruction, NumericInstruction};
 
 /// Finds the absolute value of the source number and places it in the destination.
@@ -53,6 +55,14 @@ impl CodeBuilder for AbsoluteValue {
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}AbsoluteValue::new({}, {}),",
+            indentation, self.source, self.destination
+        )
+    }
 }
 
 /// Flips the sign of the source number and places it in the destination.
@@ -103,6 +113,10 @@ impl CodeBuilder for Negate {
         instruction_list.push(NumericInstruction::Negate(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}Negate::new({}, {}),", indentation, self.source, self.destination)
     }
 }
 
@@ -159,6 +173,14 @@ impl CodeBuilder for SquareRoot {
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}SquareRoot::new({}, {}),",
+            indentation, self.source, self.destination
+        )
+    }
 }
 
 /// Rounds the source number up to the next whole number and places it in the destination.
@@ -199,6 +221,10 @@ impl CodeBuilder for Ceiling {
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}Ceiling::new({}, {}),", indentation, self.source, self.destination)
+    }
 }
 
 /// Rounds the source number down to the next whole number and places it in the destination.
@@ -238,6 +264,10 @@ impl CodeBuilder for Floor {
         instruction_list.push(NumericInstruction::Floor(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}Floor::new({}, {}),", indentation, self.source, self.destination)
     }
 }
 
@@ -281,6 +311,10 @@ impl CodeBuilder for Nearest {
         instruction_list.push(NumericInstruction::Nearest(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}Nearest::new({}, {}),", indentation, self.source, self.destination)
     }
 }
 
@@ -343,6 +377,14 @@ impl CodeBuilder for Min {
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}Min::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
+    }
 }
 
 /// Returns the greater of two source numbers and places it in the destination.
@@ -403,6 +445,14 @@ impl CodeBuilder for Max {
         instruction_list.push(NumericInstruction::Maximum(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}Max::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
     }
 }
 
@@ -465,5 +515,13 @@ impl CodeBuilder for CopySign {
         instruction_list.push(NumericInstruction::CopySign(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}CopySign::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
     }
 }

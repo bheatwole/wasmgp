@@ -1,7 +1,9 @@
 use crate::code_builder::CodeBuilder;
 use crate::convert::{GetSlotConvert, SetSlotConvert};
+use crate::indentation::Indentation;
 use crate::*;
 use anyhow::Result;
+use std::fmt::Write;
 use wasm_ast::{BlockType, ControlInstruction, Expression, Instruction, NumericInstruction, VariableInstruction};
 
 /// Copies the value from one slot to another. The type will be converted if necessary
@@ -49,6 +51,14 @@ impl CodeBuilder for CopySlot {
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}CopySlot::new({}, {}),",
+            indentation, self.source, self.destination
+        )
+    }
 }
 
 /// Returns from a function. There are work variables of the appropriate types set aside to hold the return values.
@@ -68,6 +78,10 @@ impl CodeBuilder for Return {
             instruction_list.push(VariableInstruction::LocalGet(*slot as u32).into());
         }
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}Return::new(),", indentation)
     }
 }
 
@@ -96,6 +110,25 @@ impl CodeBuilder for Call {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
         unimplemented!();
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}Call::new({}, vec![{}], vec![{}]),",
+            indentation,
+            self.function_index,
+            self.params
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(", "),
+            self.results
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(", ")
+        )
     }
 }
 
@@ -142,6 +175,12 @@ impl CodeBuilder for If {
         instruction_list
             .push(ControlInstruction::If(BlockType::None, Expression::new(inner_instructions), None).into());
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        write!(f, "{}If::new({}, vec!", indentation, self.if_not_zero)?;
+        self.do_this.print_for_rust(f, indentation)?;
+        writeln!(f, "),")
     }
 }
 
@@ -200,6 +239,14 @@ impl CodeBuilder for IfElse {
             .into(),
         );
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        write!(f, "{}IfElse::new({}, vec!", indentation, self.if_not_zero)?;
+        self.do_this.print_for_rust(f, indentation)?;
+        write!(f, ", vec!")?;
+        self.else_do_this.print_for_rust(f, indentation)?;
+        writeln!(f, "),")
     }
 }
 
@@ -283,6 +330,12 @@ impl CodeBuilder for DoUntil {
         instruction_list.push(ControlInstruction::Block(BlockType::None, loop_expression).into());
 
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        write!(f, "{}DoUntil::new({}, vec!", indentation, self.until_not_zero)?;
+        self.do_this.print_for_rust(f, indentation)?;
+        writeln!(f, "),")
     }
 }
 
@@ -368,6 +421,12 @@ impl CodeBuilder for DoWhile {
 
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        write!(f, "{}DoWhile::new({}, vec!", indentation, self.while_not_zero)?;
+        self.do_this.print_for_rust(f, indentation)?;
+        writeln!(f, "),")
+    }
 }
 
 /// DoFor(times, do): Runs the code listed in 'do' a specific number of times chosen by the genetic algorithm (at
@@ -450,6 +509,12 @@ impl CodeBuilder for DoFor {
         instruction_list.push(ControlInstruction::Block(BlockType::None, loop_expression).into());
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        write!(f, "{}DoFor::new({}, vec!", indentation, self.times)?;
+        self.do_this.print_for_rust(f, indentation)?;
+        writeln!(f, "),")
+    }
 }
 
 /// Break: If the code is currently in the middle of a 'do' loop, exits the loop unconditionally. If the code is not
@@ -511,6 +576,10 @@ impl CodeBuilder for Break {
             instruction_list.push(ControlInstruction::Branch(label_index).into());
         }
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}Break::new(),", indentation)
     }
 }
 
@@ -579,5 +648,9 @@ impl CodeBuilder for BreakIf {
             instruction_list.push(ControlInstruction::BranchIf(label_index).into());
         }
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}BreakIf::new({}),", indentation, self.break_if_not_zero)
     }
 }

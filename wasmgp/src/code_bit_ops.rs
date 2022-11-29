@@ -1,7 +1,9 @@
 use crate::code_builder::CodeBuilder;
 use crate::convert::{GetSlotConvert, SetSlotConvert};
+use crate::indentation::Indentation;
 use crate::*;
 use anyhow::Result;
+use std::fmt::Write;
 use wasm_ast::{Instruction, NumericInstruction};
 
 /// CountLeadingZeros counts the number of leading zero bits in the specified source slot and places it into the
@@ -53,6 +55,14 @@ impl CodeBuilder for CountLeadingZeros {
         SetSlotConvert::convert(self.destination, convert_to, context, instruction_list)?;
 
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}CountLeadingZeros::new({}, {}),",
+            indentation, self.source, self.destination
+        )
     }
 }
 
@@ -106,6 +116,14 @@ impl CodeBuilder for CountTrailingZeros {
 
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}CountTrailingZeros::new({}, {}),",
+            indentation, self.source, self.destination
+        )
+    }
 }
 
 /// PopulationCount counts the number of one bits in the specified source slot and places it into the destination_slot.
@@ -157,6 +175,14 @@ impl CodeBuilder for PopulationCount {
 
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}PopulationCount::new({}, {}),",
+            indentation, self.source, self.destination
+        )
+    }
 }
 
 /// And performs the bitwise AND of two source integers and places the result in the destination slot
@@ -204,6 +230,14 @@ impl CodeBuilder for And {
         instruction_list.push(NumericInstruction::And(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}And::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
     }
 }
 
@@ -253,6 +287,14 @@ impl CodeBuilder for Or {
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}Or::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
+    }
 }
 
 /// Performs the bitwise XOR of two source integers and places the result in the destination slot
@@ -300,6 +342,14 @@ impl CodeBuilder for Xor {
         instruction_list.push(NumericInstruction::Xor(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}Xor::new({}, {}, {}),",
+            indentation, self.left, self.right, self.destination
+        )
     }
 }
 
@@ -350,6 +400,14 @@ impl CodeBuilder for ShiftLeft {
         instruction_list.push(NumericInstruction::ShiftLeft(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}ShiftLeft::new({}, {}, {}),",
+            indentation, self.source, self.bits, self.destination
+        )
     }
 }
 
@@ -423,6 +481,14 @@ impl CodeBuilder for ShiftRight {
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}ShiftRight::new({}, {}, {}),",
+            indentation, self.source, self.bits, self.destination
+        )
+    }
 }
 
 /// Performs the bitwise rotate left of a source integers by a specific number of bits and places the result in the
@@ -471,6 +537,14 @@ impl CodeBuilder for RotateLeft {
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}RotateLeft::new({}, {}, {}),",
+            indentation, self.source, self.bits, self.destination
+        )
+    }
 }
 
 /// Performs the bitwise rotate right of a source integers by a specific number of bits and places the result in the
@@ -518,5 +592,13 @@ impl CodeBuilder for RotateRight {
         instruction_list.push(NumericInstruction::RotateRight(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}RotateRight::new({}, {}, {}),",
+            indentation, self.source, self.bits, self.destination
+        )
     }
 }

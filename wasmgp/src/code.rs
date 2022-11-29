@@ -1,4 +1,5 @@
 use crate::code_builder::CodeBuilder;
+use crate::indentation::Indentation;
 use crate::CodeContext;
 use crate::*;
 use anyhow::Result;
@@ -73,6 +74,8 @@ pub enum Code {
     // StoreU64(Slot, Slot),
     // StoreF32(Slot, Slot),
     // StoreF64(Slot, Slot),
+
+    // Control
     CopySlot(CopySlot),
     Return(Return),
     Call(Call),
@@ -144,6 +147,56 @@ impl CodeBuilder for Code {
 
         Ok(())
     }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        match self {
+            Code::ConstI32(instruction) => instruction.print_for_rust(f, indentation),
+            Code::ConstI64(instruction) => instruction.print_for_rust(f, indentation),
+            Code::ConstF32(instruction) => instruction.print_for_rust(f, indentation),
+            Code::ConstF64(instruction) => instruction.print_for_rust(f, indentation),
+            Code::CountLeadingZeros(instruction) => instruction.print_for_rust(f, indentation),
+            Code::CountTrailingZeros(instruction) => instruction.print_for_rust(f, indentation),
+            Code::PopulationCount(instruction) => instruction.print_for_rust(f, indentation),
+            Code::And(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Or(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Xor(instruction) => instruction.print_for_rust(f, indentation),
+            Code::ShiftLeft(instruction) => instruction.print_for_rust(f, indentation),
+            Code::ShiftRight(instruction) => instruction.print_for_rust(f, indentation),
+            Code::RotateLeft(instruction) => instruction.print_for_rust(f, indentation),
+            Code::RotateRight(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Add(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Subtract(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Multiply(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Divide(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Remainder(instruction) => instruction.print_for_rust(f, indentation),
+            Code::AbsoluteValue(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Negate(instruction) => instruction.print_for_rust(f, indentation),
+            Code::SquareRoot(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Ceiling(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Floor(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Nearest(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Min(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Max(instruction) => instruction.print_for_rust(f, indentation),
+            Code::CopySign(instruction) => instruction.print_for_rust(f, indentation),
+            Code::IsEqualZero(instruction) => instruction.print_for_rust(f, indentation),
+            Code::AreEqual(instruction) => instruction.print_for_rust(f, indentation),
+            Code::AreNotEqual(instruction) => instruction.print_for_rust(f, indentation),
+            Code::IsLessThan(instruction) => instruction.print_for_rust(f, indentation),
+            Code::IsGreaterThan(instruction) => instruction.print_for_rust(f, indentation),
+            Code::IsLessThanOrEqual(instruction) => instruction.print_for_rust(f, indentation),
+            Code::IsGreaterThanOrEqual(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Return(instruction) => instruction.print_for_rust(f, indentation),
+            Code::CopySlot(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Call(instruction) => instruction.print_for_rust(f, indentation),
+            Code::If(instruction) => instruction.print_for_rust(f, indentation),
+            Code::IfElse(instruction) => instruction.print_for_rust(f, indentation),
+            Code::DoUntil(instruction) => instruction.print_for_rust(f, indentation),
+            Code::DoWhile(instruction) => instruction.print_for_rust(f, indentation),
+            Code::DoFor(instruction) => instruction.print_for_rust(f, indentation),
+            Code::Break(instruction) => instruction.print_for_rust(f, indentation),
+            Code::BreakIf(instruction) => instruction.print_for_rust(f, indentation),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -153,6 +206,8 @@ mod tests {
     use wasm_ast::{emit_binary, ModuleBuilder};
     use wasmtime::{Engine, Instance, Store};
 
+    use crate::code_builder::CodeBuilder;
+    use crate::indentation::Indentation;
     use crate::*;
 
     fn build_code(context: CodeContext, code: Vec<Code>) -> (Store<()>, Instance) {
@@ -221,5 +276,121 @@ mod tests {
         // Call the function and confirm we get the constant
         let result = typed_func.call(&mut store, ()).unwrap();
         assert_eq!(0xFFFFFFFF, result);
+    }
+
+    #[test]
+    fn print() {
+        let to_print = vec![
+            ConstI32::new(0, 1),
+            ConstI64::new(0, 1),
+            ConstF32::new(0, 1f32),
+            ConstF64::new(0, 1f64),
+            CountLeadingZeros::new(0, 1),
+            CountTrailingZeros::new(0, 1),
+            PopulationCount::new(0, 1),
+            And::new(0, 1, 2),
+            Or::new(0, 1, 2),
+            Xor::new(0, 1, 2),
+            ShiftLeft::new(0, 1, 2),
+            ShiftRight::new(0, 1, 2),
+            RotateLeft::new(0, 1, 2),
+            RotateRight::new(0, 1, 2),
+            Add::new(0, 1, 2),
+            Subtract::new(0, 1, 2),
+            Multiply::new(0, 1, 2),
+            Divide::new(0, 1, 2),
+            Remainder::new(0, 1, 2),
+            AbsoluteValue::new(0, 1),
+            Negate::new(0, 1),
+            SquareRoot::new(0, 1),
+            Ceiling::new(0, 1),
+            Floor::new(0, 1),
+            Nearest::new(0, 1),
+            Min::new(0, 1, 2),
+            Max::new(0, 1, 2),
+            CopySign::new(0, 1, 2),
+            IsEqualZero::new(0, 1),
+            AreEqual::new(0, 1, 2),
+            AreNotEqual::new(0, 1, 2),
+            IsLessThan::new(0, 1, 2),
+            IsGreaterThan::new(0, 1, 2),
+            IsLessThanOrEqual::new(0, 1, 2),
+            IsGreaterThanOrEqual::new(0, 1, 2),
+            Return::new(),
+            CopySlot::new(0, 1),
+            Call::new(0, vec![0, 1], vec![2, 3]),
+            If::new(0, vec![Return::new()]),
+            IfElse::new(0, vec![Return::new()], vec![]),
+            DoUntil::new(0, vec![Return::new()]),
+            DoWhile::new(0, vec![Return::new()]),
+            DoFor::new(0, vec![Return::new()]),
+            Break::new(),
+            BreakIf::new(0),
+        ];
+
+        let mut indentation = Indentation::new(4, 0);
+        let mut output = std::string::String::new();
+        to_print.print_for_rust(&mut output, &mut indentation).unwrap();
+        assert_eq!(
+            output,
+            "[
+    ConstI32::new(0, 1),
+    ConstI64::new(0, 1),
+    ConstF32::new(0, 1f32),
+    ConstF64::new(0, 1f64),
+    CountLeadingZeros::new(0, 1),
+    CountTrailingZeros::new(0, 1),
+    PopulationCount::new(0, 1),
+    And::new(0, 1, 2),
+    Or::new(0, 1, 2),
+    Xor::new(0, 1, 2),
+    ShiftLeft::new(0, 1, 2),
+    ShiftRight::new(0, 1, 2),
+    RotateLeft::new(0, 1, 2),
+    RotateRight::new(0, 1, 2),
+    Add::new(0, 1, 2),
+    Subtract::new(0, 1, 2),
+    Multiply::new(0, 1, 2),
+    Divide::new(0, 1, 2),
+    Remainder::new(0, 1, 2),
+    AbsoluteValue::new(0, 1),
+    Negate::new(0, 1),
+    SquareRoot::new(0, 1),
+    Ceiling::new(0, 1),
+    Floor::new(0, 1),
+    Nearest::new(0, 1),
+    Min::new(0, 1, 2),
+    Max::new(0, 1, 2),
+    CopySign::new(0, 1, 2),
+    IsEqualZero::new(0, 1),
+    AreEqual::new(0, 1, 2),
+    AreNotEqual::new(0, 1, 2),
+    IsLessThan::new(0, 1, 2),
+    IsGreaterThan::new(0, 1, 2),
+    IsLessThanOrEqual::new(0, 1, 2),
+    IsGreaterThanOrEqual::new(0, 1, 2),
+    Return::new(),
+    CopySlot::new(0, 1),
+    Call::new(0, vec![0, 1], vec![2, 3]),
+    If::new(0, vec![
+        Return::new(),
+    ]),
+    IfElse::new(0, vec![
+        Return::new(),
+    ], vec![
+    ]),
+    DoUntil::new(0, vec![
+        Return::new(),
+    ]),
+    DoWhile::new(0, vec![
+        Return::new(),
+    ]),
+    DoFor::new(0, vec![
+        Return::new(),
+    ]),
+    Break::new(),
+    BreakIf::new(0),
+]"
+        );
     }
 }
