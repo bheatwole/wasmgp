@@ -252,7 +252,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "negative integers spin forever, see: https://github.com/misalcedo/wasm-ast/issues/40"]
     fn const_i32_and_return_u64() {
         // Context
         let name = "const_i32_and_return_u64";

@@ -145,21 +145,13 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "negative integers spin forever, see: https://github.com/misalcedo/wasm-ast/issues/40"]
     fn negative_one() {
         let mut builder = ModuleBuilder::new();
         let one_i32 = ResultType::from(vec![ValueType::I32]);
         let func_type = FunctionType::new(ResultType::empty(), one_i32);
         let func_type_index = builder.add_function_type(func_type).unwrap();
-        let body: Expression = vec![
-            NumericInstruction::I32Constant(-1).into(),
-        ]
-        .into();
-        let main_func = Function::new(
-            func_type_index,
-            ResultType::empty(),
-            body,
-        );
+        let body: Expression = vec![NumericInstruction::I32Constant(-1).into()].into();
+        let main_func = Function::new(func_type_index, ResultType::empty(), body);
         let main_func_index = builder.add_function(main_func).unwrap();
 
         let name = "spins_forever";

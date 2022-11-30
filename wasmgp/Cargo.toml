@@ -16,5 +16,5 @@ version = "0.8"
 features = ["small_rng"]
 
 [dependencies.wasm-ast]
-git = "https://github.com/misalcedo/wasm-ast" 
+git = "https://github.com/bheatwole/wasm-ast" 
 features = [ "emitter" ]
