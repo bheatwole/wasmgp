@@ -9,7 +9,7 @@ edition = "2021"
 anyhow = "1.0"
 thiserror = "1.0"
 wasmgp-macros = { path = "../wasmgp-macros" }
-wasmtime = "2.0"
+wasmtime = "3.0"
 
 [dependencies.rand]
 version = "0.8"
