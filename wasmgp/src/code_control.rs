@@ -4,7 +4,9 @@ use crate::indentation::Indentation;
 use crate::*;
 use anyhow::Result;
 use std::fmt::Write;
-use wasm_ast::{BlockType, ControlInstruction, Expression, Instruction, NumericInstruction, VariableInstruction};
+use wasm_ast::{
+    BlockType, ControlInstruction, Expression, FunctionIndex, Instruction, NumericInstruction, VariableInstruction,
+};
 
 /// Copies the value from one slot to another. The type will be converted if necessary
 ///
@@ -90,8 +92,32 @@ impl CodeBuilder for Return {
 /// variables are specified than are needed, they will be ignored. If more work variables are needed than are
 /// supplied, the works 0..x will be used until all parameters are satisfied. The returns values from the function
 /// will be placed into the work variables specified by 'return_slots'.
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// fn double(v: i32) -> i32 {
+///     v * 2
+/// }
+///
+/// #[wasm_code]
+/// fn add_then_double(v1: i32, v2: i32) -> i32 {
+///     [ Add::new(0, 1, 2), Call::new(0, vec![2], vec![2]), Return::new(), ]
+/// }
+///
+/// let mut config = WorldConfiguration::default();
+/// config.main_entry_point = FunctionSignature::new("add_then_double", vec![ValueType::I32, ValueType::I32], vec![ValueType::I32]);
+/// let mut world = World::new(config);
+/// let index = world.add_function_import("double", double).unwrap();
+/// assert_eq!(0, index);
+///
+/// let func = AddThenDouble::new_with_world(&world).unwrap();
+/// assert_eq!(6, func.call(1, 2).unwrap());
+/// assert_eq!(-6, func.call(5, -8).unwrap());
+/// ```
 pub struct Call {
-    function_index: u32,
+    function_index: FunctionIndex,
     params: Vec<Slot>,
     results: Vec<Slot>,
 }
@@ -107,8 +133,21 @@ impl Call {
 }
 
 impl CodeBuilder for Call {
-    fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
-        unimplemented!();
+    fn append_code(&self, _context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
+        // Load each parameter slot onto the stack
+        for &slot in self.params.iter() {
+            instruction_list.push(VariableInstruction::LocalGet(slot as u32).into());
+        }
+
+        // Call the host function
+        instruction_list.push(ControlInstruction::Call(self.function_index).into());
+
+        // Put the results in the slot where they go (the top of the stack is the last result returned, so we need to
+        // process our slots in reverse)
+        for &slot in self.results.iter().rev() {
+            instruction_list.push(VariableInstruction::LocalSet(slot as u32).into());
+        }
+
         Ok(())
     }
 
@@ -652,5 +691,36 @@ impl CodeBuilder for BreakIf {
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(f, "{}BreakIf::new({}),", indentation, self.break_if_not_zero)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use wasmgp_macros::wasm_code;
+
+    use crate::*;
+
+    #[wasm_code]
+    fn test_call_order(v1: i32, v2: i32) -> (i32, i32, i32) {
+        [Call::new(0, vec![0, 1], vec![2, 3, 4]), Return::new()]
+    }
+
+    // This test does not belong as a doc-test because it does not increase the readers understanding of the behavior.
+    // It simply confirms that the code has the order of parameters and results as expected.
+    #[test]
+    fn test_call_order() {
+        let mut config = WorldConfiguration::default();
+        config.main_entry_point = FunctionSignature::new(
+            "test_call_order",
+            vec![ValueType::I32, ValueType::I32],
+            vec![ValueType::I32, ValueType::I32, ValueType::I32],
+        );
+        let mut world = World::new(config);
+        let index = world
+            .add_function_import("do_it", |v1: i32, v2: i32| (v2, v1, v1 - v2))
+            .unwrap();
+        assert_eq!(0, index);
+        let func = TestCallOrder::new_with_world(&world).unwrap();
+        assert_eq!((3, 1, -2), func.call(1, 3).unwrap());
     }
 }

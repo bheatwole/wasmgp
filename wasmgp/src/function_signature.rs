@@ -1,8 +1,9 @@
+use wasm_ast::{FunctionType, ResultType};
 use wasmtime::FuncType;
 
 use crate::ValueType;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FunctionSignature {
     name: String,
     params: Vec<ValueType>,
@@ -33,6 +34,14 @@ impl FunctionSignature {
         }
     }
 
+    pub fn empty() -> FunctionSignature {
+        FunctionSignature {
+            name: "main".to_owned(),
+            params: vec![],
+            results: vec![],
+        }
+    }
+
     pub fn name(&self) -> &String {
         &self.name
     }
@@ -51,5 +60,13 @@ impl FunctionSignature {
 
     pub fn results_ast(&self) -> Vec<wasm_ast::ValueType> {
         self.results.iter().map(|f| (*f).into()).collect()
+    }
+}
+
+impl Into<FunctionType> for FunctionSignature {
+    fn into(self) -> FunctionType {
+        let params: Vec<wasm_ast::ValueType> = self.params.iter().map(|v| <ValueType>::into(*v)).collect();
+        let results: Vec<wasm_ast::ValueType> = self.results.iter().map(|v| <ValueType>::into(*v)).collect();
+        FunctionType::new(ResultType::new(params), ResultType::new(results))
     }
 }

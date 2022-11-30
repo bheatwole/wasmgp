@@ -101,6 +101,19 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
                     func,
                 })
             }
+
+            fn new_with_world(world: &#wasmgp::World<#state_ident>, #state_new_args) -> anyhow::Result<#struct_name> {
+                let name = #function_name_lit;
+                let code = vec!#body_block;
+                let mut store = world.store(#state_store_arg);
+                let instance = world.instanciate(&mut store, &code[..])?;
+                let func = instance.get_typed_func::<#param_generic, #result_generic, _>(&mut store, name)?;
+    
+                Ok(#struct_name {
+                    store: std::cell::RefCell::new(store),
+                    func,
+                })
+            }
     
             fn call(&self #param_call_fn_args) -> anyhow::Result<#result_generic> {
                 use std::ops::DerefMut;

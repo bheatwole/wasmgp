@@ -1,9 +1,8 @@
-use std::vec;
-
+use crate::{Code, CodeContext, FunctionSignature, WorldConfiguration};
 use anyhow::Result;
-use wasmtime::{AsContextMut, Engine, Extern, Func, IntoFunc, Linker, Store};
-
-use crate::{FunctionSignature, WorldConfiguration};
+use std::vec;
+use wasm_ast::{FunctionIndex, Import, ModuleBuilder, Name};
+use wasmtime::{AsContextMut, Engine, Extern, Func, Instance, IntoFunc, Linker, Store};
 
 pub const MODULE_NAME: &'static str = "host";
 
@@ -25,6 +24,7 @@ pub struct World<T> {
     wasm_engine: Engine,
     linker: Linker<T>,
     imported_functions: Vec<FunctionSignature>,
+    module_builder: ModuleBuilder,
 }
 
 impl<T: Default> World<T> {
@@ -37,6 +37,7 @@ impl<T: Default> World<T> {
             wasm_engine: engine,
             linker: linker,
             imported_functions: vec![],
+            module_builder: ModuleBuilder::new(),
         }
     }
 
@@ -45,7 +46,7 @@ impl<T: Default> World<T> {
         &mut self,
         name: &str,
         func: impl IntoFunc<T, Params, Args>,
-    ) -> Result<()> {
+    ) -> Result<FunctionIndex> {
         // Add the function to the linker
         self.linker.func_wrap(MODULE_NAME, name, func)?;
 
@@ -53,16 +54,27 @@ impl<T: Default> World<T> {
         let mut store = Store::new(&self.wasm_engine, T::default());
         if let Some(func) = self.get_extern_func_from_linker(&mut store, name) {
             let func_type = func.ty(&store);
-            self.imported_functions
-                .push(FunctionSignature::new_from_func_type(name, func_type));
+
+            // Add the signature of the function to our import list and also to the module builder
+            let signature = FunctionSignature::new_from_func_type(name, func_type);
+            self.imported_functions.push(signature.clone());
+            let type_index = self.module_builder.add_function_type(signature.into())?;
+
+            // Define an import in the module for this function type
+            let import = Import::function(
+                Name::new(String::from(MODULE_NAME)),
+                Name::new(String::from(name)),
+                type_index,
+            );
+            let function_index = self.module_builder.add_import(import)?;
+
+            Ok(function_index)
         } else {
             panic!(
                 "'host.{}' was just defined as an Extern::Func, but we got a different answer",
                 name
             )
         }
-
-        Ok(())
     }
 
     fn get_extern_func_from_linker(&self, store: impl AsContextMut<Data = T>, name: &str) -> Option<Func> {
@@ -74,5 +86,31 @@ impl<T: Default> World<T> {
         } else {
             None
         }
+    }
+
+    pub fn store(&self, data: T) -> Store<T> {
+        Store::new(&self.wasm_engine, data)
+    }
+
+    /// Creates a wasmtime Instance for the specified Code
+    pub fn instanciate(&self, store: impl AsContextMut<Data = T>, code: &[Code]) -> Result<Instance> {
+        let mut builder = self.module_builder.clone();
+        let context = CodeContext::new(
+            &self.config.main_entry_point,
+            self.config.work_slots.clone(),
+            self.config.is_signed,
+        )?;
+        context.build(&mut builder, &code[..])?;
+        let module_ast = builder.build();
+        let mut buffer = Vec::new();
+        wasm_ast::emit_binary(&module_ast, &mut buffer)?;
+        let module = wasmtime::Module::new(&self.wasm_engine, &buffer[..])?;
+        self.linker.instantiate(store, &module)
+    }
+
+    /// Returns a copy of the ModuleBuilder. This builder includes any imports that were previously defined with
+    /// `add_function_import`
+    pub fn module_builder(&self) -> ModuleBuilder {
+        self.module_builder.clone()
     }
 }

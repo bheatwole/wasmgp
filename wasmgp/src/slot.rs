@@ -9,6 +9,7 @@ pub type Slot = u8;
 ///
 /// The total sum of all slots counts plus FunctionSignature.Params.Len plus FunctionSignature.Results.Len must fit into
 /// a `u8` (256 max).
+#[derive(Clone, Debug, PartialEq)]
 pub struct SlotCount {
     pub i32: u8,
     pub i64: u8,
@@ -22,10 +23,7 @@ impl SlotCount {
     }
 
     pub fn iter(&self) -> SlotCountIterator {
-        SlotCountIterator {
-            slots: self,
-            next: 0,
-        }
+        SlotCountIterator { slots: self, next: 0 }
     }
 }
 

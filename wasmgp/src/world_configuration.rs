@@ -1,9 +1,22 @@
-use crate::{MainEntryPoint, MigrationAlgorithm, SelectionCurve, ThreadingModel};
+use crate::{FunctionSignature, MigrationAlgorithm, SelectionCurve, SlotCount, ThreadingModel};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct WorldConfiguration {
     /// The signature of the main entry point for the individuals in the world
-    pub main_entry_point: MainEntryPoint,
+    ///
+    /// The default is a 'main' function with no parameters and no results
+    pub main_entry_point: FunctionSignature,
+
+    /// The genetic code uses a number of local working variables. `work_slots` defines the number of each of the types
+    /// supported by wasmgp that are available to the genetic code.
+    ///
+    /// The default is ten i32 working variables.
+    pub work_slots: SlotCount,
+
+    /// The genetic code works with either signed or unsigned arithmetic for all the genetic code.
+    ///
+    /// The default is unsigned
+    pub is_signed: bool,
 
     /// The amount of Wasm memory that individuals may access. May be zero. Must be set to at least the size of any
     /// default data you will provide to the individual at runtime if you choose to pre-load a block of data. This will
@@ -54,7 +67,14 @@ pub struct WorldConfiguration {
 impl Default for WorldConfiguration {
     fn default() -> Self {
         WorldConfiguration {
-            main_entry_point: MainEntryPoint::empty(),
+            main_entry_point: FunctionSignature::empty(),
+            work_slots: SlotCount {
+                i32: 10,
+                i64: 0,
+                f32: 0,
+                f64: 0,
+            },
+            is_signed: false,
             memory_size: 0,
             individuals_per_island: 100,
             elite_individuals_per_generation: 2,
