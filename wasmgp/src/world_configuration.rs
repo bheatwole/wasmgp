@@ -1,4 +1,4 @@
-use crate::{FunctionSignature, MigrationAlgorithm, SelectionCurve, SlotCount, ThreadingModel};
+use crate::{FunctionSignature, MigrationAlgorithm, SelectionCurve, Slot, SlotCount, ThreadingModel};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct WorldConfiguration {
@@ -62,6 +62,12 @@ pub struct WorldConfiguration {
     /// Determine how the world runs with regards to multi-threading. Placeholder: currently multi-threading is not
     /// implemented
     pub threading_model: ThreadingModel,
+}
+
+impl WorldConfiguration {
+    pub fn slot_count(&self) -> usize {
+        self.main_entry_point.params().len() + self.main_entry_point.results().len() + self.work_slots.len()
+    }
 }
 
 impl Default for WorldConfiguration {

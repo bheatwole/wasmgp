@@ -1,4 +1,4 @@
-use crate::{Code, CodeContext, FunctionSignature, WorldConfiguration};
+use crate::{Code, CodeContext, FunctionSignature, WasmgpError, WorldConfiguration};
 use anyhow::Result;
 use std::vec;
 use wasm_ast::{FunctionIndex, Import, ModuleBuilder, Name};
@@ -28,17 +28,21 @@ pub struct World<T> {
 }
 
 impl<T: Default> World<T> {
-    pub fn new(config: WorldConfiguration) -> World<T> {
+    pub fn new(config: WorldConfiguration) -> Result<World<T>> {
+        if config.slot_count() > u8::MAX as usize {
+            return Err(WasmgpError::SlotCountTooLarge(config.slot_count()).into());
+        }
+
         let engine = Engine::default();
         let linker = Linker::new(&engine);
 
-        World {
+        Ok(World {
             config,
             wasm_engine: engine,
             linker: linker,
             imported_functions: vec![],
             module_builder: ModuleBuilder::new(),
-        }
+        })
     }
 
     /// Defines a named function that will be available to every individual
