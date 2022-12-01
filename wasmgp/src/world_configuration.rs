@@ -1,4 +1,4 @@
-use crate::{FunctionSignature, MigrationAlgorithm, SelectionCurve, Slot, SlotCount, ThreadingModel};
+use crate::{FunctionSignature, MigrationAlgorithm, SelectionCurve, SlotCount, ThreadingModel};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct WorldConfiguration {
