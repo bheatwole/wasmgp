@@ -38,6 +38,7 @@ use wasm_ast::{BlockType, ControlInstruction, Expression, Instruction, NumericIn
 /// // Fractions are truncated before operation
 /// assert_eq!(30, func.call(15.5, 15.5).unwrap());
 /// ```
+#[derive(Default)]
 pub struct Add {
     left: Slot,
     right: Slot,
@@ -105,6 +106,7 @@ impl CodeBuilder for Add {
 /// // Fractions are truncated before operation
 /// assert_eq!(5, func.call(15.999, 10.999).unwrap());
 /// ```
+#[derive(Default)]
 pub struct Subtract {
     left: Slot,
     right: Slot,
@@ -172,6 +174,7 @@ impl CodeBuilder for Subtract {
 /// // Fractions are truncated before operation
 /// assert_eq!(225, func.call(15.5, 15.5).unwrap());
 /// ```
+#[derive(Default)]
 pub struct Multiply {
     left: Slot,
     right: Slot,
@@ -259,6 +262,7 @@ impl CodeBuilder for Multiply {
 /// // Division by zero checks for floating point zero (true 0.0, not truncated to 0)
 /// assert_eq!(4.0, func.call(2.0, 0.5).unwrap());
 /// ```
+#[derive(Default)]
 pub struct Divide {
     dividend: Slot,
     divisor: Slot,
@@ -354,6 +358,7 @@ impl CodeBuilder for Divide {
 /// // Fractions are truncated before operation
 /// assert_eq!(5, func.call(15.999, 10.999).unwrap());
 /// ```
+#[derive(Default)]
 pub struct Remainder {
     dividend: Slot,
     divisor: Slot,

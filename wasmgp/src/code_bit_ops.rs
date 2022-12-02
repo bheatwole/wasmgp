@@ -33,6 +33,7 @@ use wasm_ast::{Instruction, NumericInstruction};
 /// let func = CountLeadingZerosF32::new().unwrap();
 /// assert_eq!(63, func.call().unwrap());
 /// ```
+#[derive(Default)]
 pub struct CountLeadingZeros {
     source: Slot,
     destination: Slot,
@@ -93,6 +94,7 @@ impl CodeBuilder for CountLeadingZeros {
 /// let func = CountTrailingZerosF32::new().unwrap();
 /// assert_eq!(2, func.call().unwrap());
 /// ```
+#[derive(Default)]
 pub struct CountTrailingZeros {
     source: Slot,
     destination: Slot,
@@ -152,6 +154,7 @@ impl CodeBuilder for CountTrailingZeros {
 /// let func = PopulationCountF32::new().unwrap();
 /// assert_eq!(3, func.call().unwrap());
 /// ```
+#[derive(Default)]
 pub struct PopulationCount {
     source: Slot,
     destination: Slot,
@@ -200,6 +203,7 @@ impl CodeBuilder for PopulationCount {
 /// assert_eq!(1, func.call(1, 7).unwrap());
 /// assert_eq!(2, func.call(3, 2).unwrap());
 /// ```
+#[derive(Default)]
 pub struct And {
     left: Slot,
     right: Slot,
@@ -256,6 +260,7 @@ impl CodeBuilder for And {
 /// assert_eq!(7, func.call(1, 7).unwrap());
 /// assert_eq!(11, func.call(3, 8).unwrap());
 /// ```
+#[derive(Default)]
 pub struct Or {
     left: Slot,
     right: Slot,
@@ -312,6 +317,7 @@ impl CodeBuilder for Or {
 /// assert_eq!(6, func.call(1, 7).unwrap());
 /// assert_eq!(1, func.call(3, 2).unwrap());
 /// ```
+#[derive(Default)]
 pub struct Xor {
     left: Slot,
     right: Slot,
@@ -373,6 +379,7 @@ impl CodeBuilder for Xor {
 /// assert_eq!(2, func.call(1, 33).unwrap());
 /// assert_eq!(4, func.call(2, 33).unwrap());
 /// ```
+#[derive(Default)]
 pub struct ShiftLeft {
     source: Slot,
     bits: Slot,
@@ -453,6 +460,7 @@ impl CodeBuilder for ShiftLeft {
 /// assert_eq!(-2, func.call(-4, 33).unwrap());
 /// assert_eq!(-1, func.call(-2, 33).unwrap());
 /// ```
+#[derive(Default)]
 pub struct ShiftRight {
     source: Slot,
     bits: Slot,
@@ -509,6 +517,7 @@ impl CodeBuilder for ShiftRight {
 /// assert_eq!(1, func.call(1, 32).unwrap());
 /// assert_eq!(i32::MIN, func.call(1, 31).unwrap());
 /// ```
+#[derive(Default)]
 pub struct RotateLeft {
     source: Slot,
     bits: Slot,
@@ -565,6 +574,7 @@ impl CodeBuilder for RotateLeft {
 /// assert_eq!(2, func.call(1, 31).unwrap());
 /// ```
 
+#[derive(Default)]
 pub struct RotateRight {
     source: Slot,
     bits: Slot,

@@ -7,6 +7,7 @@ use crate::convert::SetSlotConvert;
 use crate::indentation::Indentation;
 use crate::{Code, CodeContext, Slot, ValueType};
 
+#[derive(Default)]
 pub struct ConstI32 {
     slot: Slot,
     value: i32,
@@ -29,6 +30,7 @@ impl CodeBuilder for ConstI32 {
     }
 }
 
+#[derive(Default)]
 pub struct ConstI64 {
     slot: Slot,
     value: i64,
@@ -51,6 +53,7 @@ impl CodeBuilder for ConstI64 {
     }
 }
 
+#[derive(Default)]
 pub struct ConstF32 {
     slot: Slot,
     value: f32,
@@ -73,6 +76,7 @@ impl CodeBuilder for ConstF32 {
     }
 }
 
+#[derive(Default)]
 pub struct ConstF64 {
     slot: Slot,
     value: f64,
