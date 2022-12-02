@@ -1,8 +1,7 @@
 use crate::code_builder::CodeBuilder;
 use crate::indentation::Indentation;
-use crate::{Code, CodeContext, Slot, ValueType};
+use crate::{Code, CodeContext, GeneticEngine, Slot, ValueType};
 use anyhow::Result;
-use rand::rngs::SmallRng;
 use wasm_ast::{FloatType, Instruction, IntegerType, NumericInstruction, VariableInstruction};
 
 /// Used to convert a slot value to the value expected for a stack operation
@@ -36,7 +35,7 @@ impl CodeBuilder for GetSlotConvert {
         Ok(())
     }
 
-    fn make_random_code(_rng: &mut SmallRng, _max_points: usize) -> Code {
+    fn make_random_code(_engine: &mut GeneticEngine, _max_points: usize) -> Code {
         panic!("this CodeBuilder should not be created as random code")
     }
 
@@ -75,7 +74,7 @@ impl CodeBuilder for SetSlotConvert {
         Ok(())
     }
 
-    fn make_random_code(_rng: &mut SmallRng, _max_points: usize) -> Code {
+    fn make_random_code(_engine: &mut GeneticEngine, _max_points: usize) -> Code {
         panic!("this CodeBuilder should not be created as random code")
     }
 
@@ -189,7 +188,7 @@ impl CodeBuilder for StackConvert {
         Ok(())
     }
 
-    fn make_random_code(_rng: &mut SmallRng, _max_points: usize) -> Code {
+    fn make_random_code(_engine: &mut GeneticEngine, _max_points: usize) -> Code {
         panic!("this CodeBuilder should not be created as random code")
     }
 
