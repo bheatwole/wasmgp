@@ -1,23 +1,43 @@
-use crate::Slot;
+use crate::*;
+use fnv::FnvHashMap;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
+use strum::IntoEnumIterator;
 
 pub struct GeneticEngine {
     rng: SmallRng,
     slot_count: Slot,
+    weights: Vec<WeightEntry>,
 }
 
 impl GeneticEngine {
     pub fn new(seed: Option<u64>, slot_count: Slot) -> GeneticEngine {
-        GeneticEngine {
+        let mut engine = GeneticEngine {
             rng: small_rng_from_optional_seed(seed),
             slot_count,
+            weights: vec![],
+        };
+
+        // Set the default weight of every instruction except for Call to be one. The Call instructions will be added
+        // when there is a host function to call.
+        let test_for_call = Code::Call(Call::default());
+        for code in Code::iter() {
+            if code != test_for_call {
+                engine.weights.push(WeightEntry { code, weight: 1 });
+            }
         }
+
+        engine
     }
 
     pub fn random_slot(&mut self) -> Slot {
         self.rng.gen_range(0..self.slot_count)
     }
+}
+
+struct WeightEntry {
+    code: Code,
+    weight: u8,
 }
 
 fn small_rng_from_optional_seed(rng_seed: Option<u64>) -> SmallRng {

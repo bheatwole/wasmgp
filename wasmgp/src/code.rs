@@ -3,8 +3,10 @@ use crate::indentation::Indentation;
 use crate::CodeContext;
 use crate::*;
 use anyhow::Result;
+use strum_macros::EnumIter;
 use wasm_ast::Instruction;
 
+#[derive(EnumIter, PartialEq)]
 pub enum Code {
     // Const
     ConstI32(ConstI32),

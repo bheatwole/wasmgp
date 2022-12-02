@@ -7,6 +7,9 @@ pub trait CodeBuilder {
     /// Implementor will append one or more instructions onto the list
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()>;
 
+    /// Creates a new random piece of code based on the parameters of the implementor
+    //fn make_random_code(rng: &mut SmallRng, max_points: usize) -> Code;
+
     /// Implementor should print the code in such a way as to be able to copy-paste to rust code files.
     fn print_for_rust(&self, _f: &mut std::string::String, _indentation: &mut Indentation) -> std::fmt::Result {
         Ok(())

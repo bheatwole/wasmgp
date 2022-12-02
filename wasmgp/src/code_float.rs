@@ -33,7 +33,7 @@ use wasm_ast::{Instruction, NumericInstruction};
 /// assert_eq!(3, func.call(3).unwrap());
 /// assert_eq!(42, func.call(-42).unwrap());
 /// ```
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct AbsoluteValue {
     source: Slot,
     destination: Slot,
@@ -93,7 +93,7 @@ impl CodeBuilder for AbsoluteValue {
 /// assert_eq!(-3, func.call(3).unwrap());
 /// assert_eq!(42, func.call(-42).unwrap());
 /// ```
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct Negate {
     source: Slot,
     destination: Slot,
@@ -152,7 +152,7 @@ impl CodeBuilder for Negate {
 /// // Negative numbers are taken absolute value so that genetic code can operate without error
 /// assert_eq!(5, func.call(-25).unwrap());
 /// ```
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct SquareRoot {
     source: Slot,
     destination: Slot,
@@ -202,7 +202,7 @@ impl CodeBuilder for SquareRoot {
 /// assert_eq!(3.0, func.call(2.9).unwrap());
 /// assert_eq!(-2.0, func.call(-2.5).unwrap());
 /// ```
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct Ceiling {
     source: Slot,
     destination: Slot,
@@ -247,7 +247,7 @@ impl CodeBuilder for Ceiling {
 /// assert_eq!(2.0, func.call(2.9).unwrap());
 /// assert_eq!(-3.0, func.call(-2.5).unwrap());
 /// ```
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct Floor {
     source: Slot,
     destination: Slot,
@@ -295,7 +295,7 @@ impl CodeBuilder for Floor {
 /// assert_eq!(-2.0, func.call(-2.5).unwrap());
 /// assert_eq!(-4.0, func.call(-3.5).unwrap());
 /// ```
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct Nearest {
     source: Slot,
     destination: Slot,
@@ -352,7 +352,7 @@ impl CodeBuilder for Nearest {
 /// assert_eq!(3, func.call(3, 9).unwrap());
 /// assert_eq!(-25, func.call(25, -25).unwrap());
 /// ```
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct Min {
     left: Slot,
     right: Slot,
@@ -422,7 +422,7 @@ impl CodeBuilder for Min {
 /// assert_eq!(9, func.call(3, 9).unwrap());
 /// assert_eq!(25, func.call(25, -25).unwrap());
 /// ```
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct Max {
     left: Slot,
     right: Slot,
@@ -493,7 +493,7 @@ impl CodeBuilder for Max {
 /// assert_eq!(3, func.call(-3, 9).unwrap());
 /// assert_eq!(-25, func.call(25, -25).unwrap());
 /// ```
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct CopySign {
     left: Slot,
     right: Slot,
