@@ -1,7 +1,8 @@
 use crate::code_builder::CodeBuilder;
 use crate::indentation::Indentation;
-use crate::{CodeContext, Slot, ValueType};
+use crate::{Code, CodeContext, Slot, ValueType};
 use anyhow::Result;
+use rand::rngs::SmallRng;
 use wasm_ast::{FloatType, Instruction, IntegerType, NumericInstruction, VariableInstruction};
 
 /// Used to convert a slot value to the value expected for a stack operation
@@ -33,6 +34,10 @@ impl CodeBuilder for GetSlotConvert {
         StackConvert::convert(source_type, self.stack_type, context, instruction_list)?;
 
         Ok(())
+    }
+
+    fn make_random_code(_rng: &mut SmallRng, _max_points: usize) -> Code {
+        panic!("this CodeBuilder should not be created as random code")
     }
 
     fn print_for_rust(&self, _f: &mut std::string::String, _indentation: &mut Indentation) -> std::fmt::Result {
@@ -68,6 +73,10 @@ impl CodeBuilder for SetSlotConvert {
         instruction_list.push(VariableInstruction::LocalSet(self.slot as u32).into());
 
         Ok(())
+    }
+
+    fn make_random_code(_rng: &mut SmallRng, _max_points: usize) -> Code {
+        panic!("this CodeBuilder should not be created as random code")
     }
 
     fn print_for_rust(&self, _f: &mut std::string::String, _indentation: &mut Indentation) -> std::fmt::Result {
@@ -178,6 +187,10 @@ impl CodeBuilder for StackConvert {
             }
         }
         Ok(())
+    }
+
+    fn make_random_code(_rng: &mut SmallRng, _max_points: usize) -> Code {
+        panic!("this CodeBuilder should not be created as random code")
     }
 
     fn print_for_rust(&self, _f: &mut std::string::String, _indentation: &mut Indentation) -> std::fmt::Result {

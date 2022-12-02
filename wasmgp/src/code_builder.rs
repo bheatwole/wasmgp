@@ -9,12 +9,12 @@ pub trait CodeBuilder {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()>;
 
     /// Creates a new random piece of code based on the parameters of the implementor
-    fn make_random_code(rng: &mut SmallRng, max_points: usize) -> Code {
+    fn make_random_code(_rng: &mut SmallRng, _max_points: usize) -> Code {
         panic!("this CodeBuilder should not be created as random code")
     }
 
     /// Implementor should print the code in such a way as to be able to copy-paste to rust code files.
-    fn print_for_rust(&self, _f: &mut std::string::String, _indentation: &mut Indentation) -> std::fmt::Result;
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result;
 }
 
 impl CodeBuilder for Vec<Code> {
@@ -24,6 +24,10 @@ impl CodeBuilder for Vec<Code> {
         }
 
         Ok(())
+    }
+
+    fn make_random_code(_rng: &mut SmallRng, _max_points: usize) -> Code {
+        panic!("this CodeBuilder should not be created as random code")
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
