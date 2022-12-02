@@ -11,9 +11,7 @@ pub trait CodeBuilder {
     //fn make_random_code(rng: &mut SmallRng, max_points: usize) -> Code;
 
     /// Implementor should print the code in such a way as to be able to copy-paste to rust code files.
-    fn print_for_rust(&self, _f: &mut std::string::String, _indentation: &mut Indentation) -> std::fmt::Result {
-        Ok(())
-    }
+    fn print_for_rust(&self, _f: &mut std::string::String, _indentation: &mut Indentation) -> std::fmt::Result;
 }
 
 impl CodeBuilder for Vec<Code> {

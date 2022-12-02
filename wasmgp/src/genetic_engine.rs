@@ -1,5 +1,4 @@
 use crate::*;
-use fnv::FnvHashMap;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use strum::IntoEnumIterator;

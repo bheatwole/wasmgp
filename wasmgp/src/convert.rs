@@ -1,4 +1,5 @@
 use crate::code_builder::CodeBuilder;
+use crate::indentation::Indentation;
 use crate::{CodeContext, Slot, ValueType};
 use anyhow::Result;
 use wasm_ast::{FloatType, Instruction, IntegerType, NumericInstruction, VariableInstruction};
@@ -33,6 +34,10 @@ impl CodeBuilder for GetSlotConvert {
 
         Ok(())
     }
+
+    fn print_for_rust(&self, _f: &mut std::string::String, _indentation: &mut Indentation) -> std::fmt::Result {
+        Ok(())
+    }
 }
 
 /// Used to convert a stack value to the value expected for a slot
@@ -62,6 +67,10 @@ impl CodeBuilder for SetSlotConvert {
         // The top of the stack can now be set because the types are the same.
         instruction_list.push(VariableInstruction::LocalSet(self.slot as u32).into());
 
+        Ok(())
+    }
+
+    fn print_for_rust(&self, _f: &mut std::string::String, _indentation: &mut Indentation) -> std::fmt::Result {
         Ok(())
     }
 }
@@ -168,6 +177,10 @@ impl CodeBuilder for StackConvert {
                 instruction_list.push(NumericInstruction::Demote.into());
             }
         }
+        Ok(())
+    }
+
+    fn print_for_rust(&self, _f: &mut std::string::String, _indentation: &mut Indentation) -> std::fmt::Result {
         Ok(())
     }
 }
