@@ -1,9 +1,13 @@
 use thiserror::Error;
+use wasm_ast::FunctionIndex;
 
 use crate::Slot;
 
 #[derive(Error, Debug)]
 pub enum WasmgpError {
+    #[error("Invalid function index: {0}")]
+    InvalidFunctionIndex(FunctionIndex),
+
     #[error("Invalid slot: {0}")]
     InvalidSlot(Slot),
 

@@ -1,4 +1,4 @@
-use crate::{Code, CodeContext, FunctionSignature, WasmgpError, WorldConfiguration};
+use crate::{Code, CodeContext, FunctionSignature, GeneticEngine, WasmgpError, WorldConfiguration};
 use anyhow::Result;
 use std::vec;
 use wasm_ast::{FunctionIndex, Import, ModuleBuilder, Name};
@@ -22,6 +22,7 @@ pub const MODULE_NAME: &'static str = "host";
 pub struct World<T> {
     config: WorldConfiguration,
     wasm_engine: Engine,
+    genetic_engine: GeneticEngine,
     linker: Linker<T>,
     imported_functions: Vec<FunctionSignature>,
     module_builder: ModuleBuilder,
@@ -32,6 +33,7 @@ impl<T: Default> World<T> {
         if config.slot_count() > u8::MAX as usize {
             return Err(WasmgpError::SlotCountTooLarge(config.slot_count()).into());
         }
+        let total_slots = config.slot_count() as u8;
 
         let engine = Engine::default();
         let linker = Linker::new(&engine);
@@ -39,6 +41,7 @@ impl<T: Default> World<T> {
         Ok(World {
             config,
             wasm_engine: engine,
+            genetic_engine: GeneticEngine::new(None, total_slots),
             linker: linker,
             imported_functions: vec![],
             module_builder: ModuleBuilder::new(),
@@ -46,6 +49,20 @@ impl<T: Default> World<T> {
     }
 
     /// Defines a named function that will be available to every individual
+    /// ```
+    /// use wasmgp::*;
+    /// use wasmtime::*;
+    ///
+    /// fn increment(mut caller: Caller<'_, u64>, amount: u64) -> u64 {
+    ///     let value: &mut u64 = caller.data_mut();
+    ///     *value += amount;
+    ///     *value
+    /// }
+    ///
+    /// let config = WorldConfiguration::default();
+    /// let mut world = World::<u64>::new(config).unwrap();
+    /// world.add_function_import("increment", increment).unwrap();
+    /// ```
     pub fn add_function_import<Params, Args>(
         &mut self,
         name: &str,
@@ -62,7 +79,7 @@ impl<T: Default> World<T> {
             // Add the signature of the function to our import list and also to the module builder
             let signature = FunctionSignature::new_from_func_type(name, func_type);
             self.imported_functions.push(signature.clone());
-            let type_index = self.module_builder.add_function_type(signature.into())?;
+            let type_index = self.module_builder.add_function_type(signature.clone().into())?;
 
             // Define an import in the module for this function type
             let import = Import::function(
@@ -72,6 +89,14 @@ impl<T: Default> World<T> {
             );
             let function_index = self.module_builder.add_import(import)?;
 
+            // Add this function to the weight table so that it may be randomly selected
+            self.genetic_engine.set_host_call_weight(
+                function_index,
+                signature.params().len() as u8,
+                signature.results().len() as u8,
+                1,
+            );
+
             Ok(function_index)
         } else {
             panic!(
@@ -79,6 +104,56 @@ impl<T: Default> World<T> {
                 name
             )
         }
+    }
+
+    /// Sets the weight of the specified Code variant.
+    /// ```
+    /// use wasmgp::*;
+    ///
+    /// let config = WorldConfiguration::default();
+    /// let mut world = World::<()>::new(config).unwrap();
+    ///
+    /// // Add will now be selected with five time more liklihood than any other variant
+    /// world.set_code_weight(Code::Add(Add::default()), 5);
+    ///
+    /// // If code will never be selected
+    /// world.set_code_weight(Code::If(If::default()), 0);
+    /// ```
+    pub fn set_code_weight(&mut self, code: Code, weight: u8) {
+        self.genetic_engine.set_code_weight(code, weight);
+    }
+
+    /// Sets the weight for a function previously imported with `add_function_import`
+    /// ```
+    /// use wasmgp::*;
+    /// use wasmtime::*;
+    ///
+    /// fn increment(mut caller: Caller<'_, u64>, amount: u64) -> u64 {
+    ///     let value: &mut u64 = caller.data_mut();
+    ///     *value += amount;
+    ///     *value
+    /// }
+    ///
+    /// let config = WorldConfiguration::default();
+    /// let mut world = World::<u64>::new(config).unwrap();
+    /// let function_index = world.add_function_import("increment", increment).unwrap();
+    ///
+    /// // Increment will be selected five time more often than the other Code variants
+    /// world.set_function_import_weight(function_index, 5).unwrap();
+    /// ```
+    pub fn set_function_import_weight(&mut self, function_index: FunctionIndex, weight: u8) -> Result<()> {
+        let signature = self
+            .imported_functions
+            .get(function_index as usize)
+            .ok_or(WasmgpError::InvalidFunctionIndex(function_index))?;
+        self.genetic_engine.set_host_call_weight(
+            function_index,
+            signature.params().len() as u8,
+            signature.results().len() as u8,
+            weight,
+        );
+
+        Ok(())
     }
 
     fn get_extern_func_from_linker(&self, store: impl AsContextMut<Data = T>, name: &str) -> Option<Func> {
