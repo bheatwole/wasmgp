@@ -201,6 +201,56 @@ impl CodeBuilder for Code {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, max_points: usize) -> Code {
+        match self {
+            Code::ConstI32(instruction) => instruction.make_random_code(engine, max_points),
+            Code::ConstI64(instruction) => instruction.make_random_code(engine, max_points),
+            Code::ConstF32(instruction) => instruction.make_random_code(engine, max_points),
+            Code::ConstF64(instruction) => instruction.make_random_code(engine, max_points),
+            Code::CountLeadingZeros(instruction) => instruction.make_random_code(engine, max_points),
+            Code::CountTrailingZeros(instruction) => instruction.make_random_code(engine, max_points),
+            Code::PopulationCount(instruction) => instruction.make_random_code(engine, max_points),
+            Code::And(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Or(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Xor(instruction) => instruction.make_random_code(engine, max_points),
+            Code::ShiftLeft(instruction) => instruction.make_random_code(engine, max_points),
+            Code::ShiftRight(instruction) => instruction.make_random_code(engine, max_points),
+            Code::RotateLeft(instruction) => instruction.make_random_code(engine, max_points),
+            Code::RotateRight(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Add(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Subtract(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Multiply(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Divide(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Remainder(instruction) => instruction.make_random_code(engine, max_points),
+            Code::AbsoluteValue(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Negate(instruction) => instruction.make_random_code(engine, max_points),
+            Code::SquareRoot(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Ceiling(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Floor(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Nearest(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Min(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Max(instruction) => instruction.make_random_code(engine, max_points),
+            Code::CopySign(instruction) => instruction.make_random_code(engine, max_points),
+            Code::IsEqualZero(instruction) => instruction.make_random_code(engine, max_points),
+            Code::AreEqual(instruction) => instruction.make_random_code(engine, max_points),
+            Code::AreNotEqual(instruction) => instruction.make_random_code(engine, max_points),
+            Code::IsLessThan(instruction) => instruction.make_random_code(engine, max_points),
+            Code::IsGreaterThan(instruction) => instruction.make_random_code(engine, max_points),
+            Code::IsLessThanOrEqual(instruction) => instruction.make_random_code(engine, max_points),
+            Code::IsGreaterThanOrEqual(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Return(instruction) => instruction.make_random_code(engine, max_points),
+            Code::CopySlot(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Call(instruction) => instruction.make_random_code(engine, max_points),
+            Code::If(instruction) => instruction.make_random_code(engine, max_points),
+            Code::IfElse(instruction) => instruction.make_random_code(engine, max_points),
+            Code::DoUntil(instruction) => instruction.make_random_code(engine, max_points),
+            Code::DoWhile(instruction) => instruction.make_random_code(engine, max_points),
+            Code::DoFor(instruction) => instruction.make_random_code(engine, max_points),
+            Code::Break(instruction) => instruction.make_random_code(engine, max_points),
+            Code::BreakIf(instruction) => instruction.make_random_code(engine, max_points),
+        }
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         match self {
             Code::ConstI32(instruction) => instruction.print_for_rust(f, indentation),

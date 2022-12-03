@@ -154,6 +154,28 @@ impl CodeBuilder for Call {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        assert_eq!(1, self.params.len(), "always use `set_function_import_weight`");
+        assert_eq!(1, self.results.len(), "always use `set_function_import_weight`");
+
+        // Assign random slots according to the number of params expected
+        let num_params = self.params[0];
+        let mut params = vec![];
+        for _i in 0..num_params {
+            params.push(engine.random_slot());
+        }
+
+        // Assign random slots according to the number of results expected
+        let num_results = self.results[0];
+        let mut results = vec![];
+        for _i in 0..num_results {
+            results.push(engine.random_slot());
+        }
+
+        // Create a call to this function with those params and resuls
+        Call::new(self.function_index, params, results)
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -732,5 +754,20 @@ mod tests {
         assert_eq!(0, index);
         let func = TestCallOrder::new_with_world(&world).unwrap();
         assert_eq!((3, 1, -2), func.call(1, 3).unwrap());
+    }
+
+    #[test]
+    fn test_random_call() {
+        let mut ge = GeneticEngine::new(Some(1), 5);
+
+        // Test random calls for function zero with one param and one result
+        let call = Call::new(0, vec![1], vec![1]);
+        assert_eq!(call.make_random_code(&mut ge, 0), Call::new(0, vec![3], vec![0]));
+        assert_eq!(call.make_random_code(&mut ge, 0), Call::new(0, vec![0], vec![1]));
+
+        // Test random calls for function three with two params and no results
+        let call = Call::new(3, vec![2], vec![0]);
+        assert_eq!(call.make_random_code(&mut ge, 0), Call::new(3, vec![2, 4], vec![]));
+        assert_eq!(call.make_random_code(&mut ge, 0), Call::new(3, vec![0, 2], vec![]));
     }
 }
