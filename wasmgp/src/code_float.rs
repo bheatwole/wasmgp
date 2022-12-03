@@ -156,7 +156,7 @@ impl CodeBuilder for Negate {
 ///     [SquareRoot::new(0, 1), Return::new()]
 /// }
 /// let func = SquareRootI32::new().unwrap();
-/// assert_eq!(3, func.call(9).unwrap());, engine.random_slot()
+/// assert_eq!(3, func.call(9).unwrap());
 /// // Negative numbers are taken absolute value so that genetic code can operate without error
 /// assert_eq!(5, func.call(-25).unwrap());
 /// ```
