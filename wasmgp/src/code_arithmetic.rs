@@ -38,7 +38,7 @@ use wasm_ast::{BlockType, ControlInstruction, Expression, Instruction, NumericIn
 /// // Fractions are truncated before operation
 /// assert_eq!(30, func.call(15.5, 15.5).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Add {
     left: Slot,
     right: Slot,
@@ -110,7 +110,7 @@ impl CodeBuilder for Add {
 /// // Fractions are truncated before operation
 /// assert_eq!(5, func.call(15.999, 10.999).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Subtract {
     left: Slot,
     right: Slot,
@@ -178,7 +178,7 @@ impl CodeBuilder for Subtract {
 /// // Fractions are truncated before operation
 /// assert_eq!(225, func.call(15.5, 15.5).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Multiply {
     left: Slot,
     right: Slot,
@@ -266,7 +266,7 @@ impl CodeBuilder for Multiply {
 /// // Division by zero checks for floating point zero (true 0.0, not truncated to 0)
 /// assert_eq!(4.0, func.call(2.0, 0.5).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Divide {
     dividend: Slot,
     divisor: Slot,
@@ -362,7 +362,7 @@ impl CodeBuilder for Divide {
 /// // Fractions are truncated before operation
 /// assert_eq!(5, func.call(15.999, 10.999).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Remainder {
     dividend: Slot,
     divisor: Slot,
@@ -413,5 +413,23 @@ impl CodeBuilder for Remainder {
             "{}Remainder::new({}, {}, {}),",
             indentation, self.dividend, self.divisor, self.destination
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    #[test]
+    fn test_random_add() {
+        let mut ge = GeneticEngine::new(Some(1), 5);
+        let add = Add::default();
+
+        // Make some random code with up to 5 slots. Because we used a seed, this test will always come out the same
+        assert_eq!(add.make_random_code(&mut ge, 0), Add::new(3, 0, 0));
+        assert_eq!(add.make_random_code(&mut ge, 0), Add::new(1, 2, 4));
+        assert_eq!(add.make_random_code(&mut ge, 0), Add::new(0, 2, 1));
+        assert_eq!(add.make_random_code(&mut ge, 0), Add::new(3, 2, 4));
+        assert_eq!(add.make_random_code(&mut ge, 0), Add::new(2, 2, 2));
     }
 }

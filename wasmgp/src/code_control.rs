@@ -35,7 +35,7 @@ use wasm_ast::{
 /// assert_eq!(1.0, func.call(1).unwrap());
 /// assert_eq!(-2.0, func.call(-2).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct CopySlot {
     source: Slot,
     destination: Slot,
@@ -67,7 +67,7 @@ impl CodeBuilder for CopySlot {
 /// Returns from a function. There are work variables of the appropriate types set aside to hold the return values.
 /// The function should set the values of those slots prior to calling Return, however they are always initialized
 /// to zero at the top of the function.
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Return {}
 
 impl Return {
@@ -118,7 +118,7 @@ impl CodeBuilder for Return {
 /// assert_eq!(6, func.call(1, 2).unwrap());
 /// assert_eq!(-6, func.call(5, -8).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Call {
     function_index: FunctionIndex,
     params: Vec<Slot>,
@@ -197,7 +197,7 @@ impl CodeBuilder for Call {
 /// assert_eq!(6, func.call(3).unwrap());
 /// assert_eq!(4, func.call(4).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct If {
     if_not_zero: Slot,
     do_this: Vec<Code>,
@@ -249,7 +249,7 @@ impl CodeBuilder for If {
 /// assert_eq!(6, func.call(3).unwrap());
 /// assert_eq!(12, func.call(4).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct IfElse {
     if_not_zero: Slot,
     do_this: Vec<Code>,
@@ -324,7 +324,7 @@ impl CodeBuilder for IfElse {
 /// // Because the 'do' loop runs at least one, we get the next multiple
 /// assert_eq!(6, func.call(3).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct DoUntil {
     until_not_zero: Slot,
     do_this: Vec<Code>,
@@ -415,7 +415,7 @@ impl CodeBuilder for DoUntil {
 /// assert_eq!(3, func.call(3).unwrap());
 /// assert_eq!(6, func.call(4).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct DoWhile {
     while_not_zero: Slot,
     do_this: Vec<Code>,
@@ -497,7 +497,7 @@ impl CodeBuilder for DoWhile {
 /// assert_eq!(9, func.call(3).unwrap());
 /// assert_eq!(0, func.call(0).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct DoFor {
     do_this: Vec<Code>,
     times: u16,
@@ -609,7 +609,7 @@ impl CodeBuilder for DoFor {
 /// assert_eq!(6, func.call(3).unwrap());
 /// assert_eq!(0, func.call(0).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Break {}
 
 impl Break {
@@ -679,7 +679,7 @@ impl CodeBuilder for Break {
 /// assert_eq!(6, func.call(2, 5).unwrap());
 /// assert_eq!(9, func.call(3, 5).unwrap());
 /// ```
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct BreakIf {
     break_if_not_zero: Slot,
 }
