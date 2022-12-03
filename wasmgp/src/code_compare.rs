@@ -66,6 +66,10 @@ impl CodeBuilder for IsEqualZero {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        IsEqualZero::new(engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -143,6 +147,10 @@ impl CodeBuilder for AreEqual {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        AreEqual::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -218,6 +226,10 @@ impl CodeBuilder for AreNotEqual {
         instruction_list.push(NumericInstruction::NotEqual(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        AreNotEqual::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -302,6 +314,10 @@ impl CodeBuilder for IsLessThan {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        IsLessThan::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -382,6 +398,10 @@ impl CodeBuilder for IsGreaterThan {
         }
         SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        IsGreaterThan::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -466,6 +486,10 @@ impl CodeBuilder for IsLessThanOrEqual {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        IsLessThanOrEqual::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -547,6 +571,10 @@ impl CodeBuilder for IsGreaterThanOrEqual {
         }
         SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        IsGreaterThanOrEqual::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {

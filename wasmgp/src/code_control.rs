@@ -3,6 +3,7 @@ use crate::convert::{GetSlotConvert, SetSlotConvert};
 use crate::indentation::Indentation;
 use crate::*;
 use anyhow::Result;
+use rand::Rng;
 use std::fmt::Write;
 use wasm_ast::{
     BlockType, ControlInstruction, Expression, FunctionIndex, Instruction, NumericInstruction, VariableInstruction,
@@ -55,6 +56,10 @@ impl CodeBuilder for CopySlot {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        CopySlot::new(engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -82,6 +87,10 @@ impl CodeBuilder for Return {
             instruction_list.push(VariableInstruction::LocalGet(*slot as u32).into());
         }
         Ok(())
+    }
+
+    fn make_random_code(&self, _engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Return::new()
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -323,6 +332,18 @@ impl CodeBuilder for IfElse {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, max_points: usize) -> Code {
+        assert!(
+            max_points >= 3,
+            "internal error: `IfElse::make_random_code` called with too few points"
+        );
+        let if_children = engine.random_code_list(max_points - 2);
+        let points_used: usize = if_children.iter().map(|c| c.mutation_points()).sum();
+        let points_remaining = max_points - points_used;
+        let else_children = engine.random_code_list(points_remaining - 1);
+        IfElse::new(engine.random_slot(), if_children, else_children)
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         write!(f, "{}IfElse::new({}, vec!", indentation, self.if_not_zero)?;
         self.do_this.print_for_rust(f, indentation)?;
@@ -417,6 +438,15 @@ impl CodeBuilder for DoUntil {
         instruction_list.push(ControlInstruction::Block(BlockType::None, loop_expression).into());
 
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, max_points: usize) -> Code {
+        assert!(
+            max_points >= 2,
+            "internal error: `DoUntil::make_random_code` called with too few points"
+        );
+        let children = engine.random_code_list(max_points - 1);
+        DoUntil::new(engine.random_slot(), children)
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -514,6 +544,15 @@ impl CodeBuilder for DoWhile {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, max_points: usize) -> Code {
+        assert!(
+            max_points >= 2,
+            "internal error: `DoWhile::make_random_code` called with too few points"
+        );
+        let children = engine.random_code_list(max_points - 1);
+        DoWhile::new(engine.random_slot(), children)
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         write!(f, "{}DoWhile::new({}, vec!", indentation, self.while_not_zero)?;
         self.do_this.print_for_rust(f, indentation)?;
@@ -607,6 +646,15 @@ impl CodeBuilder for DoFor {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, max_points: usize) -> Code {
+        assert!(
+            max_points >= 2,
+            "internal error: `DoFor::make_random_code` called with too few points"
+        );
+        let children = engine.random_code_list(max_points - 1);
+        DoFor::new(engine.rng().gen(), children)
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         write!(f, "{}DoFor::new({}, vec!", indentation, self.times)?;
         self.do_this.print_for_rust(f, indentation)?;
@@ -674,6 +722,10 @@ impl CodeBuilder for Break {
             instruction_list.push(ControlInstruction::Branch(label_index).into());
         }
         Ok(())
+    }
+
+    fn make_random_code(&self, _engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Break::new()
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -747,6 +799,10 @@ impl CodeBuilder for BreakIf {
             instruction_list.push(ControlInstruction::BranchIf(label_index).into());
         }
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        BreakIf::new(engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {

@@ -3,6 +3,7 @@ use crate::convert::{GetSlotConvert, SetSlotConvert};
 use crate::indentation::Indentation;
 use crate::*;
 use anyhow::Result;
+use rand::Rng;
 use std::fmt::Write;
 use wasm_ast::{Instruction, NumericInstruction};
 
@@ -56,6 +57,10 @@ impl CodeBuilder for CountLeadingZeros {
         SetSlotConvert::convert(self.destination, convert_to, context, instruction_list)?;
 
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        CountLeadingZeros::new(engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -119,6 +124,10 @@ impl CodeBuilder for CountTrailingZeros {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        CountTrailingZeros::new(engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -179,6 +188,10 @@ impl CodeBuilder for PopulationCount {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        PopulationCount::new(engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -234,6 +247,10 @@ impl CodeBuilder for And {
         instruction_list.push(NumericInstruction::And(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        And::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -293,6 +310,10 @@ impl CodeBuilder for Or {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Or::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -348,6 +369,10 @@ impl CodeBuilder for Xor {
         instruction_list.push(NumericInstruction::Xor(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Xor::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -407,6 +432,14 @@ impl CodeBuilder for ShiftLeft {
         instruction_list.push(NumericInstruction::ShiftLeft(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        ShiftLeft::new(
+            engine.random_slot(),
+            engine.rng().gen_range(0..64),
+            engine.random_slot(),
+        )
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -490,6 +523,14 @@ impl CodeBuilder for ShiftRight {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        ShiftRight::new(
+            engine.random_slot(),
+            engine.rng().gen_range(0..64),
+            engine.random_slot(),
+        )
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -547,6 +588,14 @@ impl CodeBuilder for RotateLeft {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        RotateLeft::new(
+            engine.random_slot(),
+            engine.rng().gen_range(0..64),
+            engine.random_slot(),
+        )
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -602,6 +651,14 @@ impl CodeBuilder for RotateRight {
         instruction_list.push(NumericInstruction::RotateRight(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        RotateRight::new(
+            engine.random_slot(),
+            engine.rng().gen_range(0..64),
+            engine.random_slot(),
+        )
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {

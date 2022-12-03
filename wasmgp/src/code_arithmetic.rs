@@ -209,6 +209,10 @@ impl CodeBuilder for Multiply {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Multiply::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -323,6 +327,10 @@ impl CodeBuilder for Divide {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Divide::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -409,6 +417,10 @@ impl CodeBuilder for Remainder {
         instruction_list.push(ControlInstruction::Block(BlockType::None, Expression::new(inner_instructions)).into());
 
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Remainder::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {

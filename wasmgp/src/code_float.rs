@@ -57,6 +57,10 @@ impl CodeBuilder for AbsoluteValue {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        AbsoluteValue::new(engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -117,6 +121,10 @@ impl CodeBuilder for Negate {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Negate::new(engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(f, "{}Negate::new({}, {}),", indentation, self.source, self.destination)
     }
@@ -148,7 +156,7 @@ impl CodeBuilder for Negate {
 ///     [SquareRoot::new(0, 1), Return::new()]
 /// }
 /// let func = SquareRootI32::new().unwrap();
-/// assert_eq!(3, func.call(9).unwrap());
+/// assert_eq!(3, func.call(9).unwrap());, engine.random_slot()
 /// // Negative numbers are taken absolute value so that genetic code can operate without error
 /// assert_eq!(5, func.call(-25).unwrap());
 /// ```
@@ -175,6 +183,10 @@ impl CodeBuilder for SquareRoot {
         instruction_list.push(NumericInstruction::SquareRoot(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        SquareRoot::new(engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -226,6 +238,10 @@ impl CodeBuilder for Ceiling {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Ceiling::new(engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(f, "{}Ceiling::new({}, {}),", indentation, self.source, self.destination)
     }
@@ -269,6 +285,10 @@ impl CodeBuilder for Floor {
         instruction_list.push(NumericInstruction::Floor(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Floor::new(engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -317,6 +337,10 @@ impl CodeBuilder for Nearest {
         instruction_list.push(NumericInstruction::Nearest(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Nearest::new(engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -383,6 +407,10 @@ impl CodeBuilder for Min {
         instruction_list.push(NumericInstruction::Minimum(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Min::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -455,6 +483,10 @@ impl CodeBuilder for Max {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Max::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,
@@ -524,6 +556,10 @@ impl CodeBuilder for CopySign {
         instruction_list.push(NumericInstruction::CopySign(operate_as.into()).into());
         SetSlotConvert::convert(self.destination, operate_as, context, instruction_list)?;
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        CopySign::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
