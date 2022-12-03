@@ -6,7 +6,7 @@ use anyhow::Result;
 use strum_macros::EnumIter;
 use wasm_ast::Instruction;
 
-#[derive(EnumIter, PartialEq)]
+#[derive(Clone, EnumIter, PartialEq)]
 pub enum Code {
     // Const
     ConstI32(ConstI32),

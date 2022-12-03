@@ -24,6 +24,7 @@ mod world_configuration;
 pub use code::Code;
 pub use code_arithmetic::*;
 pub use code_bit_ops::*;
+pub use code_builder::CodeBuilder;
 pub use code_compare::*;
 pub use code_const::*;
 pub use code_context::CodeContext;

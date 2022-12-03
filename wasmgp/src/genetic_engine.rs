@@ -7,6 +7,7 @@ pub struct GeneticEngine {
     rng: SmallRng,
     slot_count: Slot,
     weights: Vec<WeightEntry>,
+    sum_of_weights: usize,
 }
 
 impl GeneticEngine {
@@ -15,6 +16,7 @@ impl GeneticEngine {
             rng: small_rng_from_optional_seed(seed),
             slot_count,
             weights: vec![],
+            sum_of_weights: 0,
         };
 
         // Set the default weight of every instruction except for Call to be one. The Call instructions will be added
@@ -22,7 +24,12 @@ impl GeneticEngine {
         let test_for_call = Code::Call(Call::default());
         for code in Code::iter() {
             if code != test_for_call {
-                engine.weights.push(WeightEntry { code, weight: 1 });
+                engine.sum_of_weights += 1;
+                engine.weights.push(WeightEntry {
+                    code,
+                    weight: 1,
+                    combined_weight: engine.sum_of_weights,
+                });
             }
         }
 
@@ -32,11 +39,33 @@ impl GeneticEngine {
     pub fn random_slot(&mut self) -> Slot {
         self.rng.gen_range(0..self.slot_count)
     }
+
+    pub fn random_code_list(&mut self, max_points: usize) -> Vec<Code> {
+        let mut code = vec![];
+        let points = self.rng.gen_range(1..max_points);
+        for _i in 0..points {
+            code.push(self.random_code(max_points));
+        }
+        code
+    }
+
+    pub fn random_code(&mut self, max_points: usize) -> Code {
+        let weighted_code = self.pick_random_weighted_code();
+        weighted_code.make_random_code(self, max_points)
+    }
+
+    fn pick_random_weighted_code(&mut self) -> Code {
+        let pick = self.rng.gen_range(1..=self.sum_of_weights);
+        let index = self.weights.partition_point(|entry| entry.combined_weight < pick);
+        let entry = self.weights.get(index).unwrap();
+        entry.code.clone()
+    }
 }
 
 struct WeightEntry {
     code: Code,
     weight: u8,
+    combined_weight: usize,
 }
 
 fn small_rng_from_optional_seed(rng_seed: Option<u64>) -> SmallRng {

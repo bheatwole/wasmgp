@@ -35,7 +35,7 @@ impl CodeBuilder for GetSlotConvert {
         Ok(())
     }
 
-    fn make_random_code(_engine: &mut GeneticEngine, _max_points: usize) -> Code {
+    fn make_random_code(&self, _engine: &mut GeneticEngine, _max_points: usize) -> Code {
         panic!("this CodeBuilder should not be created as random code")
     }
 
@@ -74,7 +74,7 @@ impl CodeBuilder for SetSlotConvert {
         Ok(())
     }
 
-    fn make_random_code(_engine: &mut GeneticEngine, _max_points: usize) -> Code {
+    fn make_random_code(&self, _engine: &mut GeneticEngine, _max_points: usize) -> Code {
         panic!("this CodeBuilder should not be created as random code")
     }
 
@@ -188,7 +188,7 @@ impl CodeBuilder for StackConvert {
         Ok(())
     }
 
-    fn make_random_code(_engine: &mut GeneticEngine, _max_points: usize) -> Code {
+    fn make_random_code(&self, _engine: &mut GeneticEngine, _max_points: usize) -> Code {
         panic!("this CodeBuilder should not be created as random code")
     }
 

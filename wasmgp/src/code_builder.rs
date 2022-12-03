@@ -9,7 +9,7 @@ pub trait CodeBuilder {
     fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()>;
 
     /// Creates a new random piece of code based on the parameters of the implementor
-    fn make_random_code(_engine: &mut GeneticEngine, _max_points: usize) -> Code {
+    fn make_random_code(&self, _engine: &mut GeneticEngine, _max_points: usize) -> Code {
         panic!("this CodeBuilder should not be created as random code")
     }
 
@@ -26,7 +26,7 @@ impl CodeBuilder for Vec<Code> {
         Ok(())
     }
 
-    fn make_random_code(_engine: &mut GeneticEngine, _max_points: usize) -> Code {
+    fn make_random_code(&self, _engine: &mut GeneticEngine, _max_points: usize) -> Code {
         panic!("this CodeBuilder should not be created as random code")
     }
 

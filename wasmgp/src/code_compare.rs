@@ -35,7 +35,7 @@ use wasm_ast::{Instruction, NumericInstruction};
 /// assert_eq!(1, func.call(0).unwrap());
 /// assert_eq!(0, func.call(2).unwrap());
 /// ```
-#[derive(Default, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub struct IsEqualZero {
     source: Slot,
     destination: Slot,
@@ -106,7 +106,7 @@ impl CodeBuilder for IsEqualZero {
 /// assert_eq!(0, func.call(3, 2).unwrap());
 /// assert_eq!(0, func.call(-3, -2).unwrap());
 /// ```
-#[derive(Default, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub struct AreEqual {
     left: Slot,
     right: Slot,
@@ -183,7 +183,7 @@ impl CodeBuilder for AreEqual {
 /// assert_eq!(1, func.call(3, 2).unwrap());
 /// assert_eq!(1, func.call(-3, -2).unwrap());
 /// ```
-#[derive(Default, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub struct AreNotEqual {
     left: Slot,
     right: Slot,
@@ -260,7 +260,7 @@ impl CodeBuilder for AreNotEqual {
 /// assert_eq!(0, func.call(3, 2).unwrap());
 /// assert_eq!(1, func.call(-3, -2).unwrap());
 /// ```
-#[derive(Default, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub struct IsLessThan {
     left: Slot,
     right: Slot,
@@ -342,7 +342,7 @@ impl CodeBuilder for IsLessThan {
 /// assert_eq!(1, func.call(3, 2).unwrap());
 /// assert_eq!(0, func.call(-3, -2).unwrap());
 /// ```
-#[derive(Default, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub struct IsGreaterThan {
     left: Slot,
     right: Slot,
@@ -424,7 +424,7 @@ impl CodeBuilder for IsGreaterThan {
 /// assert_eq!(0, func.call(3, 2).unwrap());
 /// assert_eq!(1, func.call(-3, -2).unwrap());
 /// ```
-#[derive(Default, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub struct IsLessThanOrEqual {
     left: Slot,
     right: Slot,
@@ -506,7 +506,7 @@ impl CodeBuilder for IsLessThanOrEqual {
 /// assert_eq!(1, func.call(3, 2).unwrap());
 /// assert_eq!(0, func.call(-3, -2).unwrap());
 /// ```
-#[derive(Default, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub struct IsGreaterThanOrEqual {
     left: Slot,
     right: Slot,
