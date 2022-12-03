@@ -137,6 +137,10 @@ impl CodeBuilder for Subtract {
         Ok(())
     }
 
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        Subtract::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
+    }
+
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
         writeln!(
             f,

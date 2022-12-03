@@ -92,8 +92,27 @@ pub enum Code {
 
 impl Code {
     /// Returns the number of places where this code item could be mutated.
-    pub fn mutation_points(&self) -> u32 {
-        todo!()
+    pub fn mutation_points(&self) -> usize {
+        match self {
+            Code::If(instructions) => instructions.mutation_points(),
+            Code::IfElse(instructions) => instructions.mutation_points(),
+            Code::DoUntil(instructions) => instructions.mutation_points(),
+            Code::DoWhile(instructions) => instructions.mutation_points(),
+            Code::DoFor(instructions) => instructions.mutation_points(),
+            _ => 1,
+        }
+    }
+
+    /// Returns the minimum number of points consumed when generating this Code randomly
+    pub fn minimum_points(&self) -> usize {
+        match self {
+            Code::If(_) => 2,
+            Code::IfElse(_) => 3,
+            Code::DoUntil(_) => 2,
+            Code::DoWhile(_) => 2,
+            Code::DoFor(_) => 2,
+            _ => 1,
+        }
     }
 
     /// Returns the default value for this type of code

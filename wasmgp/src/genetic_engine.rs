@@ -49,9 +49,11 @@ impl GeneticEngine {
     /// Creates a random list of code up to the specified number of max_points
     pub fn random_code_list(&mut self, max_points: usize) -> Vec<Code> {
         let mut code = vec![];
-        let points = self.rng.gen_range(1..max_points);
-        for _i in 0..points {
-            code.push(self.random_code(max_points));
+        let mut points = self.rng.gen_range(1..=max_points);
+        while points > 0 {
+            let child = self.random_code(points);
+            points -= child.mutation_points();
+            code.push(child);
         }
         code
     }
@@ -59,7 +61,16 @@ impl GeneticEngine {
     /// Creates a single random piece of code. `max_points` defines how many child Code elements items such as `IfElse`
     /// may also create.
     pub fn random_code(&mut self, max_points: usize) -> Code {
-        let weighted_code = self.pick_random_weighted_code();
+        assert!(
+            max_points > 0,
+            "you must have at least one point to generate any random code"
+        );
+
+        // Code that has children (If, IfElse, DoUntil, etc) need more than one point, so just re-pick if we need to
+        let mut weighted_code = self.pick_random_weighted_code();
+        while weighted_code.minimum_points() > max_points {
+            weighted_code = self.pick_random_weighted_code();
+        }
         weighted_code.make_random_code(self, max_points)
     }
 
@@ -95,6 +106,14 @@ impl GeneticEngine {
     pub fn set_host_call_weight(&mut self, function_index: FunctionIndex, num_params: u8, num_results: u8, weight: u8) {
         let call = Call::new(function_index, vec![num_params], vec![num_results]);
         self.internal_set_code_weight(call, weight);
+    }
+
+    /// Sets the weight of every Code variant to the specified value (reset with a default)
+    pub fn reset_all_code_weights(&mut self, weight: u8) {
+        for entry in self.weights.iter_mut() {
+            entry.weight = weight;
+        }
+        self.sum_of_weights = None;
     }
 
     fn internal_set_code_weight(&mut self, code: Code, weight: u8) {

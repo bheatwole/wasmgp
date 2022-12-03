@@ -160,17 +160,11 @@ impl CodeBuilder for Call {
 
         // Assign random slots according to the number of params expected
         let num_params = self.params[0];
-        let mut params = vec![];
-        for _i in 0..num_params {
-            params.push(engine.random_slot());
-        }
+        let params = (0..num_params).map(|_| engine.random_slot()).collect();
 
         // Assign random slots according to the number of results expected
         let num_results = self.results[0];
-        let mut results = vec![];
-        for _i in 0..num_results {
-            results.push(engine.random_slot());
-        }
+        let results = (0..num_results).map(|_| engine.random_slot()).collect();
 
         // Create a call to this function with those params and resuls
         Call::new(self.function_index, params, results)
@@ -229,6 +223,10 @@ impl If {
     pub fn new(if_not_zero: Slot, do_this: Vec<Code>) -> Code {
         Code::If(If { if_not_zero, do_this })
     }
+
+    pub fn mutation_points(&self) -> usize {
+        1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
+    }
 }
 
 impl CodeBuilder for If {
@@ -240,6 +238,15 @@ impl CodeBuilder for If {
         instruction_list
             .push(ControlInstruction::If(BlockType::None, Expression::new(inner_instructions), None).into());
         Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, max_points: usize) -> Code {
+        assert!(
+            max_points >= 2,
+            "internal error: `If::make_random_code` called with too few points"
+        );
+        let children = engine.random_code_list(max_points - 1);
+        If::new(engine.random_slot(), children)
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -285,6 +292,15 @@ impl IfElse {
             do_this,
             else_do_this,
         })
+    }
+
+    pub fn mutation_points(&self) -> usize {
+        1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
+            + self
+                .else_do_this
+                .iter()
+                .map(|code| code.mutation_points())
+                .sum::<usize>()
     }
 }
 
@@ -358,6 +374,10 @@ impl DoUntil {
             until_not_zero,
             do_this,
         })
+    }
+
+    pub fn mutation_points(&self) -> usize {
+        1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
     }
 }
 
@@ -450,6 +470,10 @@ impl DoWhile {
             do_this,
         })
     }
+
+    pub fn mutation_points(&self) -> usize {
+        1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
+    }
 }
 
 impl CodeBuilder for DoWhile {
@@ -528,6 +552,10 @@ pub struct DoFor {
 impl DoFor {
     pub fn new(times: u16, do_this: Vec<Code>) -> Code {
         Code::DoFor(DoFor { do_this, times })
+    }
+
+    pub fn mutation_points(&self) -> usize {
+        1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
     }
 }
 
@@ -769,5 +797,59 @@ mod tests {
         let call = Call::new(3, vec![2], vec![0]);
         assert_eq!(call.make_random_code(&mut ge, 0), Call::new(3, vec![2, 4], vec![]));
         assert_eq!(call.make_random_code(&mut ge, 0), Call::new(3, vec![0, 2], vec![]));
+    }
+
+    #[test]
+    fn test_if_mutation_points() {
+        let code = If::new(2, vec![Add::new(0, 1, 2), Add::new(2, 1, 3), Subtract::new(4, 2, 2)]);
+        assert_eq!(4, code.mutation_points());
+
+        let code = If::new(
+            2,
+            vec![
+                Add::new(0, 1, 2),
+                If::new(0, vec![Add::new(2, 1, 3), Subtract::new(4, 2, 2)]),
+            ],
+        );
+        assert_eq!(5, code.mutation_points());
+    }
+
+    #[test]
+    fn test_random_if() {
+        // Setup a genetic engine where we will only every get Add and Subtract code
+        let mut ge = GeneticEngine::new(Some(1), 5);
+        ge.reset_all_code_weights(0);
+        ge.set_code_weight(Code::Add(Add::default()), 1);
+        ge.set_code_weight(Code::Subtract(Subtract::default()), 1);
+
+        // Test random calls for If, allowing up to four child items
+        let test = If::default();
+        assert_eq!(
+            test.make_random_code(&mut ge, 4),
+            If::new(2, vec![Add::new(0, 1, 2), Add::new(2, 1, 3), Subtract::new(4, 2, 2)])
+        );
+        assert_eq!(test.make_random_code(&mut ge, 4), If::new(1, vec![Add::new(3, 3, 2)]));
+
+        // Allow for If code buried inside the 'If'
+        ge.set_code_weight(Code::If(If::default()), 2);
+        assert_eq!(
+            test.make_random_code(&mut ge, 12),
+            If::new(
+                4,
+                vec![
+                    Subtract::new(3, 4, 0),
+                    Subtract::new(4, 2, 4),
+                    Add::new(2, 3, 0),
+                    If::new(
+                        1,
+                        vec![
+                            If::new(0, vec![Subtract::new(2, 2, 2)]),
+                            Subtract::new(3, 4, 0),
+                            Add::new(1, 4, 4)
+                        ]
+                    )
+                ]
+            )
+        );
     }
 }
