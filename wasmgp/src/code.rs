@@ -95,6 +95,57 @@ impl Code {
     pub fn mutation_points(&self) -> u32 {
         todo!()
     }
+
+    /// Returns the default value for this type of code
+    pub fn get_default(&self) -> Code {
+        match self {
+            Code::ConstI32(_) => Code::ConstI32(ConstI32::default()),
+            Code::ConstI64(_) => Code::ConstI64(ConstI64::default()),
+            Code::ConstF32(_) => Code::ConstF32(ConstF32::default()),
+            Code::ConstF64(_) => Code::ConstF64(ConstF64::default()),
+            Code::CountLeadingZeros(_) => Code::CountLeadingZeros(CountLeadingZeros::default()),
+            Code::CountTrailingZeros(_) => Code::CountTrailingZeros(CountTrailingZeros::default()),
+            Code::PopulationCount(_) => Code::PopulationCount(PopulationCount::default()),
+            Code::And(_) => Code::And(And::default()),
+            Code::Or(_) => Code::Or(Or::default()),
+            Code::Xor(_) => Code::Xor(Xor::default()),
+            Code::ShiftLeft(_) => Code::ShiftLeft(ShiftLeft::default()),
+            Code::ShiftRight(_) => Code::ShiftRight(ShiftRight::default()),
+            Code::RotateLeft(_) => Code::RotateLeft(RotateLeft::default()),
+            Code::RotateRight(_) => Code::RotateRight(RotateRight::default()),
+            Code::Add(_) => Code::Add(Add::default()),
+            Code::Subtract(_) => Code::Subtract(Subtract::default()),
+            Code::Multiply(_) => Code::Multiply(Multiply::default()),
+            Code::Divide(_) => Code::Divide(Divide::default()),
+            Code::Remainder(_) => Code::Remainder(Remainder::default()),
+            Code::AbsoluteValue(_) => Code::AbsoluteValue(AbsoluteValue::default()),
+            Code::Negate(_) => Code::Negate(Negate::default()),
+            Code::SquareRoot(_) => Code::SquareRoot(SquareRoot::default()),
+            Code::Ceiling(_) => Code::Ceiling(Ceiling::default()),
+            Code::Floor(_) => Code::Floor(Floor::default()),
+            Code::Nearest(_) => Code::Nearest(Nearest::default()),
+            Code::Min(_) => Code::Min(Min::default()),
+            Code::Max(_) => Code::Max(Max::default()),
+            Code::CopySign(_) => Code::CopySign(CopySign::default()),
+            Code::IsEqualZero(_) => Code::IsEqualZero(IsEqualZero::default()),
+            Code::AreEqual(_) => Code::AreEqual(AreEqual::default()),
+            Code::AreNotEqual(_) => Code::AreNotEqual(AreNotEqual::default()),
+            Code::IsLessThan(_) => Code::IsLessThan(IsLessThan::default()),
+            Code::IsGreaterThan(_) => Code::IsGreaterThan(IsGreaterThan::default()),
+            Code::IsLessThanOrEqual(_) => Code::IsLessThanOrEqual(IsLessThanOrEqual::default()),
+            Code::IsGreaterThanOrEqual(_) => Code::IsGreaterThanOrEqual(IsGreaterThanOrEqual::default()),
+            Code::Return(_) => Code::Return(Return::default()),
+            Code::CopySlot(_) => Code::CopySlot(CopySlot::default()),
+            Code::Call(_) => Code::Call(Call::default()),
+            Code::If(_) => Code::If(If::default()),
+            Code::IfElse(_) => Code::IfElse(IfElse::default()),
+            Code::DoUntil(_) => Code::DoUntil(DoUntil::default()),
+            Code::DoWhile(_) => Code::DoWhile(DoWhile::default()),
+            Code::DoFor(_) => Code::DoFor(DoFor::default()),
+            Code::Break(_) => Code::Break(Break::default()),
+            Code::BreakIf(_) => Code::BreakIf(BreakIf::default()),
+        }
+    }
 }
 
 impl CodeBuilder for Code {
