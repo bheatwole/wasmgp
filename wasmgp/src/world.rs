@@ -1,5 +1,7 @@
 use crate::{Code, CodeContext, FunctionSignature, GeneticEngine, WasmgpError, WorldConfiguration};
 use anyhow::Result;
+use std::thread;
+use std::time::Duration;
 use std::vec;
 use wasm_ast::{FunctionIndex, Import, ModuleBuilder, Name};
 use wasmtime::{AsContextMut, Engine, Extern, Func, Instance, IntoFunc, Linker, Store};
@@ -37,6 +39,13 @@ impl<T: Default> World<T> {
 
         let engine = Engine::default();
         let linker = Linker::new(&engine);
+
+        // Advance the engine's epoch once every millisecond
+        let engine_for_timer = engine.clone();
+        thread::spawn(move || loop {
+            thread::sleep(Duration::from_millis(1));
+            engine_for_timer.increment_epoch();
+        });
 
         Ok(World {
             config,
