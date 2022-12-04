@@ -1,15 +1,14 @@
 use crate::{Individual, IslandCallbacks, RunResult, SelectionCurve};
 
-#[derive(Clone, Debug)]
-pub struct Island<R: RunResult> {
-    functions: Box<dyn IslandCallbacks<R>>,
-    individuals: Vec<Individual<R>>,
+pub struct Island<T, R: RunResult> {
+    functions: Box<dyn IslandCallbacks<T, R>>,
+    individuals: Vec<Individual<T, R>>,
     individuals_are_sorted: bool,
-    future: Vec<Individual<R>>,
+    future: Vec<Individual<T, R>>,
 }
 
-impl<R: RunResult> Island<R> {
-    pub(crate) fn new(callbacks: Box<dyn IslandCallbacks<R>>) -> Island<R> {
+impl<T, R: RunResult> Island<T, R> {
+    pub(crate) fn new(callbacks: Box<dyn IslandCallbacks<T, R>>) -> Island<T, R> {
         Island {
             functions: callbacks,
             individuals: vec![],
@@ -27,7 +26,7 @@ impl<R: RunResult> Island<R> {
 
     /// Returns the most fit of all the individuals (the one sorted to the tail by the sorting algorithm). Returns None
     /// if there are no Individuals or if the individuals have not been sorted
-    pub fn most_fit_individual(&self) -> Option<&Individual<R>> {
+    pub fn most_fit_individual(&self) -> Option<&Individual<T, R>> {
         if !self.individuals_are_sorted {
             return None;
         }
@@ -36,7 +35,7 @@ impl<R: RunResult> Island<R> {
 
     /// Returns the least fit of all the individuals (the one sorted to the head by the sorting algorithm). Returns None
     /// if there are no Individuals or if the individuals have not been sorted
-    pub fn least_fit_individual(&self) -> Option<&Individual<R>> {
+    pub fn least_fit_individual(&self) -> Option<&Individual<T, R>> {
         if !self.individuals_are_sorted {
             return None;
         }
@@ -44,7 +43,7 @@ impl<R: RunResult> Island<R> {
     }
 
     /// Returns one individual by index, or None if the index is out of range
-    pub fn get_one_individual(&self, index: usize) -> Option<&Individual<R>> {
+    pub fn get_one_individual(&self, index: usize) -> Option<&Individual<T, R>> {
         self.individuals.get(index)
     }
 
@@ -99,7 +98,7 @@ impl<R: RunResult> Island<R> {
         &self,
         curve: SelectionCurve,
         rng: &mut Rnd,
-    ) -> Option<&Individual<R>> {
+    ) -> Option<&Individual<T, R>> {
         if !self.individuals_are_sorted {
             return None;
         }
@@ -118,7 +117,7 @@ impl<R: RunResult> Island<R> {
         &mut self,
         curve: SelectionCurve,
         rng: &mut Rnd,
-    ) -> Option<Individual<R>> {
+    ) -> Option<Individual<T, R>> {
         if !self.individuals_are_sorted {
             return None;
         }
@@ -132,7 +131,7 @@ impl<R: RunResult> Island<R> {
     }
 
     /// Adds an individual to the future generation
-    pub fn add_individual_to_future_generation(&mut self, individual: Individual<R>) {
+    pub fn add_individual_to_future_generation(&mut self, individual: Individual<T, R>) {
         self.future.push(individual);
     }
 
@@ -143,14 +142,5 @@ impl<R: RunResult> Island<R> {
         } else {
             None
         }
-    }
-}
-
-impl<R: RunResult> PartialEq for Island<R> {
-    fn eq(&self, other: &Self) -> bool {
-        self.functions.as_ref() as *const _ == other.functions.as_ref() as *const _
-            && self.individuals == other.individuals
-            && self.individuals_are_sorted == other.individuals_are_sorted
-            && self.future == other.future
     }
 }
