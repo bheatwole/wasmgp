@@ -20,8 +20,16 @@ pub struct WorldConfiguration {
 
     /// The amount of Wasm memory that individuals may access. May be zero. Must be set to at least the size of any
     /// default data you will provide to the individual at runtime if you choose to pre-load a block of data. This will
-    /// be rounded up to the nearest multiple of Wasm page size (usually 64K)
+    /// be rounded up to the nearest multiple of Wasm page size (usually 64K).
+    ///
+    /// The default is zero
     pub memory_size: usize,
+
+    /// The number of milliseconds that an individual may run for. This time includes any calls out to host functions.
+    /// Individuals that exceed the time limit will return a epoch_deadline_trap as the result.
+    ///
+    /// The default is 250ms
+    pub individual_run_time_ms: u64,
 
     /// The number of individuals on each island. Before running a generation, the island will be filled with the
     /// children of genetic selection if there was a previous generation, or new random individuals if there was no
@@ -82,6 +90,7 @@ impl Default for WorldConfiguration {
             },
             is_signed: false,
             memory_size: 0,
+            individual_run_time_ms: 250,
             individuals_per_island: 100,
             elite_individuals_per_generation: 2,
             generations_between_migrations: 10,
