@@ -41,7 +41,7 @@ pub use individual::Individual;
 pub use island::Island;
 pub use island_callbacks::IslandCallbacks;
 pub use migration_algorithm::MigrationAlgorithm;
-pub use run_result::RunResult;
+pub use run_result::*;
 pub use selection_curve::SelectionCurve;
 pub use slot::*;
 pub use threading_model::ThreadingModel;

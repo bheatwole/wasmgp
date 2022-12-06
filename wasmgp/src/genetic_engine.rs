@@ -1,4 +1,5 @@
 use crate::*;
+use anyhow::Result;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use strum::IntoEnumIterator;
@@ -72,6 +73,23 @@ impl GeneticEngine {
             weighted_code = self.pick_random_weighted_code();
         }
         weighted_code.make_random_code(self, max_points)
+    }
+
+    /// Produces a random child of the two individuals that is either a mutation of the left individual, or the genetic
+    /// crossover of both.
+    ///
+    /// The defined_names of the child will only include the code that is specifically named in the child's code. If
+    /// both parents have the same defined_name, the value for that will come from the left individual.
+    pub fn rand_child<T, R: RunResult>(
+        &mut self,
+        left: &Individual<T, R>,
+        right: &Individual<T, R>,
+    ) -> Result<Individual<T, R>> {
+        // match self.select_genetic_operation() {
+        //     GeneticOperation::Mutation => self.mutate(left),
+        //     GeneticOperation::Crossover => self.crossover(left, right),
+        // }
+        todo!()
     }
 
     fn pick_random_weighted_code(&mut self) -> Code {

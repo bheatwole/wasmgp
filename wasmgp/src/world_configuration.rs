@@ -31,6 +31,11 @@ pub struct WorldConfiguration {
     /// The default is 250ms
     pub individual_run_time_ms: u64,
 
+    /// The maximum amount of code that any individual may have
+    ///
+    /// The default is 100
+    pub individual_max_points: usize,
+
     /// The number of individuals on each island. Before running a generation, the island will be filled with the
     /// children of genetic selection if there was a previous generation, or new random individuals if there was no
     /// previous generation.
@@ -91,6 +96,7 @@ impl Default for WorldConfiguration {
             is_signed: false,
             memory_size: 0,
             individual_run_time_ms: 250,
+            individual_max_points: 100,
             individuals_per_island: 100,
             elite_individuals_per_generation: 2,
             generations_between_migrations: 10,

@@ -4,7 +4,7 @@ use wasmtime::{InstancePre, Store, WasmParams, WasmResults};
 use crate::{Code, RunResult};
 
 pub struct Individual<T, R: RunResult> {
-    code: Code,
+    code: Vec<Code>,
     function_name: String,
     instance_pre: InstancePre<T>,
     deadline: u64,
@@ -13,7 +13,7 @@ pub struct Individual<T, R: RunResult> {
 
 impl<T, R: RunResult> Individual<T, R> {
     pub(crate) fn new(
-        code: Code,
+        code: Vec<Code>,
         function_name: String,
         instance_pre: InstancePre<T>,
         deadline: u64,
@@ -28,8 +28,8 @@ impl<T, R: RunResult> Individual<T, R> {
     }
 
     /// Borrows the Individual's code
-    pub fn get_code(&self) -> &Code {
-        &self.code
+    pub fn get_code(&self) -> &[Code] {
+        &self.code[..]
     }
 
     /// Borrows the current RunResult for the Individual
@@ -85,5 +85,17 @@ impl<T, R: RunResult> Individual<T, R> {
         let result = func.call(&mut store, params);
         let state = store.into_data();
         (state, result)
+    }
+}
+
+impl<T, R: RunResult> Clone for Individual<T, R> {
+    fn clone(&self) -> Self {
+        Self {
+            code: self.code.clone(),
+            function_name: self.function_name.clone(),
+            instance_pre: self.instance_pre.clone(),
+            deadline: self.deadline.clone(),
+            run_result: self.run_result.clone(),
+        }
     }
 }

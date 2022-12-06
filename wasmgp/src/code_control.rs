@@ -119,7 +119,7 @@ impl CodeBuilder for Return {
 ///
 /// let mut config = WorldConfiguration::default();
 /// config.main_entry_point = FunctionSignature::new("add_then_double", vec![ValueType::I32, ValueType::I32], vec![ValueType::I32]);
-/// let mut world = World::new(config).unwrap();
+/// let mut world = World::<(), EmptyRunResult>::new(config).unwrap();
 /// let index = world.add_function_import("double", double).unwrap();
 /// assert_eq!(0, index);
 ///
@@ -831,7 +831,7 @@ mod tests {
             vec![ValueType::I32, ValueType::I32],
             vec![ValueType::I32, ValueType::I32, ValueType::I32],
         );
-        let mut world = World::new(config).unwrap();
+        let mut world: World<(), EmptyRunResult> = World::new(config).unwrap();
         let index = world
             .add_function_import("do_it", |v1: i32, v2: i32| (v2, v1, v1 - v2))
             .unwrap();

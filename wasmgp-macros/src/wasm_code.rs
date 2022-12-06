@@ -102,7 +102,7 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
                 })
             }
 
-            fn new_with_world(world: &#wasmgp::World<#state_ident>, #state_new_args) -> anyhow::Result<#struct_name> {
+            fn new_with_world<R: #wasmgp::RunResult>(world: &#wasmgp::World<#state_ident, R>, #state_new_args) -> anyhow::Result<#struct_name> {
                 let name = #function_name_lit;
                 let code = vec!#body_block;
                 let mut store = world.store(#state_store_arg);
