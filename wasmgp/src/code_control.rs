@@ -886,7 +886,7 @@ mod tests {
 
     #[test]
     fn test_random_call() {
-        let mut ge = GeneticEngine::new(Some(1), 5);
+        let mut ge = GeneticEngine::new(GeneticEngineConfiguration::new(Some(1), 5));
 
         // Test random calls for function zero with one param and one result
         let call = Call::new(0, vec![1], vec![1]);
@@ -917,7 +917,7 @@ mod tests {
     #[test]
     fn test_random_if() {
         // Setup a genetic engine where we will only every get Add and Subtract code
-        let mut ge = GeneticEngine::new(Some(1), 5);
+        let mut ge = GeneticEngine::new(GeneticEngineConfiguration::new(Some(1), 5));
         ge.reset_all_code_weights(0);
         ge.set_code_weight(Code::Add(Add::default()), 1);
         ge.set_code_weight(Code::Subtract(Subtract::default()), 1);

@@ -438,7 +438,7 @@ mod tests {
 
     #[test]
     fn test_random_add() {
-        let mut ge = GeneticEngine::new(Some(1), 5);
+        let mut ge = GeneticEngine::new(GeneticEngineConfiguration::new(Some(1), 5));
         let add = Add::default();
 
         // Make some random code with up to 5 slots. Because we used a seed, this test will always come out the same

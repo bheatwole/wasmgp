@@ -75,6 +75,37 @@ pub struct WorldConfiguration {
     /// Determine how the world runs with regards to multi-threading. Placeholder: currently multi-threading is not
     /// implemented
     pub threading_model: ThreadingModel,
+
+    /// The average number of times the 'Mutation' genetic operation will be chosen. The `mutation_rate` and
+    /// `crossover_rate` are summed and then a random value is picked in that range to the final rate is dependant upon
+    /// both values.
+    ///
+    /// Set this to zero to disable mutation entirely.
+    ///
+    /// The default value is 1. If the default `crossover_rate` is also used, this equates to 10%
+    pub mutation_rate: u8,
+
+    /// The average number of times the 'Crossover' genetic operation will be chosen. The `mutation_rate` and
+    /// `crossover_rate` are summed and then a random value is picked in that range to the final rate is dependant upon
+    /// both values.
+    ///
+    /// Set this to zero to disable crossover entirely.
+    ///
+    /// The default value is 9. If the default `mutation_rate` is also used, this equates to 90%
+    pub crossover_rate: u8,
+
+    /// The maximum number of code items that will be mutated (replaced with new random code) when the 'Mutation'
+    /// operation is chosen. The actual value is random between one and this number. Must be at least one if mutation
+    /// is used at all.
+    ///
+    /// The default value is 1
+    pub max_mutation_points: u8,
+
+    /// The maximum number of times the code streams will be swapped during the Crossover operation. The actual value is
+    /// random between one and this number. Must be at least one if crossover is used at all.
+    ///
+    /// The default value is 2
+    pub max_crossover_points: u8,
 }
 
 impl WorldConfiguration {
@@ -107,6 +138,10 @@ impl Default for WorldConfiguration {
             select_as_parent: SelectionCurve::PreferenceForFit,
             select_as_elite: SelectionCurve::StrongPreferenceForFit,
             threading_model: ThreadingModel::None,
+            mutation_rate: 1,
+            crossover_rate: 9,
+            max_mutation_points: 1,
+            max_crossover_points: 2,
         }
     }
 }

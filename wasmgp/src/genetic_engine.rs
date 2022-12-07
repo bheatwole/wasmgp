@@ -7,16 +7,17 @@ use wasm_ast::FunctionIndex;
 
 pub struct GeneticEngine {
     rng: SmallRng,
-    slot_count: Slot,
+    config: GeneticEngineConfiguration,
     weights: Vec<WeightEntry>,
     sum_of_weights: Option<usize>,
 }
 
 impl GeneticEngine {
-    pub fn new(seed: Option<u64>, slot_count: Slot) -> GeneticEngine {
+    pub fn new(config: GeneticEngineConfiguration) -> GeneticEngine {
+        let rng = small_rng_from_optional_seed(config.seed);
         let mut engine = GeneticEngine {
-            rng: small_rng_from_optional_seed(seed),
-            slot_count,
+            rng: rng,
+            config,
             weights: vec![],
             sum_of_weights: None,
         };
@@ -44,7 +45,7 @@ impl GeneticEngine {
 
     /// Returns a random working slot out of all the slots defined in the function (parameters, returns, SlotCount)
     pub fn random_slot(&mut self) -> Slot {
-        self.rng.gen_range(0..self.slot_count)
+        self.rng.gen_range(0..self.config.slot_count)
     }
 
     /// Creates a random list of code up to the specified number of max_points
@@ -176,12 +177,12 @@ fn small_rng_from_optional_seed(rng_seed: Option<u64>) -> SmallRng {
 
 #[cfg(test)]
 mod tests {
-    use crate::GeneticEngine;
+    use crate::{GeneticEngine, GeneticEngineConfiguration};
 
     #[test]
     fn test_random_slot() {
         // Use a specific seed so that we always get the same slots for the test
-        let mut engine = GeneticEngine::new(Some(1), 10);
+        let mut engine = GeneticEngine::new(GeneticEngineConfiguration::new(Some(1), 10));
 
         // Get some random slots
         assert_eq!(engine.random_slot(), 7);

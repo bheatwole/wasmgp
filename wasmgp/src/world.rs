@@ -1,6 +1,6 @@
 use crate::{
-    Code, CodeContext, FunctionSignature, GeneticEngine, Individual, Island, IslandCallbacks, MigrationAlgorithm,
-    RunResult, WasmgpError, WorldConfiguration,
+    Code, CodeContext, FunctionSignature, GeneticEngine, GeneticEngineConfiguration, Individual, Island,
+    IslandCallbacks, MigrationAlgorithm, RunResult, WasmgpError, WorldConfiguration,
 };
 use anyhow::Result;
 use rand::seq::SliceRandom;
@@ -57,10 +57,15 @@ impl<T: Default, R: RunResult> World<T, R> {
         });
 
         let generations_remaining_before_migration = config.generations_between_migrations;
+        let mut genetic_config = GeneticEngineConfiguration::new(None, total_slots);
+        genetic_config.mutation_rate = config.mutation_rate;
+        genetic_config.crossover_rate = config.crossover_rate;
+        genetic_config.max_mutation_points = config.max_mutation_points;
+        genetic_config.max_crossover_points = config.max_crossover_points;
         Ok(World {
             config,
             wasm_engine: engine,
-            genetic_engine: GeneticEngine::new(None, total_slots),
+            genetic_engine: GeneticEngine::new(genetic_config),
             linker: linker,
             imported_functions: vec![],
             module_builder: ModuleBuilder::new(),
