@@ -80,11 +80,7 @@ impl GeneticEngine {
     ///
     /// The defined_names of the child will only include the code that is specifically named in the child's code. If
     /// both parents have the same defined_name, the value for that will come from the left individual.
-    pub fn rand_child<T, R: RunResult>(
-        &mut self,
-        left: &Individual<T, R>,
-        right: &Individual<T, R>,
-    ) -> Result<Individual<T, R>> {
+    pub fn rand_child(&mut self, left: &[Code], right: &[Code]) -> Result<Vec<Code>> {
         // match self.select_genetic_operation() {
         //     GeneticOperation::Mutation => self.mutate(left),
         //     GeneticOperation::Crossover => self.crossover(left, right),

@@ -314,7 +314,14 @@ impl<T: Default, R: RunResult> World<T, R> {
                         let right = island
                             .select_one_individual(self.config.select_as_parent, self.genetic_engine.rng())
                             .unwrap();
-                        self.genetic_engine.rand_child(left, right)?
+                        let code = self.genetic_engine.rand_child(left.get_code(), right.get_code())?;
+                        let instance_pre = self.instanciate_pre(&code[..])?;
+                        Individual::new(
+                            code,
+                            self.config.main_entry_point.name().clone(),
+                            instance_pre,
+                            self.config.individual_run_time_ms,
+                        )
                     }
                 };
                 self.add_individual_to_island_future_generation(id, next);
