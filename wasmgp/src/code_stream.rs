@@ -1,6 +1,6 @@
 use crate::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum CodeStream {
     Simple(Code),
     Begin(Code),

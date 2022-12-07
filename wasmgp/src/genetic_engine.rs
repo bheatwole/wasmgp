@@ -104,10 +104,66 @@ impl GeneticEngine {
     /// The defined_names of the child will only include the code that is specifically named in the child's code. If
     /// both parents have the same defined_name, the value for that will come from the left individual.
     pub fn rand_child(&mut self, left: &[Code], right: &[Code]) -> Result<Vec<Code>> {
-        // match self.select_genetic_operation() {
-        //     GeneticOperation::Mutation => self.mutate(left),
-        //     GeneticOperation::Crossover => self.crossover(left, right),
-        // }
+        match self.select_genetic_operation() {
+            GeneticOperation::Mutation(count) => self.mutate(left, count),
+            GeneticOperation::Crossover(count) => self.crossover(left, right, count),
+        }
+    }
+
+    /// Mutates the parent by randomly selecting a point in the code, generating a new random code item and replacing
+    /// the selected point with the new code.
+    pub fn mutate(&mut self, parent: &[Code], mut count: u8) -> Result<Vec<Code>> {
+        // Most code will replace a single item, but if we replace an item with an IfElse, we could be in for a lot of
+        // code. Make sure it doesn't get larger than the allowed amount
+        let parent_points: usize = parent.iter().map(|v| v.mutation_points()).sum();
+        let max_additional_points = self.config.individual_max_points - parent_points;
+        let mut additional_points = if max_additional_points > 1 {
+            self.rng.gen_range(1..max_additional_points)
+        } else {
+            1
+        };
+
+        // Turn the parent into a stream
+        let mut stream = CodeStream::to_stream(parent);
+
+        // Mutate a single point in the stream the specified number of times
+        while count > 0 {
+            count -= 1;
+
+            let mutation_point = self.rng.gen_range(0..stream.len());
+            let replace_with_code = vec![self.random_code(additional_points)];
+
+            // Turn the new code into a stream as well
+            let replace_stream = CodeStream::to_stream(&replace_with_code);
+
+            // Make a new stream with the new code in place of that one element
+            let mut next_stream = vec![];
+            if mutation_point > 0 {
+                next_stream.extend(&stream[0..mutation_point]);
+            }
+            next_stream.extend(&replace_stream[..]);
+            if mutation_point + 1 < stream.len() {
+                next_stream.extend(&stream[mutation_point + 1..]);
+            }
+
+            // We have a list of borrowed items, clone them to turn them into our real stream. We can't use `.cloned()`
+            // because the iterator items are `&&CodeStream`
+            stream = next_stream.iter().map(|&x| x.clone()).collect();
+
+            // If we got code larger than one point, we need to adjust the additional_points downward
+            additional_points -= replace_with_code[0].mutation_points() - 1;
+            if additional_points == 0 {
+                break;
+            }
+        }
+
+        // Turn the stream back into code
+        Ok(CodeStream::from_stream(&mut stream.into_iter()))
+    }
+
+    /// Produces a random child that is a crossover of both parents. `count` random points along the shortest of the
+    /// two code streams will be selected to swap the streams.
+    pub fn crossover(&mut self, left_parent: &[Code], right_parent: &[Code], count: u8) -> Result<Vec<Code>> {
         todo!()
     }
 
@@ -199,7 +255,7 @@ fn small_rng_from_optional_seed(rng_seed: Option<u64>) -> SmallRng {
 
 #[cfg(test)]
 mod tests {
-    use crate::{GeneticEngine, GeneticEngineConfiguration, GeneticOperation};
+    use crate::*;
 
     #[test]
     fn test_random_slot() {
@@ -242,5 +298,68 @@ mod tests {
         assert_eq!(engine.select_genetic_operation(), GeneticOperation::Mutation(1));
         assert_eq!(engine.select_genetic_operation(), GeneticOperation::Crossover(4));
         assert_eq!(engine.select_genetic_operation(), GeneticOperation::Crossover(2));
+    }
+
+    #[test]
+    fn test_mutation() {
+        let config = GeneticEngineConfiguration::new(Some(1), 10);
+        let mut engine = GeneticEngine::new(config);
+
+        // Start with some parent code
+        let parent = vec![
+            ConstI32::new(2, 1),
+            ConstI32::new(3, 3),
+            ConstI32::new(4, 0),
+            CopySlot::new(0, 1),
+            Remainder::new(1, 3, 5),
+            AreEqual::new(5, 4, 5),
+            DoUntil::new(
+                5,
+                vec![Add::new(1, 2, 1), Remainder::new(1, 3, 5), AreEqual::new(5, 4, 5)],
+            ),
+            Return::new(),
+        ];
+
+        // Mutate it once
+        let child = engine.mutate(&parent[..], 1).unwrap();
+        assert_eq!(
+            child,
+            vec![
+                ConstI32::new(2, 1),
+                ConstI32::new(3, 3),
+                Subtract::new(4, 9, 1), // mutation
+                CopySlot::new(0, 1),
+                Remainder::new(1, 3, 5),
+                AreEqual::new(5, 4, 5),
+                DoUntil::new(
+                    5,
+                    vec![Add::new(1, 2, 1), Remainder::new(1, 3, 5), AreEqual::new(5, 4, 5)],
+                ),
+                Return::new(),
+            ]
+        );
+
+        // Mutate it in three places
+        let child = engine.mutate(&parent[..], 3).unwrap();
+        assert_eq!(
+            child,
+            vec![
+                ConstI32::new(2, 1),
+                ConstI32::new(3, 3),
+                ConstI32::new(4, 0),
+                IsLessThan::new(5, 8, 5), // mutation
+                Remainder::new(1, 3, 5),
+                Or::new(1, 7, 6), // mutation
+                DoUntil::new(
+                    5,
+                    vec![
+                        Add::new(1, 2, 1),
+                        And::new(3, 6, 9), // mutation
+                        AreEqual::new(5, 4, 5)
+                    ],
+                ),
+                Return::new(),
+            ]
+        );
     }
 }

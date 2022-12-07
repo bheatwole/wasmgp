@@ -58,6 +58,7 @@ impl<T: Default, R: RunResult> World<T, R> {
 
         let generations_remaining_before_migration = config.generations_between_migrations;
         let mut genetic_config = GeneticEngineConfiguration::new(None, total_slots);
+        genetic_config.individual_max_points = config.individual_max_points;
         genetic_config.mutation_rate = config.mutation_rate;
         genetic_config.max_mutation_points = config.max_mutation_points;
         if genetic_config.mutation_rate > 0 && genetic_config.max_mutation_points == 0 {
