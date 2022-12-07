@@ -59,9 +59,22 @@ impl<T: Default, R: RunResult> World<T, R> {
         let generations_remaining_before_migration = config.generations_between_migrations;
         let mut genetic_config = GeneticEngineConfiguration::new(None, total_slots);
         genetic_config.mutation_rate = config.mutation_rate;
-        genetic_config.crossover_rate = config.crossover_rate;
         genetic_config.max_mutation_points = config.max_mutation_points;
+        if genetic_config.mutation_rate > 0 && genetic_config.max_mutation_points == 0 {
+            return Err(WasmgpError::InvalidConfiguration(
+                "must set max_mutation_points if mutation_rate is greater than zero".into(),
+            )
+            .into());
+        }
+        genetic_config.crossover_rate = config.crossover_rate;
         genetic_config.max_crossover_points = config.max_crossover_points;
+        if genetic_config.crossover_rate > 0 && genetic_config.max_crossover_points == 0 {
+            return Err(WasmgpError::InvalidConfiguration(
+                "must set max_crossover_points if crossover_rate is greater than zero".into(),
+            )
+            .into());
+        }
+
         Ok(World {
             config,
             wasm_engine: engine,

@@ -15,4 +15,7 @@ pub enum WasmgpError {
         "The total number of slots used across all parameters, return and locals must be 256 or fewer, but got {0}"
     )]
     SlotCountTooLarge(usize),
+
+    #[error("Configuration is not valid ({0})")]
+    InvalidConfiguration(String),
 }
