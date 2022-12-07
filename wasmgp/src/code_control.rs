@@ -236,6 +236,14 @@ impl If {
     pub fn mutation_points(&self) -> usize {
         1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
     }
+
+    pub fn if_not_zero(&self) -> Slot {
+        self.if_not_zero
+    }
+
+    pub fn do_this(&self) -> &[Code] {
+        &self.do_this[..]
+    }
 }
 
 impl CodeBuilder for If {
@@ -310,6 +318,18 @@ impl IfElse {
                 .iter()
                 .map(|code| code.mutation_points())
                 .sum::<usize>()
+    }
+
+    pub fn if_not_zero(&self) -> Slot {
+        self.if_not_zero
+    }
+
+    pub fn do_this(&self) -> &[Code] {
+        &self.do_this[..]
+    }
+
+    pub fn else_do_this(&self) -> &[Code] {
+        &self.else_do_this[..]
     }
 }
 
@@ -399,6 +419,14 @@ impl DoUntil {
 
     pub fn mutation_points(&self) -> usize {
         1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
+    }
+
+    pub fn until_not_zero(&self) -> Slot {
+        self.until_not_zero
+    }
+
+    pub fn do_this(&self) -> &[Code] {
+        &self.do_this[..]
     }
 }
 
@@ -504,6 +532,14 @@ impl DoWhile {
     pub fn mutation_points(&self) -> usize {
         1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
     }
+
+    pub fn while_not_zero(&self) -> Slot {
+        self.while_not_zero
+    }
+
+    pub fn do_this(&self) -> &[Code] {
+        &self.do_this[..]
+    }
 }
 
 impl CodeBuilder for DoWhile {
@@ -595,6 +631,14 @@ impl DoFor {
 
     pub fn mutation_points(&self) -> usize {
         1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
+    }
+
+    pub fn times(&self) -> u16 {
+        self.times
+    }
+
+    pub fn do_this(&self) -> &[Code] {
+        &self.do_this[..]
     }
 }
 
