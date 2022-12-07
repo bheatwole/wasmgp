@@ -908,4 +908,16 @@ mod tests {
             )
         );
     }
+
+    #[wasm_code]
+    fn test_empty_if(v1: i32, v2: i32) -> i32 {
+        [Add::new(0, 1, 2), If::new(2, vec![]), Return::new()]
+    }
+
+    #[test]
+    fn test_empty_if() {
+        // This function confirms that the compiler doesn't mind that a block is empty.
+        let func = TestEmptyIf::new().unwrap();
+        assert_eq!(4, func.call(1, 3).unwrap());
+    }
 }
