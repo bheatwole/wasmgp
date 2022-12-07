@@ -76,6 +76,28 @@ impl GeneticEngine {
         weighted_code.make_random_code(self, max_points)
     }
 
+    /// Randomly selects either a crossover or mutation as the genetic operation to perform.
+    pub fn select_genetic_operation(&mut self) -> GeneticOperation {
+        let mutation_rate = self.config.mutation_rate as usize;
+        let total = self.config.crossover_rate as usize + mutation_rate;
+        let pick = self.rng.gen_range(0..total);
+        if pick < mutation_rate as usize {
+            if self.config.max_mutation_points == 1 {
+                GeneticOperation::Mutation(1)
+            } else {
+                let count = self.rng.gen_range(1..self.config.max_mutation_points);
+                GeneticOperation::Mutation(count)
+            }
+        } else {
+            if self.config.max_crossover_points == 1 {
+                GeneticOperation::Crossover(1)
+            } else {
+                let count = self.rng.gen_range(1..self.config.max_crossover_points);
+                GeneticOperation::Crossover(count)
+            }
+        }
+    }
+
     /// Produces a random child of the two individuals that is either a mutation of the left individual, or the genetic
     /// crossover of both.
     ///
@@ -177,7 +199,7 @@ fn small_rng_from_optional_seed(rng_seed: Option<u64>) -> SmallRng {
 
 #[cfg(test)]
 mod tests {
-    use crate::{GeneticEngine, GeneticEngineConfiguration};
+    use crate::{GeneticEngine, GeneticEngineConfiguration, GeneticOperation};
 
     #[test]
     fn test_random_slot() {
@@ -204,5 +226,21 @@ mod tests {
         assert_eq!(1, entries.partition_point(|&x| x < 5));
         assert_eq!(4, entries.partition_point(|&x| x < 6));
         assert_eq!(4, entries.partition_point(|&x| x < 10));
+    }
+
+    #[test]
+    fn test_select_genetic_operation() {
+        let mut config = GeneticEngineConfiguration::new(Some(1), 10);
+        config.mutation_rate = 9; // equal chance of mutation and crossover
+        config.max_crossover_points = 5;
+        let mut engine = GeneticEngine::new(config);
+
+        assert_eq!(engine.select_genetic_operation(), GeneticOperation::Mutation(1));
+        assert_eq!(engine.select_genetic_operation(), GeneticOperation::Mutation(1));
+        assert_eq!(engine.select_genetic_operation(), GeneticOperation::Crossover(1));
+        assert_eq!(engine.select_genetic_operation(), GeneticOperation::Mutation(1));
+        assert_eq!(engine.select_genetic_operation(), GeneticOperation::Mutation(1));
+        assert_eq!(engine.select_genetic_operation(), GeneticOperation::Crossover(4));
+        assert_eq!(engine.select_genetic_operation(), GeneticOperation::Crossover(2));
     }
 }
