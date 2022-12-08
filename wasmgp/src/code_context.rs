@@ -1,6 +1,5 @@
 use crate::code_builder::CodeBuilder;
-use crate::WasmgpError;
-use crate::{Code, FunctionSignature, Slot, SlotCount, ValueType};
+use crate::{Code, FunctionSignature, Return, Slot, SlotCount, ValueType, WasmgpError};
 use anyhow::Result;
 use std::{cell::RefCell, ops::Deref};
 use wasm_ast::{Export, Function, FunctionType, LabelIndex, LocalIndex, ModuleBuilder, ResultType, SignExtension};
@@ -77,6 +76,15 @@ impl CodeContext {
         let mut instruction_list = vec![];
         for c in code.iter() {
             c.append_code(&self, &mut instruction_list)?;
+        }
+
+        // If the code does not already end in a Return, add one onto the end
+        let add_return = match code.last() {
+            Some(Code::Return(_)) => false,
+            _ => true,
+        };
+        if add_return {
+            Return::new().append_code(&self, &mut instruction_list)?;
         }
 
         // Create the list of local variables
