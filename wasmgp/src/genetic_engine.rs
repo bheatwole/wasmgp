@@ -163,8 +163,54 @@ impl GeneticEngine {
 
     /// Produces a random child that is a crossover of both parents. `count` random points along the shortest of the
     /// two code streams will be selected to swap the streams.
-    pub fn crossover(&mut self, left_parent: &[Code], right_parent: &[Code], count: u8) -> Result<Vec<Code>> {
-        todo!()
+    pub fn crossover(&mut self, left_parent: &[Code], right_parent: &[Code], mut count: u8) -> Result<Vec<Code>> {
+        assert!(count > 0);
+
+        // Turn each parent into a stream
+        let mut left_stream = CodeStream::to_stream(left_parent);
+        let mut right_stream = CodeStream::to_stream(right_parent);
+
+        // Determine the shortest stream
+        let max_crossover_point = if left_stream.len() > right_stream.len() {
+            right_stream.len()
+        } else {
+            left_stream.len()
+        };
+
+        // Pick all the crossover points. If the same point is picked more than once, this may result in slightly fewer
+        // than `count` points, but that's typically with very short streams and a lot of crossovers in a short space is
+        // not typically desired behavior
+        let mut crossover_points = vec![];
+        while count > 0 {
+            count -= 1;
+            crossover_points.push(self.rng.gen_range(0..=max_crossover_point));
+        }
+        crossover_points.sort();
+        crossover_points.dedup();
+
+        // Assemble the child stream as slices of left and right
+        let mut child_stream: Vec<CodeStream> = vec![];
+        let mut last_crossover = 0;
+        for &crossover in crossover_points.iter() {
+            // In the case of the first point being zero, we can have a situation of duplicate crossover points.
+            if last_crossover != crossover {
+                // Always extend from the 'left' stream. We will swap the meaning of 'left' and 'right' at each
+                // crossover point
+                child_stream.extend((&left_stream[last_crossover..crossover]).iter().map(|x| x.clone()));
+            }
+
+            // Swap 'left' and 'right'
+            std::mem::swap(&mut left_stream, &mut right_stream);
+            last_crossover = crossover;
+        }
+
+        // If there are any more elements remaining in 'left' add them as well
+        if left_stream.len() > last_crossover {
+            child_stream.extend((&left_stream[last_crossover..]).iter().map(|x| x.clone()));
+        }
+
+        // Turn the stream back into code
+        Ok(CodeStream::from_stream(&mut child_stream.into_iter()))
     }
 
     fn pick_random_weighted_code(&mut self) -> Code {
@@ -357,6 +403,55 @@ mod tests {
                         And::new(3, 6, 9), // mutation
                         AreEqual::new(5, 4, 5)
                     ],
+                ),
+                Return::new(),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_crossover() {
+        let config = GeneticEngineConfiguration::new(Some(1), 10);
+        let mut engine = GeneticEngine::new(config);
+
+        // Start with some parent code
+        let left = vec![
+            ConstI32::new(2, 1),
+            ConstI32::new(3, 3),
+            ConstI32::new(4, 0),
+            CopySlot::new(0, 1),
+            Remainder::new(1, 3, 5),
+            AreEqual::new(5, 4, 5),
+            DoUntil::new(
+                5,
+                vec![Add::new(1, 2, 1), Remainder::new(1, 3, 5), AreEqual::new(5, 4, 5)],
+            ),
+            Return::new(),
+        ];
+        let right = vec![
+            ConstF64::new(4, 42.0),
+            Add::new(0, 1, 2),
+            Divide::new(2, 4, 5),
+            IsGreaterThanOrEqual::new(5, 1, 6),
+            IfElse::new(6, vec![ConstF64::new(3, 1.0)], vec![ConstF64::new(3, 0.0)]),
+        ];
+
+        // With this particular seed, the child is the first part of 'right' and the last part of 'left'. The two
+        // selected crossover points were '0' and '6'
+        let child = engine.crossover(&left[..], &right[..], 2).unwrap();
+        assert_eq!(
+            child,
+            vec![
+                // Right
+                ConstF64::new(4, 42.0),
+                Add::new(0, 1, 2),
+                Divide::new(2, 4, 5),
+                IsGreaterThanOrEqual::new(5, 1, 6),
+                IfElse::new(
+                    6,
+                    vec![ConstF64::new(3, 1.0)],
+                    // Left
+                    vec![Add::new(1, 2, 1), Remainder::new(1, 3, 5), AreEqual::new(5, 4, 5)],
                 ),
                 Return::new(),
             ]
