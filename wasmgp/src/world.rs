@@ -9,7 +9,7 @@ use std::thread;
 use std::time::Duration;
 use std::vec;
 use wasm_ast::{FunctionIndex, Import, ModuleBuilder, Name};
-use wasmtime::{AsContextMut, Engine, Extern, Func, Instance, InstancePre, IntoFunc, Linker, Store};
+use wasmtime::{AsContextMut, Config, Engine, Extern, Func, Instance, InstancePre, IntoFunc, Linker, Store};
 
 pub type IslandId = usize;
 
@@ -46,7 +46,9 @@ impl<T: Default, R: RunResult> World<T, R> {
         }
         let total_slots = config.slot_count() as u8;
 
-        let engine = Engine::default();
+        let mut engine_config = Config::new();
+        engine_config.epoch_interruption(true);
+        let engine = Engine::new(&engine_config)?;
         let linker = Linker::new(&engine);
 
         // Advance the engine's epoch once every millisecond
