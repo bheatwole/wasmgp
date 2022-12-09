@@ -3,7 +3,6 @@ use crate::convert::{GetSlotConvert, SetSlotConvert};
 use crate::indentation::Indentation;
 use crate::*;
 use anyhow::Result;
-use rand::Rng;
 use std::fmt::Write;
 use wasm_ast::{Instruction, NumericInstruction};
 
