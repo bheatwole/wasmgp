@@ -435,11 +435,7 @@ impl CodeBuilder for ShiftLeft {
     }
 
     fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
-        ShiftLeft::new(
-            engine.random_slot(),
-            engine.rng().gen_range(0..64),
-            engine.random_slot(),
-        )
+        ShiftLeft::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -524,11 +520,7 @@ impl CodeBuilder for ShiftRight {
     }
 
     fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
-        ShiftRight::new(
-            engine.random_slot(),
-            engine.rng().gen_range(0..64),
-            engine.random_slot(),
-        )
+        ShiftRight::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -589,11 +581,7 @@ impl CodeBuilder for RotateLeft {
     }
 
     fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
-        RotateLeft::new(
-            engine.random_slot(),
-            engine.rng().gen_range(0..64),
-            engine.random_slot(),
-        )
+        RotateLeft::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
@@ -654,11 +642,7 @@ impl CodeBuilder for RotateRight {
     }
 
     fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
-        RotateRight::new(
-            engine.random_slot(),
-            engine.rng().gen_range(0..64),
-            engine.random_slot(),
-        )
+        RotateRight::new(engine.random_slot(), engine.random_slot(), engine.random_slot())
     }
 
     fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
