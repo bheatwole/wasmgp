@@ -55,6 +55,9 @@ pub use value_type::ValueType;
 pub use world::*;
 pub use world_configuration::WorldConfiguration;
 
+// Re-export the wasmtime::Caller
+pub use wasmtime::Caller;
+
 #[cfg(test)]
 mod tests {
     #[test]
