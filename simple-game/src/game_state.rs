@@ -103,3 +103,86 @@ impl GameState {
             + self.number_of_finished_hearts()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::card::Card;
+
+    use super::GameState;
+
+    #[test]
+    fn can_cycle_through_deck() {
+        let mut state = GameState::new(12);
+
+        let mut first_order: Vec<Card> = vec![];
+        for i in 0..52 {
+            assert_eq!(52 - i, state.draw_pile.len());
+            assert_eq!(i, state.play_pile.len());
+            state.draw_next_card();
+            assert_eq!(52 - i - 1, state.draw_pile.len());
+            assert_eq!(i + 1, state.play_pile.len());
+
+            first_order.push(*state.play_pile.last().unwrap());
+        }
+
+        for i in 0..52 {
+            state.draw_next_card();
+            assert_eq!(first_order.get(i), state.play_pile.get(i));
+        }
+    }
+
+    #[test]
+    fn card_is_ready_to_finish() {
+        let mut state = GameState::new(12);
+
+        let expected_order = vec![
+            Card::AceOfDiamonds,
+            Card::TwoOfDiamonds,
+            Card::ThreeOfDiamonds,
+            Card::FourOfDiamonds,
+            Card::FiveOfDiamonds,
+            Card::SixOfDiamonds,
+            Card::SevenOfDiamonds,
+            Card::EightOfDiamonds,
+            Card::NineOfDiamonds,
+            Card::TenOfDiamonds,
+            Card::JackOfDiamonds,
+            Card::QueenOfDiamonds,
+            Card::KingOfDiamonds,
+        ];
+
+        for &card_to_play_next in expected_order.iter() {
+            // Confirm that this card is the only one that 'is_ready_to_finish'
+            for &card_to_test_is_ready in expected_order.iter() {
+                let is_ready = state.card_is_ready_to_finish(card_to_test_is_ready);
+                if card_to_play_next == card_to_test_is_ready {
+                    assert_eq!(
+                        is_ready, true,
+                        "We wanted to play {:?} but it's marked as not ready",
+                        card_to_play_next
+                    );
+                } else {
+                    assert_eq!(
+                        is_ready, false,
+                        "It's time to play {:?} but card {:?} is ready",
+                        card_to_play_next, card_to_test_is_ready
+                    );
+                }
+            }
+
+            // Finish this card
+            assert!(state.push_card_on_finished_pile(card_to_play_next));
+        }
+    }
+
+    #[test]
+    fn can_complete_a_game() {
+        let mut state = GameState::new(12);
+        assert_eq!(52, state.draw_pile.len());
+
+        while state.number_of_finished_cards() < 52 {
+            state.draw_next_card();
+            state.move_top_play_pile_card_to_finish();
+        }
+    }
+}
