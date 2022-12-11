@@ -66,7 +66,7 @@ fn main() {
             code.print_for_rust(&mut output, &mut indentation).unwrap();
             println!("  code: {}", output);
 
-            generations_complete < 10_000 || cards_played < 52
+            generations_complete < 10_000 && cards_played < 52
         })
         .unwrap();
 }
