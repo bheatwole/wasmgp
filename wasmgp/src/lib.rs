@@ -43,6 +43,7 @@ pub use function_signature::FunctionSignature;
 pub use genetic_engine::GeneticEngine;
 pub use genetic_engine_configuration::*;
 pub use genetic_operation::*;
+pub use indentation::Indentation;
 pub use individual::Individual;
 pub use island::Island;
 pub use island_callbacks::IslandCallbacks;
