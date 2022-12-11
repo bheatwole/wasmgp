@@ -148,6 +148,25 @@ impl<T: Default, R: RunResult> World<T, R> {
         }
     }
 
+    /// Sets the weight of every Code variant to the specified value (reset with a default)
+    /// ```
+    /// use wasmgp::*;
+    ///
+    /// let config = WorldConfiguration::default();
+    /// let mut world = World::<(), EmptyRunResult>::new(config).unwrap();
+    ///
+    /// // Turn off everything
+    /// world.reset_all_code_weights(0);
+    ///
+    /// // Except...
+    /// world.set_code_weight(Code::Add(Add::default()), 1);
+    /// world.set_code_weight(Code::If(If::default()), 1);
+    /// world.set_code_weight(Code::IsEqualZero(IsEqualZero::default()), 1);
+    /// ```
+    pub fn reset_all_code_weights(&mut self, weight: u8) {
+        self.genetic_engine.reset_all_code_weights(weight);
+    }
+
     /// Sets the weight of the specified Code variant.
     /// ```
     /// use wasmgp::*;
