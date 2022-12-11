@@ -22,4 +22,8 @@ impl IslandCallbacks<GameState, GameResult> for IslandOne {
         // 'winning' at any cost, another on 'not losing', etc
         individual.set_run_result(Some(GameResult::new(state)));
     }
+
+    fn score_individual(&self, individual: &Individual<GameState, GameResult>) -> u64 {
+        individual.get_run_result().unwrap().cards_played() as u64
+    }
 }
