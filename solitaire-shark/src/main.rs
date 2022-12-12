@@ -2,12 +2,20 @@ mod card;
 mod game_result;
 mod game_state;
 mod island_common;
+mod island_five;
+mod island_four;
 mod island_one;
+mod island_three;
+mod island_two;
 mod suit;
 
 use game_result::GameResult;
 use game_state::GameState;
+use island_five::IslandFive;
+use island_four::IslandFour;
 use island_one::IslandOne;
+use island_three::IslandThree;
+use island_two::IslandTwo;
 use wasmgp::*;
 
 fn main() {
@@ -98,6 +106,10 @@ fn main() {
 
     // Setup the various islands that apply different kinds of pressure to the genetic algorithm.
     world.create_island(Box::new(IslandOne::new()));
+    world.create_island(Box::new(IslandTwo::new()));
+    world.create_island(Box::new(IslandThree::new()));
+    world.create_island(Box::new(IslandFour::new()));
+    world.create_island(Box::new(IslandFive::new()));
 
     // Run the world for 10_000 generations
     let mut generations_complete = 0;
@@ -109,6 +121,42 @@ fn main() {
             println!(
                 "  island one:   {:.04}% games won",
                 most_fit_island_one.get_run_result().unwrap().games_won() as f64 / 100.0f64
+            );
+            let most_fit_island_two = world.get_island(1).unwrap().most_fit_individual().unwrap();
+            println!(
+                "  island two:   {:.04} avg finished cards",
+                most_fit_island_two
+                    .get_run_result()
+                    .unwrap()
+                    .number_of_finished_cards() as f64
+                    / 100.0f64
+            );
+            let most_fit_island_three = world.get_island(2).unwrap().most_fit_individual().unwrap();
+            println!(
+                "  island three:   {:.04} avg remaining draw+play cards",
+                most_fit_island_three
+                    .get_run_result()
+                    .unwrap()
+                    .number_of_draw_stack_cards() as f64
+                    / 100.0f64
+            );
+            let most_fit_island_four = world.get_island(3).unwrap().most_fit_individual().unwrap();
+            println!(
+                "  island four:   {:.04} avg remaining face down cards",
+                most_fit_island_four
+                    .get_run_result()
+                    .unwrap()
+                    .number_of_face_down_cards() as f64
+                    / 100.0f64
+            );
+            let most_fit_island_five = world.get_island(4).unwrap().most_fit_individual().unwrap();
+            println!(
+                "  island five:   {:.04} avg remaining face up cards",
+                most_fit_island_five
+                    .get_run_result()
+                    .unwrap()
+                    .number_of_face_up_cards() as f64
+                    / 100.0f64
             );
 
             let mut indentation = Indentation::new(4, 0);

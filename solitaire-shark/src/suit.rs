@@ -14,8 +14,4 @@ impl Suit {
             _ => false,
         }
     }
-
-    pub fn is_black(&self) -> bool {
-        !self.is_red()
-    }
 }

@@ -85,10 +85,6 @@ impl Card {
         self.suit().is_red()
     }
 
-    pub fn is_black(self) -> bool {
-        self.suit().is_black()
-    }
-
     pub fn is_solitaire_play_legal(self, can_play_on_top_of: Card) -> bool {
         self.is_red() != can_play_on_top_of.is_red()
             && self.index_in_suit() + 1 == can_play_on_top_of.index_in_suit()
