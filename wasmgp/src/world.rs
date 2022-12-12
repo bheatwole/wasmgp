@@ -46,7 +46,7 @@ impl<T: Default, R: RunResult> World<T, R> {
         }
         let total_slots = config.slot_count() as u8;
 
-        let mut engine_config = Config::new();
+        let mut engine_config = Config::default();
         engine_config.epoch_interruption(true);
         let engine = Engine::new(&engine_config)?;
         let linker = Linker::new(&engine);

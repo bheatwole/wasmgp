@@ -118,6 +118,7 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
             fn call(&self #param_call_fn_args) -> anyhow::Result<#result_generic> {
                 use std::ops::DerefMut;
                 let mut store = self.store.borrow_mut();
+                store.set_epoch_deadline(100);
                 let results = self.func.call(store.deref_mut(), #param_call_args)?;
                 Ok(results)
             }
