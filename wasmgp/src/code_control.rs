@@ -233,8 +233,8 @@ impl If {
         Code::If(If { if_not_zero, do_this })
     }
 
-    pub fn mutation_points(&self) -> usize {
-        1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
+    pub fn points(&self) -> usize {
+        1 + self.do_this.iter().map(|code| code.points()).sum::<usize>()
     }
 
     pub fn if_not_zero(&self) -> Slot {
@@ -311,13 +311,9 @@ impl IfElse {
         })
     }
 
-    pub fn mutation_points(&self) -> usize {
-        1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
-            + self
-                .else_do_this
-                .iter()
-                .map(|code| code.mutation_points())
-                .sum::<usize>()
+    pub fn points(&self) -> usize {
+        1 + self.do_this.iter().map(|code| code.points()).sum::<usize>()
+            + self.else_do_this.iter().map(|code| code.points()).sum::<usize>()
     }
 
     pub fn if_not_zero(&self) -> Slot {
@@ -358,7 +354,7 @@ impl CodeBuilder for IfElse {
             "internal error: `IfElse::make_random_code` called with too few points"
         );
         let if_children = engine.random_code_list(max_points - 2);
-        let points_used: usize = if_children.iter().map(|c| c.mutation_points()).sum();
+        let points_used: usize = if_children.iter().map(|c| c.points()).sum();
         let points_remaining = max_points - points_used;
         let else_children = engine.random_code_list(points_remaining - 1);
         IfElse::new(engine.random_slot(), if_children, else_children)
@@ -417,8 +413,8 @@ impl DoUntil {
         })
     }
 
-    pub fn mutation_points(&self) -> usize {
-        1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
+    pub fn points(&self) -> usize {
+        1 + self.do_this.iter().map(|code| code.points()).sum::<usize>()
     }
 
     pub fn until_not_zero(&self) -> Slot {
@@ -529,8 +525,8 @@ impl DoWhile {
         })
     }
 
-    pub fn mutation_points(&self) -> usize {
-        1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
+    pub fn points(&self) -> usize {
+        1 + self.do_this.iter().map(|code| code.points()).sum::<usize>()
     }
 
     pub fn while_not_zero(&self) -> Slot {
@@ -629,8 +625,8 @@ impl DoFor {
         Code::DoFor(DoFor { do_this, times })
     }
 
-    pub fn mutation_points(&self) -> usize {
-        1 + self.do_this.iter().map(|code| code.mutation_points()).sum::<usize>()
+    pub fn points(&self) -> usize {
+        1 + self.do_this.iter().map(|code| code.points()).sum::<usize>()
     }
 
     pub fn times(&self) -> u16 {
@@ -900,9 +896,9 @@ mod tests {
     }
 
     #[test]
-    fn test_if_mutation_points() {
+    fn test_if_points() {
         let code = If::new(2, vec![Add::new(0, 1, 2), Add::new(2, 1, 3), Subtract::new(4, 2, 2)]);
-        assert_eq!(4, code.mutation_points());
+        assert_eq!(4, code.points());
 
         let code = If::new(
             2,
@@ -911,7 +907,7 @@ mod tests {
                 If::new(0, vec![Add::new(2, 1, 3), Subtract::new(4, 2, 2)]),
             ],
         );
-        assert_eq!(5, code.mutation_points());
+        assert_eq!(5, code.points());
     }
 
     #[test]

@@ -92,13 +92,13 @@ pub enum Code {
 
 impl Code {
     /// Returns the number of places where this code item could be mutated.
-    pub fn mutation_points(&self) -> usize {
+    pub fn points(&self) -> usize {
         match self {
-            Code::If(instructions) => instructions.mutation_points(),
-            Code::IfElse(instructions) => instructions.mutation_points(),
-            Code::DoUntil(instructions) => instructions.mutation_points(),
-            Code::DoWhile(instructions) => instructions.mutation_points(),
-            Code::DoFor(instructions) => instructions.mutation_points(),
+            Code::If(instructions) => instructions.points(),
+            Code::IfElse(instructions) => instructions.points(),
+            Code::DoUntil(instructions) => instructions.points(),
+            Code::DoWhile(instructions) => instructions.points(),
+            Code::DoFor(instructions) => instructions.points(),
             _ => 1,
         }
     }

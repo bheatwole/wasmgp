@@ -54,7 +54,7 @@ impl GeneticEngine {
         let mut points = self.rng.gen_range(1..=max_points);
         while points > 0 {
             let child = self.random_code(points);
-            points -= child.mutation_points();
+            points -= child.points();
             code.push(child);
         }
         code
@@ -115,7 +115,7 @@ impl GeneticEngine {
     pub fn mutate(&mut self, parent: &[Code], mut count: u8) -> Result<Vec<Code>> {
         // Most code will replace a single item, but if we replace an item with an IfElse, we could be in for a lot of
         // code. Make sure it doesn't get larger than the allowed amount
-        let parent_points: usize = parent.iter().map(|v| v.mutation_points()).sum();
+        let parent_points: usize = parent.iter().map(|v| v.points()).sum();
         let max_additional_points = self.config.individual_max_points - parent_points;
         let mut additional_points = if max_additional_points > 1 {
             self.rng.gen_range(1..max_additional_points)
@@ -151,7 +151,7 @@ impl GeneticEngine {
             stream = next_stream.iter().map(|&x| x.clone()).collect();
 
             // If we got code larger than one point, we need to adjust the additional_points downward
-            additional_points -= replace_with_code[0].mutation_points() - 1;
+            additional_points -= replace_with_code[0].points() - 1;
             if additional_points == 0 {
                 break;
             }
