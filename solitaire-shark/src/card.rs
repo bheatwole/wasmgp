@@ -1,12 +1,12 @@
 use rand::seq::SliceRandom;
 use rand::Rng;
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
+use strum_macros::{EnumIter, FromRepr};
 
 use crate::suit::Suit;
 
-#[derive(Copy, Clone, Debug, EnumIter, PartialEq)]
-#[repr(u8)]
+#[derive(Copy, Clone, Debug, EnumIter, FromRepr, PartialEq)]
+#[repr(i32)]
 pub enum Card {
     AceOfSpades = 0,
     TwoOfSpades,
@@ -120,6 +120,12 @@ impl Card {
             deck.shuffle(rng);
         }
         deck
+    }
+}
+
+impl From<i32> for Card {
+    fn from(value: i32) -> Self {
+        Card::from_repr(value).unwrap()
     }
 }
 
