@@ -81,6 +81,19 @@ impl Card {
         (self as u8 % 13) as usize
     }
 
+    pub fn is_red(self) -> bool {
+        self.suit().is_red()
+    }
+
+    pub fn is_black(self) -> bool {
+        self.suit().is_black()
+    }
+
+    pub fn is_solitaire_play_legal(self, can_play_on_top_of: Card) -> bool {
+        self.is_red() != can_play_on_top_of.is_red()
+            && self.index_in_suit() + 1 == can_play_on_top_of.index_in_suit()
+    }
+
     pub fn is_next_card_in_suit(&self, previous_card: Option<Card>) -> bool {
         if let Some(previous_card) = previous_card {
             self.suit() == previous_card.suit()
