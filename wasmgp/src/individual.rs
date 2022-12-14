@@ -1,7 +1,7 @@
 use anyhow::Result;
 use wasmtime::{InstancePre, Store, WasmParams, WasmResults};
 
-use crate::{Code, RunResult};
+use crate::{Code, CodeBuilder, Indentation, RunResult};
 
 pub struct Individual<T, R: RunResult> {
     code: Vec<Code>,
@@ -45,6 +45,15 @@ impl<T, R: RunResult> Individual<T, R> {
     /// Replaces the RunResult for this Individual
     pub fn set_run_result(&mut self, run_result: Option<R>) {
         self.run_result = run_result;
+    }
+
+    /// Returns the code as a string
+    pub fn get_code_string(&self) -> String {
+        let mut indentation = Indentation::new(2, 0);
+        let mut output = std::string::String::new();
+        let code: Vec<Code> = self.get_code().iter().map(|c| c.clone()).collect();
+        code.print_for_rust(&mut output, &mut indentation).unwrap();
+        output
     }
 
     /// Executes the individual's code on the specified state and using the specified parameters. Both params and
