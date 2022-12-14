@@ -15,3 +15,11 @@ features = ["small_rng"]
 
 [dependencies.wasmgp]
 path = "../wasmgp" 
+
+
+# Uncomment when you want to profile for valgrind. Example valgrind:
+# valgrind --tool=callgrind --dump-instr=yes --collect-jumps=yes --simulate-cache=yes ./target/release/solitaire-shark
+# or
+# valgrind --tool=massif  ./target/release/solitaire-shark
+# [profile.release]
+# debug = true
