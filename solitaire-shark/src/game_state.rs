@@ -193,7 +193,11 @@ impl GameState {
         let mut cards = vec![];
         let work_pile = self.face_up_work_piles.get_mut(work_pile_index).unwrap();
         for _ in 0..number_of_cards_to_pop {
-            cards.push(work_pile.pop().unwrap());
+            if let Some(top) = work_pile.pop() {
+                cards.push(top);
+            } else {
+                break;
+            }
         }
         self.flip_over_top_face_down_work_pile_card_if_needed(work_pile_index);
         cards
@@ -201,8 +205,8 @@ impl GameState {
 
     fn push_cards_onto_work_pile(&mut self, work_pile_index: usize, mut cards: Vec<Card>) {
         let work_pile = self.face_up_work_piles.get_mut(work_pile_index).unwrap();
-        while cards.len() > 0 {
-            work_pile.push(cards.pop().unwrap());
+        while let Some(card) = cards.pop() {
+            work_pile.push(card);
         }
     }
 
@@ -210,8 +214,8 @@ impl GameState {
         let face_up = self.face_up_work_piles.get_mut(work_pile_index).unwrap();
         if 0 == face_up.len() {
             let face_down = self.face_down_work_piles.get_mut(work_pile_index).unwrap();
-            if face_down.len() > 0 {
-                face_up.push(face_down.pop().unwrap());
+            if let Some(card) = face_down.pop() {
+                face_up.push(card);
             }
         }
     }
