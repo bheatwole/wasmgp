@@ -117,7 +117,7 @@ impl GeneticEngine {
         // code. Make sure it doesn't get larger than the allowed amount
         let parent_points: usize = parent.iter().map(|v| v.points()).sum();
         let max_additional_points = self.config.individual_max_points - parent_points;
-        let mut additional_points = if max_additional_points > 1 {
+        let mut additional_points = if max_additional_points > 1 && self.config.individual_max_points > parent_points {
             self.rng.gen_range(1..max_additional_points)
         } else {
             1
@@ -132,6 +132,9 @@ impl GeneticEngine {
 
             let mutation_point = self.rng.gen_range(0..stream.len());
             let replace_with_code = vec![self.random_code(additional_points)];
+            let random_code_points = replace_with_code[0].points();
+            assert!(random_code_points <= additional_points);
+            assert!(random_code_points > 0);
 
             // Turn the new code into a stream as well
             let replace_stream = CodeStream::to_stream(&replace_with_code);
@@ -151,7 +154,7 @@ impl GeneticEngine {
             stream = next_stream.iter().map(|&x| x.clone()).collect();
 
             // If we got code larger than one point, we need to adjust the additional_points downward
-            additional_points -= replace_with_code[0].points() - 1;
+            additional_points -= random_code_points - 1;
             if additional_points == 0 {
                 break;
             }
