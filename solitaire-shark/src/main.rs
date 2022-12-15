@@ -48,8 +48,44 @@ fn main() {
         .unwrap();
     world
         .add_function_import(
-            "move_top_work_pile_card_to_finish",
-            move_top_work_pile_card_to_finish,
+            "move_top_work_pile_one_card_to_finish",
+            move_top_work_pile_one_card_to_finish,
+        )
+        .unwrap();
+    world
+        .add_function_import(
+            "move_top_work_pile_two_card_to_finish",
+            move_top_work_pile_two_card_to_finish,
+        )
+        .unwrap();
+    world
+        .add_function_import(
+            "move_top_work_pile_three_card_to_finish",
+            move_top_work_pile_three_card_to_finish,
+        )
+        .unwrap();
+    world
+        .add_function_import(
+            "move_top_work_pile_four_card_to_finish",
+            move_top_work_pile_four_card_to_finish,
+        )
+        .unwrap();
+    world
+        .add_function_import(
+            "move_top_work_pile_five_card_to_finish",
+            move_top_work_pile_five_card_to_finish,
+        )
+        .unwrap();
+    world
+        .add_function_import(
+            "move_top_work_pile_six_card_to_finish",
+            move_top_work_pile_six_card_to_finish,
+        )
+        .unwrap();
+    world
+        .add_function_import(
+            "move_top_work_pile_seven_card_to_finish",
+            move_top_work_pile_seven_card_to_finish,
         )
         .unwrap();
     world
@@ -63,45 +99,6 @@ fn main() {
             "move_work_pile_cards_to_another_work_pile",
             move_work_pile_cards_to_another_work_pile,
         )
-        .unwrap();
-    world
-        .add_function_import("number_of_cards_in_draw_pile", number_of_cards_in_draw_pile)
-        .unwrap();
-    world
-        .add_function_import("number_of_cards_in_play_pile", number_of_cards_in_play_pile)
-        .unwrap();
-    world
-        .add_function_import("number_of_finished_spades", number_of_finished_spades)
-        .unwrap();
-    world
-        .add_function_import("number_of_finished_diamonds", number_of_finished_diamonds)
-        .unwrap();
-    world
-        .add_function_import("number_of_finished_clubs", number_of_finished_clubs)
-        .unwrap();
-    world
-        .add_function_import("number_of_finished_hearts", number_of_finished_hearts)
-        .unwrap();
-    world
-        .add_function_import("number_of_finished_cards", number_of_finished_cards)
-        .unwrap();
-    world
-        .add_function_import(
-            "number_of_face_down_cards_in_work_pile",
-            number_of_face_down_cards_in_work_pile,
-        )
-        .unwrap();
-    world
-        .add_function_import(
-            "number_of_face_up_cards_in_work_pile",
-            number_of_face_up_cards_in_work_pile,
-        )
-        .unwrap();
-    world
-        .add_function_import("work_pile_is_empty", work_pile_is_empty)
-        .unwrap();
-    world
-        .add_function_import("face_up_card_in_work_pile", face_up_card_in_work_pile)
         .unwrap();
 
     // Setup the various islands that apply different kinds of pressure to the genetic algorithm.
@@ -200,13 +197,63 @@ fn card_is_ready_to_finish(mut caller: Caller<'_, GameState>, card: i32) -> i32 
     }
 }
 
-fn move_top_work_pile_card_to_finish(
-    mut caller: Caller<'_, GameState>,
-    work_pile_index: i32,
-) -> i32 {
+fn move_top_work_pile_one_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
     let game: &mut GameState = caller.data_mut();
-    let work_pile_index = work_pile_index.saturating_abs() % 7;
-    if game.move_top_work_pile_card_to_finish(work_pile_index as usize) {
+    if game.move_top_work_pile_card_to_finish(0) {
+        1
+    } else {
+        0
+    }
+}
+
+fn move_top_work_pile_two_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
+    let game: &mut GameState = caller.data_mut();
+    if game.move_top_work_pile_card_to_finish(1) {
+        1
+    } else {
+        0
+    }
+}
+
+fn move_top_work_pile_three_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
+    let game: &mut GameState = caller.data_mut();
+    if game.move_top_work_pile_card_to_finish(2) {
+        1
+    } else {
+        0
+    }
+}
+
+fn move_top_work_pile_four_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
+    let game: &mut GameState = caller.data_mut();
+    if game.move_top_work_pile_card_to_finish(3) {
+        1
+    } else {
+        0
+    }
+}
+
+fn move_top_work_pile_five_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
+    let game: &mut GameState = caller.data_mut();
+    if game.move_top_work_pile_card_to_finish(4) {
+        1
+    } else {
+        0
+    }
+}
+
+fn move_top_work_pile_six_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
+    let game: &mut GameState = caller.data_mut();
+    if game.move_top_work_pile_card_to_finish(5) {
+        1
+    } else {
+        0
+    }
+}
+
+fn move_top_work_pile_seven_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
+    let game: &mut GameState = caller.data_mut();
+    if game.move_top_work_pile_card_to_finish(6) {
         1
     } else {
         0
@@ -229,7 +276,6 @@ fn move_top_play_pile_card_to_work_pile(
 fn move_work_pile_cards_to_another_work_pile(
     mut caller: Caller<'_, GameState>,
     source_work_pile_index: i32,
-    number_of_cards_to_move: i32,
     destination_work_pile_index: i32,
 ) -> i32 {
     let game: &mut GameState = caller.data_mut();
@@ -237,90 +283,11 @@ fn move_work_pile_cards_to_another_work_pile(
     let destination_work_pile_index = destination_work_pile_index.saturating_abs() % 7;
     if game.move_work_pile_cards_to_another_work_pile(
         source_work_pile_index as usize,
-        number_of_cards_to_move as usize,
+        13, // always move as much as we can
         destination_work_pile_index as usize,
     ) {
         1
     } else {
         0
-    }
-}
-
-fn number_of_cards_in_draw_pile(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    game.number_of_cards_in_draw_pile() as i32
-}
-
-fn number_of_cards_in_play_pile(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    game.number_of_cards_in_play_pile() as i32
-}
-
-fn number_of_finished_spades(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    game.number_of_finished_spades() as i32
-}
-
-fn number_of_finished_diamonds(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    game.number_of_finished_diamonds() as i32
-}
-
-fn number_of_finished_clubs(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    game.number_of_finished_clubs() as i32
-}
-
-fn number_of_finished_hearts(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    game.number_of_finished_hearts() as i32
-}
-
-fn number_of_finished_cards(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    game.number_of_finished_cards() as i32
-}
-
-fn number_of_face_down_cards_in_work_pile(
-    mut caller: Caller<'_, GameState>,
-    work_pile_index: i32,
-) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    let index = work_pile_index.saturating_abs() % 7;
-    game.number_of_face_down_cards_in_work_pile(index as usize) as i32
-}
-
-fn number_of_face_up_cards_in_work_pile(
-    mut caller: Caller<'_, GameState>,
-    work_pile_index: i32,
-) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    let index = work_pile_index.saturating_abs() % 7;
-    game.number_of_face_up_cards_in_work_pile(index as usize) as i32
-}
-
-fn work_pile_is_empty(mut caller: Caller<'_, GameState>, work_pile_index: i32) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    let index = work_pile_index.saturating_abs() % 7;
-    if game.work_pile_is_empty(index as usize) {
-        1
-    } else {
-        0
-    }
-}
-
-fn face_up_card_in_work_pile(
-    mut caller: Caller<'_, GameState>,
-    work_pile_index: i32,
-    number_of_cards_down: i32,
-) -> (i32, i32) {
-    let game: &mut GameState = caller.data_mut();
-    let index = work_pile_index.saturating_abs() % 7;
-    if let Some(card) =
-        game.face_up_card_in_work_pile(index as usize, number_of_cards_down as usize)
-    {
-        (1, card as i32)
-    } else {
-        (0, 0)
     }
 }
