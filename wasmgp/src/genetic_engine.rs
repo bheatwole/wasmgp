@@ -376,7 +376,7 @@ mod tests {
             vec![
                 ConstI32::new(2, 1),
                 ConstI32::new(3, 3),
-                Subtract::new(4, 9, 1), // mutation
+                Break::new(), // mutation
                 CopySlot::new(0, 1),
                 Remainder::new(1, 3, 5),
                 AreEqual::new(5, 4, 5),
@@ -396,14 +396,14 @@ mod tests {
                 ConstI32::new(2, 1),
                 ConstI32::new(3, 3),
                 ConstI32::new(4, 0),
-                IsLessThan::new(5, 8, 5), // mutation
+                Nearest::new(8, 5), // mutation
                 Remainder::new(1, 3, 5),
-                Or::new(1, 7, 6), // mutation
+                PopulationCount::new(1, 7), // mutation
                 DoUntil::new(
                     5,
                     vec![
-                        Add::new(1, 2, 1),
-                        And::new(3, 6, 9), // mutation
+                        Or::new(8, 6, 1), // mutation
+                        Remainder::new(1, 3, 5),
                         AreEqual::new(5, 4, 5)
                     ],
                 ),

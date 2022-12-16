@@ -116,6 +116,86 @@ impl CodeBuilder for ConstF64 {
     }
 }
 
+/// Sets the value of the specified slot to `1`.
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(signed)]
+/// fn one() -> f32 {
+///     [ConstOne::new(0), Return::new()]
+/// }
+/// let func = One::new().unwrap();
+/// assert_eq!(1.0, func.call().unwrap());
+/// ```
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ConstOne {
+    destination: Slot,
+}
+
+impl ConstOne {
+    pub fn new(destination: Slot) -> Code {
+        Code::ConstOne(ConstOne { destination })
+    }
+}
+
+impl CodeBuilder for ConstOne {
+    fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
+        instruction_list.push(NumericInstruction::I32Constant(1).into());
+        SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
+        Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        ConstOne::new(engine.random_slot())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}ConstOne::new({}),", indentation, self.destination)
+    }
+}
+
+/// Sets the value of the specified slot to `0`.
+///
+/// ```
+/// use wasmgp::*;
+/// use wasmgp_macros::wasm_code;
+///
+/// #[wasm_code(signed)]
+/// fn zero() -> f32 {
+///     [ConstZero::new(0), Return::new()]
+/// }
+/// let func = Zero::new().unwrap();
+/// assert_eq!(0.0, func.call().unwrap());
+/// ```
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ConstZero {
+    destination: Slot,
+}
+
+impl ConstZero {
+    pub fn new(destination: Slot) -> Code {
+        Code::ConstZero(ConstZero { destination })
+    }
+}
+
+impl CodeBuilder for ConstZero {
+    fn append_code(&self, context: &CodeContext, instruction_list: &mut Vec<Instruction>) -> Result<()> {
+        instruction_list.push(NumericInstruction::I32Constant(0).into());
+        SetSlotConvert::convert(self.destination, ValueType::I32, context, instruction_list)?;
+        Ok(())
+    }
+
+    fn make_random_code(&self, engine: &mut GeneticEngine, _max_points: usize) -> Code {
+        ConstZero::new(engine.random_slot())
+    }
+
+    fn print_for_rust(&self, f: &mut std::string::String, indentation: &mut Indentation) -> std::fmt::Result {
+        writeln!(f, "{}ConstZero::new({}),", indentation, self.destination)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use wasmgp_macros::wasm_code;
