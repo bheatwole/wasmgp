@@ -296,6 +296,46 @@ mod tests {
     use super::GameState;
 
     #[test]
+    fn draw_three() {
+        // Setup fake gamestate with the diamonds in the draw pile
+        let mut state = GameState {
+            draw_pile: vec![
+                Card::KingOfDiamonds,
+                Card::QueenOfDiamonds,
+                Card::JackOfDiamonds,
+                Card::TenOfDiamonds,
+                Card::NineOfDiamonds,
+                Card::EightOfDiamonds,
+                Card::SevenOfDiamonds,
+                Card::SixOfDiamonds,
+                Card::FiveOfDiamonds,
+                Card::FourOfDiamonds,
+                Card::ThreeOfDiamonds,
+                Card::TwoOfDiamonds,
+                Card::AceOfDiamonds,
+            ],
+            play_pile: vec![],
+            face_down_work_piles: vec![],
+            face_up_work_piles: vec![],
+            top_card_in_finished_suits: vec![None, None, None, None],
+        };
+
+        assert_eq!(None, state.top_card_of_play_pile());
+        state.draw_next_three();
+        assert_eq!(Some(Card::ThreeOfDiamonds), state.top_card_of_play_pile());
+        state.draw_next_three();
+        assert_eq!(Some(Card::SixOfDiamonds), state.top_card_of_play_pile());
+        state.draw_next_three();
+        assert_eq!(Some(Card::NineOfDiamonds), state.top_card_of_play_pile());
+        state.draw_next_three();
+        assert_eq!(Some(Card::QueenOfDiamonds), state.top_card_of_play_pile());
+        state.draw_next_three();
+        assert_eq!(Some(Card::KingOfDiamonds), state.top_card_of_play_pile());
+        state.draw_next_three();
+        assert_eq!(Some(Card::ThreeOfDiamonds), state.top_card_of_play_pile());
+    }
+
+    #[test]
     fn card_is_ready_to_finish() {
         let mut state = GameState::new(12);
 
