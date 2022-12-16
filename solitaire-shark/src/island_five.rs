@@ -30,12 +30,12 @@ impl IslandCallbacks<GameState, GameResult> for IslandFive {
         a: &Individual<GameState, GameResult>,
         b: &Individual<GameState, GameResult>,
     ) -> std::cmp::Ordering {
-        // island_three_fitness_score_fn: run 100 games and score on fewest cards in draw+play piles, then win rate
+        // island_five_fitness_score_fn: run 100 games and score on fewest cards in face_up piles, then win rate
         let a_result = a.get_run_result().unwrap();
         let b_result = b.get_run_result().unwrap();
-        let mut cmp = a_result
-            .number_of_draw_stack_cards()
-            .cmp(&b_result.number_of_draw_stack_cards());
+        let mut cmp = b_result
+            .number_of_face_up_cards()
+            .cmp(&a_result.number_of_face_up_cards());
 
         if Ordering::Equal == cmp {
             cmp = a_result.games_won().cmp(&b_result.games_won());
@@ -45,7 +45,7 @@ impl IslandCallbacks<GameState, GameResult> for IslandFive {
     }
 
     fn score_individual(&self, i: &Individual<GameState, GameResult>) -> u64 {
-        5200 - i.get_run_result().unwrap().number_of_draw_stack_cards() as u64
+        5200 - i.get_run_result().unwrap().number_of_face_up_cards() as u64
     }
 
     fn clone(&self) -> Box<dyn IslandCallbacks<GameState, GameResult>> {
