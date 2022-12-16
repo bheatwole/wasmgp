@@ -285,7 +285,13 @@ impl GameState {
     ) -> Option<Card> {
         assert!(work_pile_index < 7);
         let work_pile = self.face_up_work_piles.get(work_pile_index).unwrap();
-        work_pile.get(number_of_cards_down).copied()
+        if work_pile.len() == 0 {
+            return None;
+        }
+
+        // The actual index is the reverse of the stack index
+        let index = (work_pile.len() - 1) - number_of_cards_down;
+        work_pile.get(index).copied()
     }
 }
 
@@ -531,5 +537,49 @@ mod tests {
         assert_eq!(13, state.number_of_finished_clubs());
         assert_eq!(0, state.number_of_face_up_cards_in_work_pile(6));
         assert_eq!(false, state.move_top_work_pile_card_to_finish(6));
+    }
+
+    #[test]
+    fn solitaire_stacking_from_play_pile() {
+        // Setup fake gamestate with the cards ready for the work piles in the play pile
+        let mut state = GameState {
+            draw_pile: vec![],
+            play_pile: vec![
+                Card::AceOfHearts,
+                Card::AceOfSpades,
+                Card::TwoOfHearts,
+                Card::TwoOfSpades,
+                Card::ThreeOfHearts,
+                Card::ThreeOfSpades,
+                Card::FourOfHearts,
+                Card::FourOfSpades,
+            ],
+            face_down_work_piles: vec![vec![], vec![], vec![], vec![], vec![], vec![], vec![]],
+            face_up_work_piles: vec![vec![], vec![], vec![], vec![], vec![], vec![], vec![]],
+            top_card_in_finished_suits: vec![None, None, None, None],
+        };
+
+        // One by one put them on the work piles, which need to alternate every two cards for color
+        assert!(state.move_top_play_pile_card_to_work_pile(0));
+        assert!(state.move_top_play_pile_card_to_work_pile(1));
+        assert!(state.move_top_play_pile_card_to_work_pile(1));
+        assert!(state.move_top_play_pile_card_to_work_pile(0));
+        assert!(state.move_top_play_pile_card_to_work_pile(0));
+        assert!(state.move_top_play_pile_card_to_work_pile(1));
+        assert!(state.move_top_play_pile_card_to_work_pile(1));
+        assert!(state.move_top_play_pile_card_to_work_pile(0));
+
+        // Finish each work pile
+        assert!(state.move_top_work_pile_card_to_finish(0));
+        assert!(state.move_top_work_pile_card_to_finish(1));
+        assert!(state.move_top_work_pile_card_to_finish(0));
+        assert!(state.move_top_work_pile_card_to_finish(1));
+        assert!(state.move_top_work_pile_card_to_finish(0));
+        assert!(state.move_top_work_pile_card_to_finish(1));
+        assert!(state.move_top_work_pile_card_to_finish(0));
+        assert!(state.move_top_work_pile_card_to_finish(1));
+        assert_eq!(8, state.number_of_finished_cards());
+        assert_eq!(0, state.number_of_face_up_cards_in_work_pile(0));
+        assert_eq!(0, state.number_of_face_up_cards_in_work_pile(1));
     }
 }
