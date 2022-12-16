@@ -284,7 +284,7 @@ impl GameState {
         number_of_cards_down: usize,
     ) -> Option<Card> {
         assert!(work_pile_index < 7);
-        let work_pile = self.face_down_work_piles.get(work_pile_index).unwrap();
+        let work_pile = self.face_up_work_piles.get(work_pile_index).unwrap();
         work_pile.get(number_of_cards_down).copied()
     }
 }
@@ -432,5 +432,104 @@ mod tests {
         assert!(state.move_top_play_pile_card_to_finish());
         assert_eq!(13, state.number_of_finished_clubs());
         assert_eq!(13, state.number_of_finished_cards());
+    }
+
+    #[test]
+    fn move_top_work_pile_card_to_finish() {
+        // Setup fake gamestate with the clubs in the work piles
+        let mut state = GameState {
+            draw_pile: vec![],
+            play_pile: vec![],
+            face_down_work_piles: vec![
+                vec![],
+                vec![Card::ThreeOfClubs],
+                vec![Card::SixOfClubs, Card::FiveOfClubs],
+                vec![Card::TenOfClubs, Card::NineOfClubs, Card::EightOfClubs],
+                vec![],
+                vec![],
+                vec![],
+            ],
+            face_up_work_piles: vec![
+                vec![Card::AceOfClubs],
+                vec![Card::TwoOfClubs],
+                vec![Card::FourOfClubs],
+                vec![Card::SevenOfClubs],
+                vec![Card::JackOfClubs],
+                vec![Card::QueenOfClubs],
+                vec![Card::KingOfClubs],
+            ],
+            top_card_in_finished_suits: vec![None, None, None, None],
+        };
+
+        assert_eq!(0, state.number_of_finished_clubs());
+
+        assert_eq!(0, state.number_of_face_down_cards_in_work_pile(0));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(0));
+        assert_eq!(1, state.number_of_finished_clubs());
+        assert_eq!(0, state.number_of_face_up_cards_in_work_pile(0));
+        assert_eq!(false, state.move_top_work_pile_card_to_finish(0));
+
+        assert_eq!(1, state.number_of_face_down_cards_in_work_pile(1));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(1));
+        assert_eq!(2, state.number_of_finished_clubs());
+        assert_eq!(1, state.number_of_face_up_cards_in_work_pile(1));
+        assert_eq!(0, state.number_of_face_down_cards_in_work_pile(1));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(1));
+        assert_eq!(3, state.number_of_finished_clubs());
+        assert_eq!(0, state.number_of_face_up_cards_in_work_pile(1));
+        assert_eq!(0, state.number_of_face_down_cards_in_work_pile(1));
+        assert_eq!(false, state.move_top_work_pile_card_to_finish(1));
+
+        assert_eq!(2, state.number_of_face_down_cards_in_work_pile(2));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(2));
+        assert_eq!(4, state.number_of_finished_clubs());
+        assert_eq!(1, state.number_of_face_up_cards_in_work_pile(2));
+        assert_eq!(1, state.number_of_face_down_cards_in_work_pile(2));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(2));
+        assert_eq!(5, state.number_of_finished_clubs());
+        assert_eq!(1, state.number_of_face_up_cards_in_work_pile(2));
+        assert_eq!(0, state.number_of_face_down_cards_in_work_pile(2));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(2));
+        assert_eq!(6, state.number_of_finished_clubs());
+        assert_eq!(0, state.number_of_face_up_cards_in_work_pile(2));
+        assert_eq!(0, state.number_of_face_down_cards_in_work_pile(2));
+        assert_eq!(false, state.move_top_work_pile_card_to_finish(2));
+
+        assert_eq!(3, state.number_of_face_down_cards_in_work_pile(3));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(3));
+        assert_eq!(7, state.number_of_finished_clubs());
+        assert_eq!(1, state.number_of_face_up_cards_in_work_pile(3));
+        assert_eq!(2, state.number_of_face_down_cards_in_work_pile(3));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(3));
+        assert_eq!(8, state.number_of_finished_clubs());
+        assert_eq!(1, state.number_of_face_up_cards_in_work_pile(3));
+        assert_eq!(1, state.number_of_face_down_cards_in_work_pile(3));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(3));
+        assert_eq!(9, state.number_of_finished_clubs());
+        assert_eq!(1, state.number_of_face_up_cards_in_work_pile(3));
+        assert_eq!(0, state.number_of_face_down_cards_in_work_pile(3));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(3));
+        assert_eq!(10, state.number_of_finished_clubs());
+        assert_eq!(0, state.number_of_face_up_cards_in_work_pile(3));
+        assert_eq!(0, state.number_of_face_down_cards_in_work_pile(3));
+        assert_eq!(false, state.move_top_work_pile_card_to_finish(3));
+
+        assert_eq!(0, state.number_of_face_down_cards_in_work_pile(4));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(4));
+        assert_eq!(11, state.number_of_finished_clubs());
+        assert_eq!(0, state.number_of_face_up_cards_in_work_pile(4));
+        assert_eq!(false, state.move_top_work_pile_card_to_finish(4));
+
+        assert_eq!(0, state.number_of_face_down_cards_in_work_pile(5));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(5));
+        assert_eq!(12, state.number_of_finished_clubs());
+        assert_eq!(0, state.number_of_face_up_cards_in_work_pile(5));
+        assert_eq!(false, state.move_top_work_pile_card_to_finish(5));
+
+        assert_eq!(0, state.number_of_face_down_cards_in_work_pile(6));
+        assert_eq!(true, state.move_top_work_pile_card_to_finish(6));
+        assert_eq!(13, state.number_of_finished_clubs());
+        assert_eq!(0, state.number_of_face_up_cards_in_work_pile(6));
+        assert_eq!(false, state.move_top_work_pile_card_to_finish(6));
     }
 }
