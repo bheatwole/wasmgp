@@ -378,4 +378,59 @@ mod tests {
             assert!(state.push_card_on_finished_pile(card_to_play_next));
         }
     }
+
+    #[test]
+    fn move_top_play_pile_card_to_finish() {
+        // Setup fake gamestate with the clubs in the play pile
+        let mut state = GameState {
+            draw_pile: vec![],
+            play_pile: vec![
+                Card::KingOfClubs,
+                Card::QueenOfClubs,
+                Card::JackOfClubs,
+                Card::TenOfClubs,
+                Card::NineOfClubs,
+                Card::EightOfClubs,
+                Card::SevenOfClubs,
+                Card::SixOfClubs,
+                Card::FiveOfClubs,
+                Card::FourOfClubs,
+                Card::ThreeOfClubs,
+                Card::TwoOfClubs,
+                Card::AceOfClubs,
+            ],
+            face_down_work_piles: vec![],
+            face_up_work_piles: vec![],
+            top_card_in_finished_suits: vec![None, None, None, None],
+        };
+
+        assert_eq!(0, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(1, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(2, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(3, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(4, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(5, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(6, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(7, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(8, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(9, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(10, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(11, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(12, state.number_of_finished_clubs());
+        assert!(state.move_top_play_pile_card_to_finish());
+        assert_eq!(13, state.number_of_finished_clubs());
+        assert_eq!(13, state.number_of_finished_cards());
+    }
 }
