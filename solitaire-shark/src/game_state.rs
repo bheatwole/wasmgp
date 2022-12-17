@@ -281,12 +281,16 @@ impl GameState {
     pub fn face_up_card_in_work_pile(
         &self,
         work_pile_index: usize,
-        number_of_cards_down: usize,
+        mut number_of_cards_down: usize,
     ) -> Option<Card> {
         assert!(work_pile_index < 7);
         let work_pile = self.face_up_work_piles.get(work_pile_index).unwrap();
         if work_pile.len() == 0 {
             return None;
+        }
+
+        if number_of_cards_down > work_pile.len() {
+            number_of_cards_down = work_pile.len() - 1;
         }
 
         // The actual index is the reverse of the stack index
@@ -581,5 +585,100 @@ mod tests {
         assert_eq!(8, state.number_of_finished_cards());
         assert_eq!(0, state.number_of_face_up_cards_in_work_pile(0));
         assert_eq!(0, state.number_of_face_up_cards_in_work_pile(1));
+    }
+
+    #[test]
+    fn move_work_pile_cards_to_another_work_pile() {
+        // Setup fake gamestate with the cards ready in the work piles to stack
+        let mut state = GameState {
+            draw_pile: vec![],
+            play_pile: vec![],
+            face_down_work_piles: vec![
+                vec![Card::FiveOfHearts],
+                vec![Card::FourOfClubs],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+            ],
+            face_up_work_piles: vec![
+                vec![Card::AceOfDiamonds],
+                vec![Card::TwoOfSpades],
+                vec![Card::ThreeOfHearts],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+            ],
+            top_card_in_finished_suits: vec![None, None, None, None],
+        };
+
+        assert!(state.move_work_pile_cards_to_another_work_pile(0, 1, 1));
+        assert!(state.move_work_pile_cards_to_another_work_pile(1, 2, 2));
+        assert!(state.move_work_pile_cards_to_another_work_pile(2, 3, 1));
+        assert!(state.move_work_pile_cards_to_another_work_pile(1, 4, 0));
+        assert_eq!(5, state.number_of_face_up_cards_in_work_pile(0));
+        assert_eq!(
+            Some(Card::AceOfDiamonds),
+            state.face_up_card_in_work_pile(0, 0)
+        );
+        assert_eq!(
+            Some(Card::TwoOfSpades),
+            state.face_up_card_in_work_pile(0, 1)
+        );
+        assert_eq!(
+            Some(Card::ThreeOfHearts),
+            state.face_up_card_in_work_pile(0, 2)
+        );
+        assert_eq!(
+            Some(Card::FourOfClubs),
+            state.face_up_card_in_work_pile(0, 3)
+        );
+        assert_eq!(
+            Some(Card::FiveOfHearts),
+            state.face_up_card_in_work_pile(0, 4)
+        );
+    }
+
+    #[test]
+    fn face_up_card_in_work_pile() {
+        // Setup fake gamestate with some cards ready in the work piles
+        let state = GameState {
+            draw_pile: vec![],
+            play_pile: vec![],
+            face_down_work_piles: vec![vec![], vec![], vec![], vec![], vec![], vec![], vec![]],
+            face_up_work_piles: vec![
+                vec![Card::ThreeOfHearts, Card::TwoOfSpades, Card::AceOfDiamonds],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+                vec![],
+            ],
+            top_card_in_finished_suits: vec![None, None, None, None],
+        };
+
+        assert_eq!(
+            Some(Card::AceOfDiamonds),
+            state.face_up_card_in_work_pile(0, 0)
+        );
+        assert_eq!(
+            Some(Card::TwoOfSpades),
+            state.face_up_card_in_work_pile(0, 1)
+        );
+        assert_eq!(
+            Some(Card::ThreeOfHearts),
+            state.face_up_card_in_work_pile(0, 2)
+        );
+        // No matter how high it goes, always returns the last
+        assert_eq!(
+            Some(Card::ThreeOfHearts),
+            state.face_up_card_in_work_pile(0, 500)
+        );
+
+        assert_eq!(None, state.face_up_card_in_work_pile(1, 0));
+        assert_eq!(None, state.face_up_card_in_work_pile(1, 500));
     }
 }
