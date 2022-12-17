@@ -681,4 +681,72 @@ mod tests {
         assert_eq!(None, state.face_up_card_in_work_pile(1, 0));
         assert_eq!(None, state.face_up_card_in_work_pile(1, 500));
     }
+
+    fn finish_all_piles(state: &mut GameState) -> usize {
+        let mut number_finished = 0;
+        if state.move_top_play_pile_card_to_finish() {
+            number_finished += 1;
+        }
+        for pile in 0..7 {
+            if state.move_top_work_pile_card_to_finish(pile) {
+                number_finished += 1;
+            }
+        }
+
+        number_finished
+    }
+
+    fn move_play_to_a_pile(state: &mut GameState) -> bool {
+        for pile in 0..7 {
+            if state.move_top_play_pile_card_to_work_pile(pile) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn move_pile_to_pile(state: &mut GameState, source: usize) -> usize {
+        let mut times_moved = 0;
+        for dest in 0..7 {
+            if state.move_work_pile_cards_to_another_work_pile(source, 13, dest) {
+                times_moved += 1;
+            }
+        }
+
+        times_moved
+    }
+
+    fn move_all_piles(state: &mut GameState) -> usize {
+        let mut times_moved = 0;
+        for pile in 0..7 {
+            times_moved += move_pile_to_pile(state, pile);
+        }
+
+        times_moved
+    }
+
+    #[test]
+    fn win_a_game() {
+        let mut state = GameState::new(4);
+
+        for _ in 0..10_000 {
+            // Draw the next card
+            state.draw_next_three();
+
+            // Keep moving from the play pile until we can't anymore
+            while move_play_to_a_pile(&mut state) {}
+
+            // Move from every work pile to every other work pile
+            move_all_piles(&mut state);
+
+            // Finish anything we can
+            while finish_all_piles(&mut state) > 0 {}
+            if state.number_of_finished_cards() == 52 {
+                break;
+            }
+        }
+
+        assert_eq!(52, state.number_of_finished_cards());
+    }
 }
