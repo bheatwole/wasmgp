@@ -28,77 +28,29 @@ fn main() {
         f32: 0,
         f64: 0,
     };
-    config.individual_run_time_ms = 10;
+    config.individual_max_points = 20;
+    config.individual_run_time_ms = 2;
 
     // Create the world with the configuration we specified
     let mut world = World::<GameState, GameResult>::new(config).unwrap();
+    world.reset_all_code_weights(0);
+    world.set_code_weight(Code::ConstOne(ConstOne::default()), 1);
+    world.set_code_weight(Code::Add(Add::default()), 1);
+    world.set_code_weight(Code::Subtract(Subtract::default()), 1);
+    world.set_code_weight(Code::DoUntil(DoUntil::default()), 1);
 
     // Add the functions that the genetic code can call
     world
         .add_function_import("draw_next_three", draw_next_three)
         .unwrap();
     world
-        .add_function_import(
-            "move_top_play_pile_card_to_finish",
-            move_top_play_pile_card_to_finish,
-        )
+        .add_function_import("finish_all_piles", finish_all_piles)
         .unwrap();
     world
-        .add_function_import("card_is_ready_to_finish", card_is_ready_to_finish)
+        .add_function_import("move_play_to_a_pile", move_play_to_a_pile)
         .unwrap();
     world
-        .add_function_import(
-            "move_top_work_pile_one_card_to_finish",
-            move_top_work_pile_one_card_to_finish,
-        )
-        .unwrap();
-    world
-        .add_function_import(
-            "move_top_work_pile_two_card_to_finish",
-            move_top_work_pile_two_card_to_finish,
-        )
-        .unwrap();
-    world
-        .add_function_import(
-            "move_top_work_pile_three_card_to_finish",
-            move_top_work_pile_three_card_to_finish,
-        )
-        .unwrap();
-    world
-        .add_function_import(
-            "move_top_work_pile_four_card_to_finish",
-            move_top_work_pile_four_card_to_finish,
-        )
-        .unwrap();
-    world
-        .add_function_import(
-            "move_top_work_pile_five_card_to_finish",
-            move_top_work_pile_five_card_to_finish,
-        )
-        .unwrap();
-    world
-        .add_function_import(
-            "move_top_work_pile_six_card_to_finish",
-            move_top_work_pile_six_card_to_finish,
-        )
-        .unwrap();
-    world
-        .add_function_import(
-            "move_top_work_pile_seven_card_to_finish",
-            move_top_work_pile_seven_card_to_finish,
-        )
-        .unwrap();
-    world
-        .add_function_import(
-            "move_top_play_pile_card_to_work_pile",
-            move_top_play_pile_card_to_work_pile,
-        )
-        .unwrap();
-    world
-        .add_function_import(
-            "move_work_pile_cards_to_another_work_pile",
-            move_work_pile_cards_to_another_work_pile,
-        )
+        .add_function_import("move_all_piles", move_all_piles)
         .unwrap();
 
     // Setup the various islands that apply different kinds of pressure to the genetic algorithm.
@@ -117,7 +69,7 @@ fn main() {
             let most_fit_island_one = world.get_island(0).unwrap().most_fit_individual().unwrap();
             println!(
                 "  island one:   {:.04}% games won",
-                most_fit_island_one.get_run_result().unwrap().games_won() as f64 / 100.0f64
+                most_fit_island_one.get_run_result().unwrap().games_won() as f64
             );
             let most_fit_island_two = world.get_island(1).unwrap().most_fit_individual().unwrap();
             println!(
@@ -178,116 +130,49 @@ fn draw_next_three(mut caller: Caller<'_, GameState>) {
     game.draw_next_three();
 }
 
-fn move_top_play_pile_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    if game.move_top_play_pile_card_to_finish() {
-        1
-    } else {
-        0
+fn finish_all_piles(mut caller: Caller<'_, GameState>) -> i32 {
+    let state: &mut GameState = caller.data_mut();
+    let mut number_finished = 0;
+    if state.move_top_play_pile_card_to_finish() {
+        number_finished += 1;
     }
+    for pile in 0..7 {
+        if state.move_top_work_pile_card_to_finish(pile) {
+            number_finished += 1;
+        }
+    }
+
+    number_finished
 }
 
-fn card_is_ready_to_finish(mut caller: Caller<'_, GameState>, card: i32) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    let card = card.saturating_abs() % 52;
-    if game.card_is_ready_to_finish(card.into()) {
-        1
-    } else {
-        0
+fn move_play_to_a_pile(mut caller: Caller<'_, GameState>) -> i32 {
+    let state: &mut GameState = caller.data_mut();
+    for pile in 0..7 {
+        if state.move_top_play_pile_card_to_work_pile(pile) {
+            return 1;
+        }
     }
+
+    0
 }
 
-fn move_top_work_pile_one_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    if game.move_top_work_pile_card_to_finish(0) {
-        1
-    } else {
-        0
+fn move_pile_to_pile(state: &mut GameState, source: usize) -> i32 {
+    let mut times_moved = 0;
+    for dest in 0..7 {
+        if state.move_work_pile_cards_to_another_work_pile(source, 13, dest) {
+            times_moved += 1;
+        }
     }
+
+    times_moved
 }
 
-fn move_top_work_pile_two_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    if game.move_top_work_pile_card_to_finish(1) {
-        1
-    } else {
-        0
+fn move_all_piles(mut caller: Caller<'_, GameState>) -> i32 {
+    let state: &mut GameState = caller.data_mut();
+    let mut times_moved = 0;
+    for pile in 0..7 {
+        times_moved += move_pile_to_pile(state, pile);
     }
-}
 
-fn move_top_work_pile_three_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    if game.move_top_work_pile_card_to_finish(2) {
-        1
-    } else {
-        0
-    }
-}
-
-fn move_top_work_pile_four_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    if game.move_top_work_pile_card_to_finish(3) {
-        1
-    } else {
-        0
-    }
-}
-
-fn move_top_work_pile_five_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    if game.move_top_work_pile_card_to_finish(4) {
-        1
-    } else {
-        0
-    }
-}
-
-fn move_top_work_pile_six_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    if game.move_top_work_pile_card_to_finish(5) {
-        1
-    } else {
-        0
-    }
-}
-
-fn move_top_work_pile_seven_card_to_finish(mut caller: Caller<'_, GameState>) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    if game.move_top_work_pile_card_to_finish(6) {
-        1
-    } else {
-        0
-    }
-}
-
-fn move_top_play_pile_card_to_work_pile(
-    mut caller: Caller<'_, GameState>,
-    work_pile_index: i32,
-) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    let work_pile_index = work_pile_index.saturating_abs() % 7;
-    if game.move_top_play_pile_card_to_work_pile(work_pile_index as usize) {
-        1
-    } else {
-        0
-    }
-}
-
-fn move_work_pile_cards_to_another_work_pile(
-    mut caller: Caller<'_, GameState>,
-    source_work_pile_index: i32,
-    destination_work_pile_index: i32,
-) -> i32 {
-    let game: &mut GameState = caller.data_mut();
-    let source_work_pile_index = source_work_pile_index.saturating_abs() % 7;
-    let destination_work_pile_index = destination_work_pile_index.saturating_abs() % 7;
-    if game.move_work_pile_cards_to_another_work_pile(
-        source_work_pile_index as usize,
-        13, // always move as much as we can
-        destination_work_pile_index as usize,
-    ) {
-        1
-    } else {
-        0
-    }
+    times_moved
 }
