@@ -14,7 +14,7 @@ strum = "0.24"
 strum_macros = "0.24"
 thiserror = "1.0"
 wasmgp-macros = { path = "../wasmgp-macros" }
-wasmtime = "3.0"
+wasmtime = "5.0"
 
 [dependencies.rand]
 version = "0.8"
