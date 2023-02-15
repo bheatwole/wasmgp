@@ -303,9 +303,27 @@ impl<T: Default, R: RunResult> World<T, R> {
     }
 
     /// Runs the next generation across all islands.
+    #[cfg(not(feature = "async"))]
     pub fn run_one_generation(&mut self) {
         for island in self.islands.iter_mut() {
             island.run_one_generation();
+        }
+
+        // See if it is time for a migration
+        if self.config.generations_between_migrations > 0 {
+            self.generations_remaining_before_migration -= 1;
+            if self.generations_remaining_before_migration == 0 {
+                self.migrate_individuals_between_islands();
+                self.generations_remaining_before_migration = self.config.generations_between_migrations;
+            }
+        }
+    }
+
+    /// Runs the next generation across all islands.
+    #[cfg(feature = "async")]
+    pub async fn run_one_generation(&mut self) {
+        for island in self.islands.iter_mut() {
+            island.run_one_generation().await;
         }
 
         // See if it is time for a migration
@@ -390,6 +408,7 @@ impl<T: Default, R: RunResult> World<T, R> {
     }
 
     /// Runs generations until the specified function returns false
+    #[cfg(not(feature = "async"))]
     pub fn run_generations_while<While>(&mut self, mut while_fn: While) -> Result<()>
     where
         While: FnMut(&World<T, R>) -> bool,
@@ -399,6 +418,23 @@ impl<T: Default, R: RunResult> World<T, R> {
         while running {
             self.fill_all_islands()?;
             self.run_one_generation();
+            running = while_fn(self);
+        }
+
+        Ok(())
+    }
+
+    /// Runs generations until the specified function returns false
+    #[cfg(feature = "async")]
+    pub async fn run_generations_while<While>(&mut self, mut while_fn: While) -> Result<()>
+    where
+        While: FnMut(&World<T, R>) -> bool,
+    {
+        // Always run at least one generation
+        let mut running = true;
+        while running {
+            self.fill_all_islands()?;
+            self.run_one_generation().await;
             running = while_fn(self);
         }
 

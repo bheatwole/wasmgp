@@ -49,6 +49,7 @@ impl<T, R: RunResult> Island<T, R> {
 
     /// Uses the specified VM to run one generation of individuals. Calls all of the user-supplied functions from the
     /// `Island` trait.
+    #[cfg(not(feature = "async"))]
     pub fn run_one_generation(&mut self) {
         // Allow the island to set up for all runs
         self.functions.pre_generation_run(&self.individuals);
@@ -60,6 +61,25 @@ impl<T, R: RunResult> Island<T, R> {
 
         // Allow the island to before any cleanup or group analysis tasks
         self.functions.post_generation_run(&self.individuals);
+
+        // Sort the individuals
+        self.sort_individuals();
+    }
+
+    /// Uses the specified VM to run one generation of individuals. Calls all of the user-supplied functions from the
+    /// `Island` trait.
+    #[cfg(feature = "async")]
+    pub async fn run_one_generation(&mut self) {
+        // Allow the island to set up for all runs
+        self.functions.pre_generation_run(&self.individuals).await;
+
+        // Run each individual
+        for individual in self.individuals.iter_mut() {
+            self.functions.run_individual(individual).await;
+        }
+
+        // Allow the island to before any cleanup or group analysis tasks
+        self.functions.post_generation_run(&self.individuals).await;
 
         // Sort the individuals
         self.sort_individuals();
