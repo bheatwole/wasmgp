@@ -80,13 +80,16 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
 
         impl #struct_name {
             fn new(#state_new_args) -> anyhow::Result<#struct_name> {
+                use rand::SeedableRng;
+
                 let name = #function_name_lit;
                 let fs = #wasmgp::FunctionSignature::new(name, #param_value_types, #result_value_types);
                 let slots = #slot_count_constructor;
-                let context = #wasmgp::CodeContext::new(&fs, slots, #slot_count)?;
+                let context = #wasmgp::CodeContext::new(&fs, slots, #slot_count, #wasmgp::SlotInit::Zero)?;
                 let code = vec!#body_block;
                 let mut builder = wasm_ast::ModuleBuilder::new();
-                context.build(&mut builder, &code[..])?;
+                let mut rnd = rand::rngs::SmallRng::from_entropy();
+                context.build(&mut builder, &code[..], &mut rnd)?;
                 let module = builder.build();
                 let mut buffer = Vec::new();
                 wasm_ast::emit_binary(&module, &mut buffer)?;
@@ -94,7 +97,7 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
                 let module = wasmtime::Module::new(&engine, &buffer[..])?;
                 let mut store = wasmtime::Store::new(&engine, #state_store_arg);
                 let instance = wasmtime::Instance::new(&mut store, &module, &vec![])?;
-                let func = instance.get_typed_func::<#param_generic, #result_generic, _>(&mut store, name)?;
+                let func = instance.get_typed_func::<#param_generic, #result_generic>(&mut store, name)?;
     
                 Ok(#struct_name {
                     store: std::cell::RefCell::new(store),
@@ -102,12 +105,12 @@ pub fn handle_macro(slot_count: &SlotCount, inner_fn: &mut ItemFn) -> Result<Tok
                 })
             }
 
-            fn new_with_world<R: #wasmgp::RunResult>(world: &#wasmgp::World<#state_ident, R>, #state_new_args) -> anyhow::Result<#struct_name> {
+            fn new_with_world<R: #wasmgp::RunResult>(world: &mut #wasmgp::World<#state_ident, R>, #state_new_args) -> anyhow::Result<#struct_name> {
                 let name = #function_name_lit;
                 let code = vec!#body_block;
                 let mut store = world.store(#state_store_arg);
                 let instance = world.instanciate(&mut store, &code[..])?;
-                let func = instance.get_typed_func::<#param_generic, #result_generic, _>(&mut store, name)?;
+                let func = instance.get_typed_func::<#param_generic, #result_generic>(&mut store, name)?;
     
                 Ok(#struct_name {
                     store: std::cell::RefCell::new(store),

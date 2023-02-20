@@ -343,8 +343,11 @@ mod tests {
     use crate::*;
 
     fn build_code(context: CodeContext, code: Vec<Code>) -> (Store<()>, Instance) {
+        use rand::SeedableRng;
+
         let mut builder = ModuleBuilder::new();
-        context.build(&mut builder, &code[..]).unwrap();
+        let mut rnd = rand::rngs::SmallRng::from_entropy();
+        context.build(&mut builder, &code[..], &mut rnd).unwrap();
         let module = builder.build();
 
         let mut buffer = Vec::new();
@@ -369,14 +372,14 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots, false).unwrap();
+        let context = CodeContext::new(&fs, slots, false, SlotInit::Zero).unwrap();
 
         // Code
         let code = vec![Return::new()];
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
-        let typed_func = instance.get_typed_func::<(), u32, _>(&mut store, name).unwrap();
+        let typed_func = instance.get_typed_func::<(), u32>(&mut store, name).unwrap();
 
         // Call the function and confirm we get zero
         let result = typed_func.call(&mut store, ()).unwrap();
@@ -394,7 +397,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots, false).unwrap();
+        let context = CodeContext::new(&fs, slots, false, SlotInit::Zero).unwrap();
         assert_eq!(ValueType::I64, context.get_slot_value_type(0).unwrap());
 
         // Code: because we're using unsigned math in Wasm, -1 should be 0xFFFFFFFF in u32/u64
@@ -402,7 +405,7 @@ mod tests {
 
         // Compile and get function pointer to it
         let (mut store, instance) = build_code(context, code);
-        let typed_func = instance.get_typed_func::<(), u64, _>(&mut store, name).unwrap();
+        let typed_func = instance.get_typed_func::<(), u64>(&mut store, name).unwrap();
 
         // Call the function and confirm we get the constant
         let result = typed_func.call(&mut store, ()).unwrap();

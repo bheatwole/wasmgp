@@ -43,7 +43,7 @@ mod tests {
 
         // Create an instance of the module and get a pointer to the exported function by its name
         let (mut store, instance) = instanciate_binary(&buffer[..]);
-        let typed_func = instance.get_typed_func::<i32, i32, _>(&mut store, &name).unwrap();
+        let typed_func = instance.get_typed_func::<i32, i32>(&mut store, &name).unwrap();
 
         // Call the function and confirm we get the same value as what we passed in
         let result = typed_func.call(&mut store, 1).unwrap();
@@ -132,7 +132,7 @@ mod tests {
 
         // Attempt to create an instance of the module.
         let (mut store, instance) = instanciate_binary(&buffer[..]);
-        let typed_func = instance.get_typed_func::<i32, i32, _>(&mut store, &name).unwrap();
+        let typed_func = instance.get_typed_func::<i32, i32>(&mut store, &name).unwrap();
 
         // Call the function and confirm we get the same value as what we passed in
         let result = typed_func.call(&mut store, 1).unwrap();

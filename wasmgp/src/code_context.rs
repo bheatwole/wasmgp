@@ -1,5 +1,8 @@
 use crate::code_builder::CodeBuilder;
-use crate::{Code, FunctionSignature, Return, Slot, SlotCount, ValueType, WasmgpError};
+use crate::{
+    Code, ConstF32, ConstF64, ConstI32, ConstI64, FunctionSignature, Return, Slot, SlotCount, SlotInit, ValueType,
+    WasmgpError,
+};
 use anyhow::Result;
 use std::{cell::RefCell, ops::Deref};
 use wasm_ast::{Export, Function, FunctionType, LabelIndex, LocalIndex, ModuleBuilder, ResultType, SignExtension};
@@ -22,7 +25,12 @@ impl CodeContext {
     /// on the value of `is_signed`. It is not current possible to mix signedness in an algorithm.
     ///
     /// The total number of slots used across all parameters, return and locals must be 256 or fewer.
-    pub fn new(signature: &FunctionSignature, slots: SlotCount, is_signed: bool) -> Result<CodeContext> {
+    pub fn new(
+        signature: &FunctionSignature,
+        slots: SlotCount,
+        is_signed: bool,
+        init: SlotInit,
+    ) -> Result<CodeContext> {
         let slot_count = signature.params().len() + signature.results().len() + slots.len();
         if slot_count > 256 {
             return Err(WasmgpError::SlotCountTooLarge(slot_count).into());
@@ -35,6 +43,7 @@ impl CodeContext {
                 purpose: SlotPurpose::Parameter,
                 value_type: *p,
                 is_in_use: true,
+                init: None,
             });
         }
         for r in signature.results().iter() {
@@ -43,6 +52,7 @@ impl CodeContext {
                 purpose: SlotPurpose::Return,
                 value_type: *r,
                 is_in_use: true,
+                init: None,
             });
         }
         for s in slots.iter() {
@@ -51,6 +61,7 @@ impl CodeContext {
                 purpose: SlotPurpose::Local,
                 value_type: s,
                 is_in_use: true,
+                init: Some(init),
             });
         }
 
@@ -65,15 +76,53 @@ impl CodeContext {
     /// Adds a function to the specified builder. This adds three components to the WASM: a function type using the
     /// signature held by the context, the function body using the specified Code, and a function export using the name
     /// from the signature.
-    pub fn build(&self, builder: &mut ModuleBuilder, code: &[Code]) -> Result<()> {
+    pub fn build<R: rand::Rng>(&self, builder: &mut ModuleBuilder, code: &[Code], rng: &mut R) -> Result<()> {
         // Add the function type
         let params = self.signature.params_ast();
         let results = self.signature.results_ast();
         let function_type = FunctionType::new(ResultType::from(params), ResultType::from(results));
         let function_type_index = builder.add_function_type(function_type)?;
 
-        // Build the code. Some instructions may create more local variables for internal processing
+        // Find all slots that require initialization and init them
         let mut instruction_list = vec![];
+        for slot_info in self.locals_needing_init() {
+            match slot_info.init {
+                Some(SlotInit::Zero) => {
+                    // All slots are inited to zero by default
+                }
+                Some(SlotInit::One) => match slot_info.value_type {
+                    ValueType::I32 => {
+                        ConstI32::new(slot_info.index as u8, 1).append_code(&self, &mut instruction_list)?
+                    }
+                    ValueType::I64 => {
+                        ConstI64::new(slot_info.index as u8, 1).append_code(&self, &mut instruction_list)?
+                    }
+                    ValueType::F32 => {
+                        ConstF32::new(slot_info.index as u8, 1f32).append_code(&self, &mut instruction_list)?
+                    }
+                    ValueType::F64 => {
+                        ConstF64::new(slot_info.index as u8, 1f64).append_code(&self, &mut instruction_list)?
+                    }
+                },
+                Some(SlotInit::Random) => match slot_info.value_type {
+                    ValueType::I32 => {
+                        ConstI32::new(slot_info.index as u8, rng.gen()).append_code(&self, &mut instruction_list)?
+                    }
+                    ValueType::I64 => {
+                        ConstI64::new(slot_info.index as u8, rng.gen()).append_code(&self, &mut instruction_list)?
+                    }
+                    ValueType::F32 => {
+                        ConstF32::new(slot_info.index as u8, rng.gen()).append_code(&self, &mut instruction_list)?
+                    }
+                    ValueType::F64 => {
+                        ConstF64::new(slot_info.index as u8, rng.gen()).append_code(&self, &mut instruction_list)?
+                    }
+                },
+                None => panic!("should never have not-init in this list"),
+            }
+        }
+
+        // Build the code. Some instructions may create more local variables for internal processing
         for c in code.iter() {
             c.append_code(&self, &mut instruction_list)?;
         }
@@ -124,6 +173,12 @@ impl CodeContext {
             .collect()
     }
 
+    /// Returns a list of all the local variables that need initialization
+    fn locals_needing_init(&self) -> Vec<SlotInfo> {
+        let locals = self.locals.borrow();
+        locals.iter().filter(|i| i.init.is_some()).map(|i| *i).collect()
+    }
+
     /// Returns the ValueType of the slot. Returns an error if the slot is out of range of all slots, or has
     /// `SlotPurpose::Instruction`
     pub fn get_slot_value_type(&self, slot: Slot) -> Result<ValueType> {
@@ -171,6 +226,7 @@ impl CodeContext {
                 purpose: SlotPurpose::Instruction,
                 value_type: value_type,
                 is_in_use: true,
+                init: None,
             });
 
             position
@@ -239,7 +295,7 @@ impl<'a> Drop for DroppableBreakStackEntry<'a> {
     }
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 enum SlotPurpose {
     // This slot is set by the caller
     Parameter,
@@ -254,6 +310,7 @@ enum SlotPurpose {
     Instruction,
 }
 
+#[derive(Clone, Copy)]
 struct SlotInfo {
     // Sometimes the slot list is filtered, so it is useful to know the slot index. This is a u16 instead of a u8
     // because the sum of (Parameter, Return, Local) must be <= 256, but the use of Instruction slots may exceed a u8.
@@ -268,11 +325,14 @@ struct SlotInfo {
     // If the `purpose` is `Instruction`, the slot is used for a while and then is available for another instruction to
     // use it. Always `true` for all other purpose types.
     is_in_use: bool,
+
+    // If set to a value, the slot will be initialized before the code is run
+    init: Option<SlotInit>,
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{FunctionSignature, ValueType};
+    use crate::{FunctionSignature, SlotInit, ValueType};
 
     use super::CodeContext;
 
@@ -285,7 +345,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots, false).unwrap();
+        let context = CodeContext::new(&fs, slots, false, SlotInit::Zero).unwrap();
 
         // The local types should NOT include parameters (these locals are created by the definition for the function),
         // but start with the return types, and then include each of the slots
@@ -306,7 +366,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots, false).unwrap();
+        let context = CodeContext::new(&fs, slots, false, SlotInit::Zero).unwrap();
 
         // Getting a parameter slot returns an initialized type
         assert_eq!(ValueType::I32, context.get_slot_value_type(0).unwrap());
@@ -335,7 +395,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots, false).unwrap();
+        let context = CodeContext::new(&fs, slots, false, SlotInit::Zero).unwrap();
 
         // Getting an unused local slot from an empty context returns the first slot
         let slot_zero = context.get_unused_local(ValueType::I32);
@@ -374,7 +434,7 @@ mod tests {
             f32: 0,
             f64: 0,
         };
-        let context = CodeContext::new(&fs, slots, false).unwrap();
+        let context = CodeContext::new(&fs, slots, false, SlotInit::Zero).unwrap();
 
         // Calling 'can_break' with no loop returns None
         assert_eq!(None, context.can_break());

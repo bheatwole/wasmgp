@@ -123,7 +123,7 @@ impl CodeBuilder for Return {
 /// let index = world.add_function_import("double", double).unwrap();
 /// assert_eq!(0, index);
 ///
-/// let func = AddThenDouble::new_with_world(&world).unwrap();
+/// let func = AddThenDouble::new_with_world(&mut world).unwrap();
 /// assert_eq!(6, func.call(1, 2).unwrap());
 /// assert_eq!(-6, func.call(5, -8).unwrap());
 /// ```
@@ -876,7 +876,7 @@ mod tests {
             .add_function_import("do_it", |v1: i32, v2: i32| (v2, v1, v1 - v2))
             .unwrap();
         assert_eq!(0, index);
-        let func = TestCallOrder::new_with_world(&world).unwrap();
+        let func = TestCallOrder::new_with_world(&mut world).unwrap();
         assert_eq!((3, 1, -2), func.call(1, 3).unwrap());
     }
 

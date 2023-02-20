@@ -45,7 +45,7 @@ use slot_count::SlotCount;
 ///             f32: 0,
 ///             f64: 0,
 ///         };
-///         let context = wasmgp::CodeContext::new(&fs, slots, false)?;
+///         let context = wasmgp::CodeContext::new(&fs, slots, false, SlotInit::Zero)?;
 ///         let code = vec![
 ///             Code::Add(0, 0, 1),
 ///             Return::new()
@@ -59,7 +59,7 @@ use slot_count::SlotCount;
 ///         let module = wasmtime::Module::new(&engine, &buffer[..])?;
 ///         let mut store = Store::new(&engine, ());
 ///         let instance = Instance::new(&mut store, &module, &vec![])?;
-///         let func = instance.get_typed_func::<u32, u64, _>(&mut store, name)?;
+///         let func = instance.get_typed_func::<u32, u64>(&mut store, name)?;
 ///
 ///         Ok(Double {
 ///             store: std::cell::RefCell::new(store),

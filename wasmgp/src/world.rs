@@ -233,14 +233,15 @@ impl<T: Default, R: RunResult> World<T, R> {
     }
 
     /// Creates a wasmtime Instance for the specified Code
-    pub fn instanciate(&self, store: impl AsContextMut<Data = T>, code: &[Code]) -> Result<Instance> {
+    pub fn instanciate(&mut self, store: impl AsContextMut<Data = T>, code: &[Code]) -> Result<Instance> {
         let mut builder = self.module_builder.clone();
         let context = CodeContext::new(
             &self.config.main_entry_point,
             self.config.work_slots.clone(),
             self.config.is_signed,
+            self.config.work_slot_initialization,
         )?;
-        context.build(&mut builder, &code[..])?;
+        context.build(&mut builder, &code[..], self.genetic_engine.rng())?;
         let module_ast = builder.build();
         let mut buffer = Vec::new();
         wasm_ast::emit_binary(&module_ast, &mut buffer)?;
@@ -249,15 +250,16 @@ impl<T: Default, R: RunResult> World<T, R> {
     }
 
     /// Creates a wasmtime InstancePre for the specified Code
-    pub fn instanciate_pre(&self, code: &[Code]) -> Result<InstancePre<T>> {
+    pub fn instanciate_pre(&mut self, code: &[Code]) -> Result<InstancePre<T>> {
         let store = Store::new(&self.wasm_engine, T::default());
         let mut builder = self.module_builder.clone();
         let context = CodeContext::new(
             &self.config.main_entry_point,
             self.config.work_slots.clone(),
             self.config.is_signed,
+            self.config.work_slot_initialization,
         )?;
-        context.build(&mut builder, &code[..])?;
+        context.build(&mut builder, &code[..], self.genetic_engine.rng())?;
         let module_ast = builder.build();
         let mut buffer = Vec::new();
         wasm_ast::emit_binary(&module_ast, &mut buffer)?;
