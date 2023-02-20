@@ -1,4 +1,4 @@
-use crate::{FunctionSignature, MigrationAlgorithm, SelectionCurve, SlotCount, ThreadingModel};
+use crate::{FunctionSignature, MigrationAlgorithm, SelectionCurve, SlotCount, SlotInit, ThreadingModel};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct WorldConfiguration {
@@ -12,6 +12,9 @@ pub struct WorldConfiguration {
     ///
     /// The default is ten i32 working variables.
     pub work_slots: SlotCount,
+
+    /// The work_slots will be initialized according to this parameter.
+    pub work_slot_initialization: SlotInit,
 
     /// The genetic code works with either signed or unsigned arithmetic for all the genetic code.
     ///
@@ -124,6 +127,7 @@ impl Default for WorldConfiguration {
                 f32: 0,
                 f64: 0,
             },
+            work_slot_initialization: SlotInit::Zero,
             is_signed: false,
             memory_size: 0,
             individual_run_time_ms: 250,
