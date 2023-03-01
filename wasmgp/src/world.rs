@@ -251,7 +251,6 @@ impl<T: Default, R: RunResult> World<T, R> {
 
     /// Creates a wasmtime InstancePre for the specified Code
     pub fn instanciate_pre(&mut self, code: &[Code]) -> Result<InstancePre<T>> {
-        let store = Store::new(&self.wasm_engine, T::default());
         let mut builder = self.module_builder.clone();
         let context = CodeContext::new(
             &self.config.main_entry_point,
@@ -264,7 +263,7 @@ impl<T: Default, R: RunResult> World<T, R> {
         let mut buffer = Vec::new();
         wasm_ast::emit_binary(&module_ast, &mut buffer)?;
         let module = wasmtime::Module::new(&self.wasm_engine, &buffer[..])?;
-        self.linker.instantiate_pre(store, &module)
+        self.linker.instantiate_pre(&module)
     }
 
     /// Returns a copy of the ModuleBuilder. This builder includes any imports that were previously defined with
